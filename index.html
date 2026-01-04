@@ -1331,23 +1331,53 @@
     }
   }, {passive:false});
 
+  // --- Cheat Code: Add click listener to money display ---
+  moneyText.style.cursor = 'pointer';
+  moneyText.style.transition = 'transform 0.2s';
+  moneyText.addEventListener('click', (e) => {
+    e.stopPropagation();
+    cheatClicks++;
+    
+    // Reset timer
+    if (cheatTimer) clearTimeout(cheatTimer);
+    cheatTimer = setTimeout(() => { cheatClicks = 0; }, 2000);
+    
+    // Check if 7 clicks reached
+    if (cheatClicks >= 7) {
+      money += 1000;
+      cheatClicks = 0;
+      playSound('buy');
+      
+      const t = translations[currentLang];
+      moneyText.innerText = '💰 ' + money + ' ' + t.money;
+      checkButtons();
+      updateShopUI();
+      
+      // Visual feedback
+      moneyText.style.transform = 'scale(1.2)';
+      setTimeout(() => { moneyText.style.transform = 'scale(1)'; }, 200);
+    }
+  });
+
   // --- Factory Reset Function ---
   function factoryReset() {
-    if (!confirm(translations[currentLang].resetAllConfirm)) return;
+    const t = translations[currentLang];
+    if (!confirm(t.resetAllConfirm)) return;
+    if (!confirm(t.resetAllConfirm2)) return;
     
     // Reset all progress
     money = 0;
-    bullets = [];
-    unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false,
-      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false, glitter: false,
-      garland: false, glitter: false,  bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
+    unlocked = { 
+      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+      garland: false, glitter: false,
+      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
     };
     activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
     activeThrowType = 'ball';
     activeBackground = 'bg_day'; 
     ornaments = [];
-    bullets = [];;
-    ghostTargets = [];;
+    bullets = [];
+    ghostTargets = [];
     missionLevel = 1;
     
     checkButtons();
@@ -1355,55 +1385,13 @@
     updateLanguage();
   }
 
-  factoryResetBtn.onclick = factoryReset;
-  // First confirmation  
-  startCreative.onclick = ()=>{ gameState='CREATIVE'; menuOverlay.style.display='none'; ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };
-  startMission.onclick = ()=>{ gameState='MISSION'; menuOverlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };
-  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
-  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
-  
-  document.getElementById('shopBtn').onclick = () => toggleShop(true);
-  menuBtn.onclick = ()=>{ gameState = 'MENU'; menuOverlay.style.display = 'flex'; bullets = []; };
-  // --- UI interactions ---
-  // MODIFIED: resetBtn now only clears ornaments and bullets (keeps progress)  factoryResetBtn.onclick = factoryReset;
-  document.getElementById('resetBtn').onclick = () => { 
-    ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };
-    bullets = []; Overlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };
-    ghostTargets = []; ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
-  };nclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
-  
-  document.getElementById('shopBtn').onclick = () => toggleShop(true); --- Factory Reset Function ---
-  menuBtn.onclick = ()=>{ gameState = 'MENU'; menuOverlay.style.display = 'flex'; bullets = []; };function factoryReset() {
-  
-  factoryResetBtn.onclick = factoryReset;
-  // First confirmation  
-  startCreative.onclick = ()=>{ gameState='CREATIVE'; menuOverlay.style.display='none'; ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };llConfirm)) return;
-  startMission.onclick = ()=>{ gameState='MISSION'; menuOverlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };0;
-  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };firmation (add translation keys for this)
-  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
-bsolutely sure? This cannot be undone.';
-  // --- Factory Reset Function ---dConfirmEn;
-  function factoryReset() {  };
-    const t = translations[currentLang];51'];
-    if (!confirm(t.resetAllConfirm)) return;
-     [];
-    // Reset all progressts = [];
-    money = 0;bullets = [];ghostTargets = [];Level = 1;
-    unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false,
-      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false, glitter: false,el = 1;
-      garland: false, glitter: false,  bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false     checkButtons();eShopUI();
-      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false   updateLanguage();
-    }; ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];dateLanguage();
-    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];'ball';
+  // Start
+  resize();
+  updateLanguage();
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
+  loop();
 
-
-
-
-
-
-
-
-
-
-
-e();tml>  updateLanguage();  function loop(){ update(); draw(); requestAnimationFrame(loop); }  loop();})();</script></body></html>
+})();
+</script>
+</body>
+</html>
