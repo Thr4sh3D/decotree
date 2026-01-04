@@ -77,7 +77,10 @@
     background: white; padding: 20px; border-radius: 25px; width: 360px;
     text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    max-height: 80vh; overflow:auto;
+    max-height: 80vh; 
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
   }
   @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   
@@ -99,18 +102,6 @@
 
   /* small helpers for stars */
   .hidden { display:none; }
-
-  /* Language selector */
-  .lang-selector {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 3000;
-  }
-  .lang-selector select {
-    padding: 6px 10px; border-radius: 8px; border: 1px solid #ddd;
-    background: white; font-size: 13px; cursor: pointer;
-  }
 </style>
 </head>
 <body>
@@ -139,28 +130,28 @@
     <p id="menuSubtitle">Välj spelläge</p>
     <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Fritt Skapande</button>
     <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag</button>
-    <button id="factoryResetBtn" class="menu-btn" style="background:#dc3545;color:white;font-size:13px;padding:10px;margin-top:20px">Nollställ Allt</button>
+    
+    <!-- Language selector moved here -->
+    <select id="langSelect" style="width:100%; margin:15px 0; padding:10px; border-radius:8px; border:1px solid #ddd; font-size:14px; cursor:pointer;">
+      <option value="sv">🇸🇪 Svenska</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="de">🇩🇪 Deutsch</option>
+      <option value="pt">🇵🇹 Português</option>
+      <option value="it">🇮🇹 Italiano</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="ja">🇯🇵 日本語</option>
+    </select>
+    
+    <button id="factoryResetBtn" class="menu-btn" style="background:#dc3545;color:white;font-size:13px;padding:10px;margin-top:30px">Nollställ Allt</button>
   </div>
-</div>
-
-<!-- Language selector (moved outside menu-card for better positioning) -->
-<div class="lang-selector">
-  <select id="langSelect">
-    <option value="sv">🇸🇪 Svenska</option>
-    <option value="en">🇬🇧 English</option>
-    <option value="es">🇪🇸 Español</option>
-    <option value="fr">🇫🇷 Français</option>
-    <option value="de">🇩🇪 Deutsch</option>
-    <option value="pt">🇵🇹 Português</option>
-    <option value="it">🇮🇹 Italiano</option>
-    <option value="ru">🇷🇺 Русский</option>
-    <option value="zh">🇨🇳 中文</option>
-    <option value="ja">🇯🇵 日本語</option>
-  </select>
 </div>
 
 <div id="shopModal">
   <div class="shop-content">
+    <button onclick="document.getElementById('shopModal').style.display='none'" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">✕</button>
     <h2 id="shopTitle" style="margin-top:0; color:#333">Jul-Butiken</h2>
 
     <div class="shop-tabs">
@@ -317,7 +308,8 @@
       bgAurora: 'Norrsken', bgAuroraDesc: 'Lila/Grönt',
       bgSunset: 'Solnedgång', bgSunsetDesc: 'Orange/Rosa/Lila',
       resetAll: 'Nollställ Allt',
-      resetAllConfirm: 'Är du säker? All progress raderas permanent!'
+      resetAllConfirm: 'Är du säker? All progress raderas permanent!',
+      resetAllConfirm2: 'Verkligen helt säker? Detta går inte att ångra.'
     },
     en: {
       menuTitle: 'DecoTree', menuSubtitle: 'Choose game mode',
@@ -341,7 +333,8 @@
       bgAurora: 'Aurora', bgAuroraDesc: 'Purple/Green',
       bgSunset: 'Sunset', bgSunsetDesc: 'Orange/Pink/Purple',
       resetAll: 'Reset All Progress',
-      resetAllConfirm: 'Are you sure? All progress will be permanently deleted!'
+      resetAllConfirm: 'Are you sure? All progress will be permanently deleted!',
+      resetAllConfirm2: 'Really absolutely sure? This cannot be undone.'
     },
     es: {
       menuTitle: 'DecoTree', menuSubtitle: 'Elige modo de juego',
@@ -365,7 +358,8 @@
       bgAurora: 'Aurora', bgAuroraDesc: 'Morado/Verde',
       bgSunset: 'Atardecer', bgSunsetDesc: 'Naranja/Rosa/Morado',
       resetAll: 'Restablecer Todo',
-      resetAllConfirm: '¿Estás seguro? ¡Todo el progreso se eliminará permanentemente!'
+      resetAllConfirm: '¿Estás seguro? ¡Todo el progreso se eliminará permanentemente!',
+      resetAllConfirm2: '¿Realmente estás absolutamente seguro? Esto no se puede deshacer.'
     },
     fr: {
       menuTitle: 'DecoTree', menuSubtitle: 'Choisir le mode',
@@ -389,7 +383,8 @@
       bgAurora: 'Aurore', bgAuroraDesc: 'Violet/Vert',
       bgSunset: 'Coucher de soleil', bgSunsetDesc: 'Orange/Rose/Violet',
       resetAll: 'Tout Réinitialiser',
-      resetAllConfirm: 'Êtes-vous sûr? Toute progression sera définitivement supprimée!'
+      resetAllConfirm: 'Êtes-vous sûr? Toute progression sera définitivement supprimée!',
+      resetAllConfirm2: 'Vraiment absolument sûr? Cela ne peut pas être annulé.'
     },
     de: {
       menuTitle: 'DecoTree', menuSubtitle: 'Spielmodus wählen',
@@ -413,7 +408,8 @@
       bgAurora: 'Aurora', bgAuroraDesc: 'Lila/Grün',
       bgSunset: 'Sonnenuntergang', bgSunsetDesc: 'Orange/Rosa/Lila',
       resetAll: 'Alles Zurücksetzen',
-      resetAllConfirm: 'Sind Sie sicher? Aller Fortschritt wird dauerhaft gelöscht!'
+      resetAllConfirm: 'Sind Sie sicher? Aller Fortschritt wird dauerhaft gelöscht!',
+      resetAllConfirm2: 'Wirklich absolut sicher? Dies kann nicht rückgängig gemacht werden.'
     },
     pt: {
       menuTitle: 'DecoTree', menuSubtitle: 'Escolha o modo',
@@ -437,7 +433,8 @@
       bgAurora: 'Aurora', bgAuroraDesc: 'Roxo/Verde',
       bgSunset: 'Pôr do Sol', bgSunsetDesc: 'Laranja/Rosa/Roxo',
       resetAll: 'Redefinir Tudo',
-      resetAllConfirm: 'Tem certeza? Todo o progresso será excluído permanentemente!'
+      resetAllConfirm: 'Tem certeza? Todo o progresso será excluído permanentemente!',
+      resetAllConfirm2: 'Realmente absolutamente certo? Isso não pode ser desfeito.'
     },
     it: {
       menuTitle: 'DecoTree', menuSubtitle: 'Scegli modalità',
@@ -461,7 +458,8 @@
       bgAurora: 'Aurora', bgAuroraDesc: 'Viola/Verde',
       bgSunset: 'Tramonto', bgSunsetDesc: 'Arancione/Rosa/Viola',
       resetAll: 'Ripristina Tutto',
-      resetAllConfirm: 'Sei sicuro? Tutti i progressi verranno eliminati in modo permanente!'
+      resetAllConfirm: 'Sei sicuro? Tutti i progressi verranno eliminati in modo permanente!',
+      resetAllConfirm2: 'Davvero assolutamente sicuro? Questo non può essere annullato.'
     },
     ru: {
       menuTitle: 'DecoTree', menuSubtitle: 'Выберите режим',
@@ -485,7 +483,8 @@
       bgAurora: 'Аврора', bgAuroraDesc: 'Фиолетовый/Зеленый',
       bgSunset: 'Закат', bgSunsetDesc: 'Оранжевый/Розовый/Фиолетовый',
       resetAll: 'Сбросить Всё',
-      resetAllConfirm: 'Вы уверены? Весь прогресс будет безвозвратно удален!'
+      resetAllConfirm: 'Вы уверены? Весь прогресс будет безвозвратно удален!',
+      resetAllConfirm2: 'Действительно абсолютно уверены? Это действие нельзя отменить.'
     },
     zh: {
       menuTitle: 'DecoTree', menuSubtitle: '选择游戏模式',
@@ -509,7 +508,8 @@
       bgAurora: '极光', bgAuroraDesc: '紫/绿',
       bgSunset: '日落', bgSunsetDesc: '橙/粉/紫',
       resetAll: '重置全部',
-      resetAllConfirm: '你确定吗？所有进度将被永久删除！'
+      resetAllConfirm: '你确定吗？所有进度将被永久删除！',
+      resetAllConfirm2: '真的完全确定吗？这无法撤消。'
     },
     ja: {
       menuTitle: 'DecoTree', menuSubtitle: 'ゲームモードを選択',
@@ -533,7 +533,8 @@
       bgAurora: 'オーロラ', bgAuroraDesc: '紫/緑',
       bgSunset: '夕焼け', bgSunsetDesc: 'オレンジ/ピンク/紫',
       resetAll: 'すべてリセット',
-      resetAllConfirm: '本当によろしいですか？すべての進行状況が完全に削除されます！'
+      resetAllConfirm: '本当によろしいですか？すべての進行状況が完全に削除されます！',
+      resetAllConfirm2: '本当に完全に確信していますか？これは元に戻せません。'
     }
   };
 
@@ -1188,6 +1189,8 @@
       // Draw drooping curve
       ctx.beginPath();
       ctx.moveTo(o.x - r * 2.5, o.y);
+
+
       ctx.bezierCurveTo(
         o.x - r * 1.2, o.y + r * 2.5,
         o.x + r * 1.2, o.y + r * 2.5,
@@ -1207,44 +1210,34 @@
                   Math.pow(t, 3) * (o.x + r * 2.5);
         const y = Math.pow(1-t, 3) * o.y +
                   3 * Math.pow(1-t, 2) * t * (o.y + r * 2.5) +
-                  3 * (1-t) * Math.pow(t, 2) * (o.y + r * 2.5) +
+                  3 * (1-t) * Math.pow(t,  2) * (o.y + r * 2.5) +
                   Math.pow(t, 3) * o.y;
         
         ctx.beginPath();
         ctx.arc(x, y, r * 0.15, 0, Math.PI * 2);
         ctx.fill();
       }
-      
       ctx.restore();
     }
   }
 
+  // Santa - UPGRADED: More details and smoother shape
   function drawSanta(x, y) {
+    ctx.fillStyle = '#000';
     ctx.save();
+    ctx.fillRect(x - 24, y - 3, 48, 8);
     
     // Body (red coat with rounded rectangular shape)
     ctx.fillStyle = '#d32f2f';
     ctx.beginPath();
     ctx.ellipse(x, y, 24, 28, 0, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Black belt
     ctx.fillStyle = '#000';
-    ctx.fillRect(x - 24, y - 3, 48, 8);
-    
-    // Gold buckle
-    ctx.fillStyle = '#ffd700';
     ctx.fillRect(x - 6, y - 4, 12, 10);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x - 4, y - 2, 8, 6);
-    
-    // Head (peach face)
-    ctx.fillStyle = '#ffccb0';
+    ctx.fillStyle = '#ffd700';
     ctx.beginPath();
     ctx.arc(x, y - 22, 16, 0, Math.PI * 2);
     ctx.fill();
-    
-    // Eyes
     ctx.fillStyle = '#000';
     ctx.beginPath();
     ctx.arc(x - 5, y - 24, 2, 0, Math.PI * 2);
@@ -1264,11 +1257,14 @@
     ctx.beginPath();
     ctx.arc(x + 8, y - 16, 7, 0, Math.PI * 2);
     ctx.fill();
+    
+    ctx.fillStyle = '#d32f2f';
     ctx.beginPath();
-    ctx.arc(x - 4, y - 10, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + 4, y - 10, 6, 0, Math.PI * 2);
+    ctx.moveTo(x - 10, y - 10);
+    ctx.lineTo(x - 14, y - 28);
+    ctx.lineTo(x + 14, y - 28);
+    ctx.lineTo(x + 10, y - 10);
+    ctx.closePath();
     ctx.fill();
     
     // Hat (droopy red cap)
@@ -1303,13 +1299,6 @@
       shoot(e.clientY);
     }
   });
-
-  window.addEventListener('touchmove', e => {
-    if (gameState !== 'MENU'){
-      move(e.touches[0].clientX);
-      e.preventDefault();
-    }
-  }, {passive:false});
   
   window.addEventListener('touchstart', e => {
     if (gameState !== 'MENU' && e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target) && !menuOverlay.contains(e.target)){
@@ -1318,43 +1307,34 @@
       e.preventDefault(); // mobile double-shot fix
     }
   }, {passive:false});
-
-  // --- UI interactions ---
-  // MODIFIED: resetBtn now only clears ornaments and bullets (keeps progress)
-  document.getElementById('resetBtn').onclick = () => { 
-    ornaments = []; 
-    bullets = []; 
-    ghostTargets = [];
-  };
   
-  document.getElementById('shopBtn').onclick = () => toggleShop(true);
-  menuBtn.onclick = ()=>{ gameState = 'MENU'; menuOverlay.style.display = 'flex'; bullets = []; };
-  
-  factoryResetBtn.onclick = factoryReset;
-  
-  startCreative.onclick = ()=>{ gameState='CREATIVE'; menuOverlay.style.display='none'; ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };
-  startMission.onclick = ()=>{ gameState='MISSION'; menuOverlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };
-  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
-  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
+  window.addEventListener('touchmove', e => {
+    // Allow scrolling inside shop modal
+    if (e.target.closest('#shopModal')) return;
+    
+    if (gameState !== 'MENU'){
+      move(e.touches[0].clientX);
+      e.preventDefault();
+    }
+  }, {passive:false});
 
   // --- Factory Reset Function ---
   function factoryReset() {
-    const t = translations[currentLang];
-    if (!confirm(t.resetAllConfirm)) return;
+    if (!confirm(translations[currentLang].resetAllConfirm)) return;
     
     // Reset all progress
     money = 0;
-    unlocked = { 
-      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
-      garland: false, glitter: false,
-      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
+    bullets = [];
+    unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false,
+      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false, glitter: false,
+      garland: false, glitter: false,  bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
     };
     activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
     activeThrowType = 'ball';
-    activeBackground = 'bg_day';
+    activeBackground = 'bg_day'; 
     ornaments = [];
-    bullets = [];
-    ghostTargets = [];
+    bullets = [];;
+    ghostTargets = [];;
     missionLevel = 1;
     
     checkButtons();
@@ -1362,13 +1342,56 @@
     updateLanguage();
   }
 
-  // Start
-  resize();
-  updateLanguage();
-  function loop(){ update(); draw(); requestAnimationFrame(loop); }
-  loop();
+  factoryResetBtn.onclick = factoryReset;
+  // First confirmation  
+  startCreative.onclick = ()=>{ gameState='CREATIVE'; menuOverlay.style.display='none'; ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };
+  startMission.onclick = ()=>{ gameState='MISSION'; menuOverlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };
+  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
+  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
+  
+  document.getElementById('shopBtn').onclick = () => toggleShop(true);
+  menuBtn.onclick = ()=>{ gameState = 'MENU'; menuOverlay.style.display = 'flex'; bullets = []; };
+  // --- UI interactions ---
+  // MODIFIED: resetBtn now only clears ornaments and bullets (keeps progress)  factoryResetBtn.onclick = factoryReset;
+  document.getElementById('resetBtn').onclick = () => { 
+    ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };
+    bullets = []; Overlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };
+    ghostTargets = []; ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
+  };nclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
+  
+  document.getElementById('shopBtn').onclick = () => toggleShop(true); --- Factory Reset Function ---
+  menuBtn.onclick = ()=>{ gameState = 'MENU'; menuOverlay.style.display = 'flex'; bullets = []; };function factoryReset() {
+  
+  factoryResetBtn.onclick = factoryReset;
+  // First confirmation  
+  startCreative.onclick = ()=>{ gameState='CREATIVE'; menuOverlay.style.display='none'; ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };llConfirm)) return;
+  startMission.onclick = ()=>{ gameState='MISSION'; menuOverlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };0;
+  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };firmation (add translation keys for this)
+  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
+bsolutely sure? This cannot be undone.';
+  // --- Factory Reset Function ---dConfirmEn;
+  function factoryReset() {  };
+    const t = translations[currentLang];51'];
+    if (!confirm(t.resetAllConfirm)) return;
+     [];
+    // Reset all progressts = [];
+    money = 0;bullets = [];ghostTargets = [];Level = 1;
+    unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false,
+      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false, glitter: false,el = 1;
+      garland: false, glitter: false,  bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false     checkButtons();eShopUI();
+      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false   updateLanguage();
+    }; ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];dateLanguage();
+    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];'ball';
 
-})();
-</script>
-</body>
-</html>
+
+
+
+
+
+
+
+
+
+
+e();tml>  updateLanguage();  function loop(){ update(); draw(); requestAnimationFrame(loop); }  loop();})();</script></body></html>  }art    updateLanguage();    updateLanguage();    updateShopUI();    updateLanguage();    checkButtons();eShopUI();        missionLevel = 1;    ghostTargets = [];Level = 1;    activeBackground = 'bg_day'; ornaments = [];    activeThrowType = 'ball';= 'bg_day';dateLanguage();  }art
+e();tml>  updateLanguage();  function loop(){ update(); draw(); requestAnimationFrame(loop); }  loop();})();</script></body></html>
