@@ -631,10 +631,24 @@
   // --- Backgrounds ---
   function drawBackground(){
     const bg = backgrounds[activeBackground] || backgrounds.bg_day;
-    const g = ctx.createLinearGradient(0,0,0,H);
-    bg.colors.forEach(c=> g.addColorStop(c.p, c.c));
-    ctx.fillStyle = g;
-    ctx.fillRect(0,0,W,H);
+    
+    if (activeBackground === 'bg_day') {
+      // Special rendering for day: sky + snow ground
+      // Sky (top 80%)
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(0, 0, W, H * 0.8);
+      
+      // Snow ground (bottom 20%)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, H * 0.8, W, H * 0.2);
+    } else {
+      // Other backgrounds use gradient
+      const g = ctx.createLinearGradient(0,0,0,H);
+      bg.colors.forEach(c=> g.addColorStop(c.p, c.c));
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    }
+    
     if (activeBackground === 'bg_night') drawStars();
   }
   function generateStars(){
@@ -950,10 +964,58 @@
       ctx.fillStyle=g; ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(o.x - o.r*0.4, o.y - o.r*0.4, o.r*0.25,0,Math.PI*2); ctx.fill();
     } else if (type === 'candy'){
-      const r = o.r; ctx.save(); ctx.translate(o.x,o.y); ctx.rotate((o.x+o.y)%6/6);
-      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(0,0,r*1.1,r*0.9,0,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='#e63946'; ctx.lineWidth = Math.max(2,r*0.4);
-      for (let i=-2;i<=2;i++){ ctx.beginPath(); ctx.ellipse(i*r*0.18,0,r*0.5,r*0.45,0,0,Math.PI*2); ctx.stroke(); }
+      // J-shaped candy cane with red stripes
+      const r = o.r;
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      
+      // Draw white candy cane body (J-shape)
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = r * 0.6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.beginPath();
+      // Hook at top
+      ctx.arc(0, -r * 1.2, r * 0.5, Math.PI, 0, false);
+      // Straight part down
+      ctx.lineTo(r * 0.5, r * 1.5);
+      ctx.stroke();
+      
+      // Red diagonal stripes
+      ctx.strokeStyle = '#e63946';
+      ctx.lineWidth = r * 0.15;
+      
+      const stripeCount = 6;
+      for (let i = 0; i < stripeCount; i++) {
+        const t = i / stripeCount;
+        ctx.save();
+        
+        // Position along the cane path
+        let px, py, angle;
+        if (t < 0.4) {
+          // On the curved hook
+          const hookAngle = Math.PI + t * 2.5 * Math.PI;
+          px = Math.cos(hookAngle) * r * 0.5;
+          py = -r * 1.2 + Math.sin(hookAngle) * r * 0.5;
+          angle = hookAngle + Math.PI / 2;
+        } else {
+          // On the straight part
+          const straightT = (t - 0.4) / 0.6;
+          px = r * 0.5;
+          py = -r * 0.7 + straightT * (r * 2.2);
+          angle = 0;
+        }
+        
+        ctx.translate(px, py);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.35, 0);
+        ctx.lineTo(r * 0.35, 0);
+        ctx.stroke();
+        ctx.restore();
+      }
+      
       ctx.restore();
     } else if (type === 'light'){
       ctx.save(); ctx.beginPath(); ctx.shadowColor='rgba(255,230,120,0.8)'; ctx.shadowBlur=20; ctx.fillStyle=o.color||'#fff';
