@@ -21,8 +21,14 @@
     padding: 8px 15px; border-radius: 20px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     color: #0b3a4a; font-weight: bold; font-size: 16px;
-    display: flex; flex-direction: column; gap: 4px;
+    display: flex; flex-direction: column; gap: 6px;
     pointer-events: auto;
+    align-items:flex-start;
+  }
+
+  #menuBtn {
+    background: #fff; color:#0b3a4a; border:1px solid #ddd; padding:4px 8px;
+    border-radius:12px; font-size:13px; cursor:pointer;
   }
   
   /* Knappar */
@@ -49,77 +55,138 @@
     box-shadow: 0 4px 0 rgba(0,0,0,0.15); color: #003049;
   }
 
+  /* Menu overlay */
+  #menuOverlay {
+    position: fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.35); z-index:200; pointer-events:auto;
+  }
+  .menu-card {
+    background: white; padding:30px; border-radius:20px; text-align:center; width:320px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.4);
+  }
+  .menu-card h1 { margin:0 0 12px 0; font-size:22px; color:#0b3a4a; }
+  .menu-btn { width:100%; padding:14px; margin-top:10px; border-radius:12px; font-size:16px; }
+
   /* BUTIK (Modal) */
   #shopModal {
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6); z-index: 100;
+    background: rgba(0,0,0,0.6); z-index: 150;
     justify-content: center; align-items: center;
   }
   .shop-content {
-    background: white; padding: 20px; border-radius: 25px; width: 320px;
+    background: white; padding: 20px; border-radius: 25px; width: 360px;
     text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-height: 80vh; overflow:auto;
   }
   @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   
   .shop-item {
-    background: #f0f8ff; margin: 10px 0; padding: 15px; border-radius: 15px;
+    background: #f0f8ff; margin: 10px 0; padding: 12px; border-radius: 15px;
     display: flex; justify-content: space-between; align-items: center;
     border: 2px solid #e1e1e1;
   }
   .buy-btn {
     background: #28a745; font-size: 12px; padding: 8px 12px; box-shadow: 0 3px 0 #1e7e34;
+    color:white;
   }
   .buy-btn:disabled { background: #ccc; box-shadow: none; color: #666; cursor: not-allowed; }
   .close-btn { background: #666; margin-top: 10px; width: 100%; }
 
+  .shop-tabs { display:flex; gap:10px; margin-bottom:10px; justify-content:center; }
+  .shop-tab { padding:6px 10px; cursor:pointer; border-radius:8px; background:#eee; }
+  .shop-tab.active { background:#dff3ff; color:#005cbf; font-weight:bold; }
+
+  /* small helpers for stars */
+  .hidden { display:none; }
 </style>
 </head>
 <body>
 
 <div class="ui-bar">
   <div class="score-box">
-    <span id="scoreText">🎄 Kulor: 0</span>
-    <span id="moneyText" style="color:#28a745">💰 0 kr</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="menuBtn" ontouchstart="event.stopPropagation()">Meny</button>
+      <div style="display:flex;flex-direction:column;">
+        <span id="scoreText">🎄 Kulor: 0</span>
+        <span id="moneyText" style="color:#28a745">💰 0 kr</span>
+      </div>
+    </div>
   </div>
   <div class="btn-group">
     <button id="resetBtn" ontouchstart="event.stopPropagation()">Rensa</button>
     <button id="shopBtn" ontouchstart="event.stopPropagation()">🏪 Affär</button>
-    <!-- Sound button moved into btn-group -->
     <button id="soundBtn" ontouchstart="event.stopPropagation()">🔊</button>
+  </div>
+</div>
+
+<!-- Main Menu overlay -->
+<div id="menuOverlay">
+  <div class="menu-card">
+    <h1>DecoTree</h1>
+    <p>Välj spelläge</p>
+    <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Creative Mode</button>
+    <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag (Tjäna pengar)</button>
   </div>
 </div>
 
 <div id="shopModal">
   <div class="shop-content">
     <h2 style="margin-top:0; color:#333">Jul-Butiken</h2>
-    <p>Köp nya färger & ornament till dina kulor!</p>
-    
-    <div class="shop-item">
-      <div><b>Guld & Silver</b><br><span style="font-size:12px">Glittrande metallic</span></div>
-      <button class="buy-btn" id="buyGold" onclick="buyPack('gold', 100)">100 kr</button>
+
+    <div class="shop-tabs">
+      <div id="tabItems" class="shop-tab active">Föremål</div>
+      <div id="tabBackgrounds" class="shop-tab">Bakgrunder</div>
     </div>
 
-    <div class="shop-item">
-      <div><b>Diamant</b><br><span style="font-size:12px">Blå/Lila kristaller</span></div>
-      <button class="buy-btn" id="buyDiamond" onclick="buyPack('diamond', 500)">500 kr</button>
+    <div id="shopItems">
+      <p>Köp nya färger & ornament till dina kulor!</p>
+      <div class="shop-item">
+        <div><b>Guld & Silver</b><br><span style="font-size:12px">Glittrande metallic</span></div>
+        <button class="buy-btn" id="buyGold" onclick="buyPack('gold', 100)">100 kr</button>
+      </div>
+
+      <div class="shop-item">
+        <div><b>Diamant</b><br><span style="font-size:12px">Blå/Lila kristaller</span></div>
+        <button class="buy-btn" id="buyDiamond" onclick="buyPack('diamond', 500)">500 kr</button>
+      </div>
+
+      <hr style="border:none; height:1px; background:#eee; margin:10px 0;">
+
+      <div class="shop-item">
+        <div><b>Polkagris</b><br><span style="font-size:12px">Randig polkagris</span></div>
+        <button class="buy-btn" id="buyCandy" onclick="buyPack('candy', 50)">50 kr</button>
+      </div>
+
+      <div class="shop-item">
+        <div><b>Ljusslinga</b><br><span style="font-size:12px">Glittrande ljus</span></div>
+        <button class="buy-btn" id="buyLight" onclick="buyPack('light', 150)">150 kr</button>
+      </div>
+
+      <div class="shop-item">
+        <div><b>Ljus</b><br><span style="font-size:12px">Vitt ljus med låga</span></div>
+        <button class="buy-btn" id="buyCandle" onclick="buyPack('candle', 300)">300 kr</button>
+      </div>
     </div>
 
-    <hr style="border:none; height:1px; background:#eee; margin:10px 0;">
-
-    <div class="shop-item">
-      <div><b>Polkagris</b><br><span style="font-size:12px">Randig polkagris</span></div>
-      <button class="buy-btn" id="buyCandy" onclick="buyPack('candy', 50)">50 kr</button>
-    </div>
-
-    <div class="shop-item">
-      <div><b>Ljusslinga</b><br><span style="font-size:12px">Glittrande ljus</span></div>
-      <button class="buy-btn" id="buyLight" onclick="buyPack('light', 150)">150 kr</button>
-    </div>
-
-    <div class="shop-item">
-      <div><b>Ljus</b><br><span style="font-size:12px">Vitt ljus med låga</span></div>
-      <button class="buy-btn" id="buyCandle" onclick="buyPack('candle', 300)">300 kr</button>
+    <div id="shopBackgrounds" class="hidden">
+      <p>Köp bakgrunder</p>
+      <div class="shop-item">
+        <div><b>Dag</b><br><span style="font-size:12px">Standard (Gratis)</span></div>
+        <button class="buy-btn" id="buyBg_day" onclick="buyPack('bg_day', 0)">Fri</button>
+      </div>
+      <div class="shop-item">
+        <div><b>Natt</b><br><span style="font-size:12px">Mörk himmel med stjärnor</span></div>
+        <button class="buy-btn" id="buyBg_night" onclick="buyPack('bg_night', 100)">100 kr</button>
+      </div>
+      <div class="shop-item">
+        <div><b>Norrsken</b><br><span style="font-size:12px">Lila/Grönt</span></div>
+        <button class="buy-btn" id="buyBg_aurora" onclick="buyPack('bg_aurora', 300)">300 kr</button>
+      </div>
+      <div class="shop-item">
+        <div><b>Solnedgång</b><br><span style="font-size:12px">Orange/Rosa/Lila</span></div>
+        <button class="buy-btn" id="buyBg_sunset" onclick="buyPack('bg_sunset', 500)">500 kr</button>
+      </div>
     </div>
 
     <button class="close-btn" onclick="toggleShop(false)">Stäng</button>
@@ -132,14 +199,22 @@
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  
-  // Element
+
+  // Elements
   const scoreText = document.getElementById('scoreText');
   const moneyText = document.getElementById('moneyText');
   const shopModal = document.getElementById('shopModal');
   const soundBtn = document.getElementById('soundBtn');
+  const menuOverlay = document.getElementById('menuOverlay');
+  const menuBtn = document.getElementById('menuBtn');
+  const startCreative = document.getElementById('startCreative');
+  const startMission = document.getElementById('startMission');
+  const tabItems = document.getElementById('tabItems');
+  const tabBackgrounds = document.getElementById('tabBackgrounds');
+  const shopItemsDiv = document.getElementById('shopItems');
+  const shopBackgroundsDiv = document.getElementById('shopBackgrounds');
 
-  // Speldata
+  // Game state
   let W, H;
   let money = 0;
   let tree = { tiers: [], trunk: {} };
@@ -147,437 +222,332 @@
   let ornaments = [];
   let bullets = [];
   let snowflakes = [];
-  
-  // Färger (Börjar med standard)
+
+  // new
+  let gameState = 'MENU'; // 'MENU'|'CREATIVE'|'MISSION'
+  let ghostTargets = [];
+  let missionLevel = 1;
+
+  // Färger och items
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
-  
-  // Köpta paket / objekt
-  let unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false };
+  let unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false,
+                   bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false };
 
-  // Active throwing type
+  // active settings
   let activeThrowType = 'ball'; // 'ball'|'candy'|'light'|'candle'
+  let activeBackground = 'bg_day'; // background id
 
-  // --- Ljud (Web Audio API, synth) ---
-  let audioCtx = null;
-  let masterGain = null;
-  let noiseBuffer = null;
-  let isMuted = false;
+  // Background definitions
+  const backgrounds = {
+    bg_day: { id:'bg_day', name:'Dag', price:0, colors:[{p:0,c:'#eaf6ff'},{p:1,c:'#ffffff'}] },
+    bg_night: { id:'bg_night', name:'Natt', price:100, colors:[{p:0,c:'#001022'},{p:1,c:'#000010'}] },
+    bg_aurora: { id:'bg_aurora', name:'Norrsken', price:300, colors:[{p:0,c:'#311b63'},{p:0.6,c:'#5eead4'},{p:1,c:'#0f172a'}] },
+    bg_sunset: { id:'bg_sunset', name:'Solnedgång', price:500, colors:[{p:0,c:'#ff7e5f'},{p:0.6,c:'#fbd786'},{p:1,c:'#c94b4b'}] }
+  };
+  let stars = [];
 
+  // --- Audio (same as before) ---
+  let audioCtx = null, masterGain = null, noiseBuffer = null, isMuted = false;
   function initAudio() {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 1;
-    masterGain.connect(audioCtx.destination);
-
-    // skapa ett kort vitt brus-buffer
+    masterGain = audioCtx.createGain(); masterGain.gain.value = 1; masterGain.connect(audioCtx.destination);
     const sampleRate = audioCtx.sampleRate;
     const buffer = audioCtx.createBuffer(1, sampleRate * 1, sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
     noiseBuffer = buffer;
-
-    function resumeOnce() {
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      document.removeEventListener('pointerdown', resumeOnce);
-      document.removeEventListener('touchstart', resumeOnce);
-    }
-    document.addEventListener('pointerdown', resumeOnce);
-    document.addEventListener('touchstart', resumeOnce);
+    function resumeOnce(){ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); document.removeEventListener('pointerdown',resumeOnce); document.removeEventListener('touchstart',resumeOnce); }
+    document.addEventListener('pointerdown', resumeOnce); document.addEventListener('touchstart', resumeOnce);
   }
-
-  function playSound(type) {
+  function playSound(type){
     if (isMuted) return;
-    initAudio();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    initAudio(); if (audioCtx.state==='suspended') audioCtx.resume();
     const now = audioCtx.currentTime;
-
-    if (type === 'shoot') {
-      const src = audioCtx.createBufferSource();
-      src.buffer = noiseBuffer;
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2000, now);
-      filter.frequency.exponentialRampToValueAtTime(300, now + 0.25);
-      const g = audioCtx.createGain();
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(0.6, now + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-      src.connect(filter); filter.connect(g); g.connect(masterGain);
-      src.start(now); src.stop(now + 0.35);
+    if (type==='shoot'){
+      const src = audioCtx.createBufferSource(); src.buffer = noiseBuffer;
+      const filter = audioCtx.createBiquadFilter(); filter.type='lowpass';
+      filter.frequency.setValueAtTime(2000, now); filter.frequency.exponentialRampToValueAtTime(300, now+0.25);
+      const g = audioCtx.createGain(); g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.6, now+0.02); g.gain.exponentialRampToValueAtTime(0.0001, now+0.35);
+      src.connect(filter); filter.connect(g); g.connect(masterGain); src.start(now); src.stop(now+0.35);
     }
-
-    if (type === 'stick') {
-      const o = audioCtx.createOscillator();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(1500, now);
-      o.frequency.exponentialRampToValueAtTime(2200, now + 0.06);
-      const g = audioCtx.createGain();
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.linearRampToValueAtTime(0.9, now + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-      o.connect(g); g.connect(masterGain);
-      o.start(now); o.stop(now + 0.2);
-    }
-
-    if (type === 'money') {
-      const freqs = [1200, 1600, 2000];
-      freqs.forEach((f, i) => {
-        const t = now + i * 0.06;
-        const o = audioCtx.createOscillator();
-        o.type = 'square';
-        o.frequency.setValueAtTime(f, t);
-        const g = audioCtx.createGain();
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.6, t + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-        o.connect(g); g.connect(masterGain);
-        o.start(t); o.stop(t + 0.18);
-      });
-    }
-
-    if (type === 'buy') {
-      const chord = [440, 660, 880];
-      chord.forEach((f, i) => {
-        const o = audioCtx.createOscillator();
-        o.type = 'triangle';
-        o.frequency.setValueAtTime(f * (1 + (i - 1) * 0.02), now);
-        const g = audioCtx.createGain();
-        g.gain.setValueAtTime(0.0001, now);
-        g.gain.linearRampToValueAtTime(0.25, now + 0.05);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
-        o.connect(g); g.connect(masterGain);
-        o.start(now); o.stop(now + 1.0);
-      });
-    }
+    if (type==='stick'){ const o = audioCtx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(1500,now); o.frequency.exponentialRampToValueAtTime(2200, now+0.06); const g=audioCtx.createGain(); g.gain.setValueAtTime(0.0001,now); g.gain.linearRampToValueAtTime(0.9,now+0.005); g.gain.exponentialRampToValueAtTime(0.0001, now+0.18); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.2); }
+    if (type==='money'){ const freqs=[1200,1600,2000]; freqs.forEach((f,i)=>{ const t=now+i*0.06; const o=audioCtx.createOscillator(); o.type='square'; o.frequency.setValueAtTime(f,t); const g=audioCtx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.6,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.16); o.connect(g); g.connect(masterGain); o.start(t); o.stop(t+0.18); }); }
+    if (type==='buy'){ const chord=[440,660,880]; chord.forEach((f,i)=>{ const o=audioCtx.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(f*(1+(i-1)*0.02),now); const g=audioCtx.createGain(); g.gain.setValueAtTime(0.0001,now); g.gain.linearRampToValueAtTime(0.25,now+0.05); g.gain.exponentialRampToValueAtTime(0.0001,now+1.0); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+1.0); }); }
   }
+  soundBtn.onclick = (e)=>{ e.stopPropagation(); isMuted=!isMuted; soundBtn.innerText = isMuted ? '🔇' : '🔊'; if (!isMuted) initAudio(); };
+  soundBtn.ontouchstart = (e)=>{ e.stopPropagation(); };
 
-  // Sound button
-  soundBtn.onclick = (e) => {
-    e.stopPropagation();
-    isMuted = !isMuted;
-    soundBtn.innerText = isMuted ? '🔇' : '🔊';
-    if (!isMuted) initAudio();
-  };
-  soundBtn.ontouchstart = (e) => { e.stopPropagation(); };
-
-  document.addEventListener('pointerdown', () => { try { initAudio(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }, { once: true });
-  document.addEventListener('touchstart', () => { try { initAudio(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }, { once: true });
-
-  // Init
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = W; canvas.height = H;
-    player.x = W / 2; player.y = H - 60;
-    setupTree();
-    if(snowflakes.length === 0) {
-      for(let i=0; i<50; i++) snowflakes.push(createSnowflake());
-    }
-  }
+  // --- Init / Resize ---
+  function resize(){ W=window.innerWidth; H=window.innerHeight; canvas.width=W; canvas.height=H; player.x=W/2; player.y=H-60; setupTree(); if(snowflakes.length===0){ for(let i=0;i<50;i++) snowflakes.push(createSnowflake()); } generateStars(); }
   window.addEventListener('resize', resize);
 
-  // --- LOGIK: GRANEN ---
-  function setupTree() {
-    const cx = W / 2;
-    const bottomY = H - 110;
-    const treeH = Math.min(H * 0.65, W * 0.85);
-    const treeW = treeH * 0.85;
-    tree.tiers = [];
+  // --- Tree / Snow (unchanged logic) ---
+  function setupTree(){ const cx=W/2; const bottomY=H-110; const treeH=Math.min(H*0.65, W*0.85); const treeW=treeH*0.85; tree.tiers=[]; tree.tiers.push({ x1:cx, y1:bottomY - treeH * 0.45, x2:cx - treeW/2, y2:bottomY, x3:cx + treeW/2, y3:bottomY, color:'#087023' }); const y2_bot = bottomY - treeH * 0.25; tree.tiers.push({ x1:cx, y1:y2_bot - treeH * 0.45, x2:cx - treeW * 0.35, y2:y2_bot, x3:cx + treeW * 0.35, y3:y2_bot, color:'#0a8a2f' }); const y1_bot = y2_bot - treeH * 0.25; tree.tiers.push({ x1:cx, y1:y1_bot - treeH * 0.45, x2:cx - treeW * 0.2, y2:y1_bot, x3:cx + treeW * 0.2, y3:y1_bot, color:'#0fb24b' }); tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 }; }
 
-    tree.tiers.push({
-      x1: cx, y1: bottomY - treeH * 0.45, 
-      x2: cx - treeW/2, y2: bottomY, x3: cx + treeW/2, y3: bottomY,
-      color: '#087023'
-    });
-    const y2_bot = bottomY - treeH * 0.25;
-    tree.tiers.push({
-      x1: cx, y1: y2_bot - treeH * 0.45,
-      x2: cx - treeW * 0.35, y2: y2_bot, x3: cx + treeW * 0.35, y3: y2_bot,
-      color: '#0a8a2f'
-    });
-    const y1_bot = y2_bot - treeH * 0.25;
-    tree.tiers.push({
-      x1: cx, y1: y1_bot - treeH * 0.45, 
-      x2: cx - treeW * 0.2, y2: y1_bot, x3: cx + treeW * 0.2, y3: y1_bot,
-      color: '#0fb24b'
-    });
-    tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 };
+  function createSnowflake(){ return { x: Math.random() * W, y: Math.random() * H, r: Math.random() * 3 + 1, speed: Math.random() * 1 + 0.5, wobble: Math.random() * Math.PI * 2 }; }
+  function updateSnow(){ snowflakes.forEach(s=>{ s.y += s.speed; s.x += Math.sin(s.wobble)*0.5; s.wobble += 0.05; if(s.y>H){ s.y=-10; s.x=Math.random()*W; } }); }
+
+  // --- Targets (Mission) ---
+  function spawnTargets(level){
+    ghostTargets = [];
+    const count = Math.min(3 + level, 8);
+    for(let i=0;i<count;i++){
+      const t = randomPointInTree();
+      ghostTargets.push({ x: t.x, y: t.y - Math.random()*10, r: 22 + Math.random()*10 });
+    }
+  }
+  function randomPointInTree(){
+    // pick random tier and random barycentric point inside triangle
+    const tri = tree.tiers[Math.floor(Math.random()*tree.tiers.length)];
+    const u = Math.random(), v = Math.random();
+    const a = Math.sqrt(u);
+    const x = (1 - a) * tri.x1 + (a * (1 - v)) * tri.x2 + (a * v) * tri.x3;
+    const y = (1 - a) * tri.y1 + (a * (1 - v)) * tri.y2 + (a * v) * tri.y3;
+    return {x,y};
+  }
+  function findTargetAt(x,y){
+    for(let i=0;i<ghostTargets.length;i++){
+      const t = ghostTargets[i];
+      const dx = x - t.x, dy = y - t.y;
+      if (Math.sqrt(dx*dx+dy*dy) <= t.r + 8) return i;
+    }
+    return -1;
   }
 
-  // --- LOGIK: SNÖ ---
-  function createSnowflake() {
-    return {
-      x: Math.random() * W, y: Math.random() * H,
-      r: Math.random() * 3 + 1,
-      speed: Math.random() * 1 + 0.5,
-      wobble: Math.random() * Math.PI * 2
-    };
+  // --- Backgrounds ---
+  function drawBackground(){
+    const bg = backgrounds[activeBackground] || backgrounds.bg_day;
+    const g = ctx.createLinearGradient(0,0,0,H);
+    bg.colors.forEach(c=> g.addColorStop(c.p, c.c));
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+    if (activeBackground === 'bg_night') drawStars();
   }
-  function updateSnow() {
-    snowflakes.forEach(s => {
-      s.y += s.speed;
-      s.x += Math.sin(s.wobble) * 0.5;
-      s.wobble += 0.05;
-      if (s.y > H) { s.y = -10; s.x = Math.random() * W; }
-    });
+  function generateStars(){
+    stars = [];
+    for(let i=0;i<120;i++) stars.push({x:Math.random()*W, y:Math.random()*H*0.7, r:Math.random()*1.6 + 0.5, a:Math.random()});
   }
-
-  // --- LOGIK: SPEL & FYSIK ---
-  function isInside(px, py, t) {
-    const area = 0.5 * (-t.y2 * t.x3 + t.y1 * (-t.x2 + t.x3) + t.x1 * (t.y2 - t.y3) + t.x2 * t.y3);
-    const s = 1 / (2 * area) * (t.y1 * t.x3 - t.x1 * t.y3 + (t.y3 - t.y1) * px + (t.x1 - t.x3) * py);
-    const trig = 1 / (2 * area) * (t.x1 * t.y2 - t.y1 * t.x2 + (t.y1 - t.y2) * px + (t.x2 - t.x1) * py);
-    return s > 0 && trig > 0 && (1 - s - trig) > 0;
+  function drawStars(){
+    ctx.save(); ctx.fillStyle='white';
+    stars.forEach(s=>{ ctx.globalAlpha = 0.6 + Math.sin(Date.now()/1000 + s.a)*0.4; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); });
+    ctx.globalAlpha = 1; ctx.restore();
   }
 
-  function shoot(targetY) {
-    const color = (activeThrowType === 'ball') ? activePalette[Math.floor(Math.random() * activePalette.length)]
+  // --- Shooting / Collision / Update ---
+  function shoot(targetY){
+    const color = (activeThrowType === 'ball') ? activePalette[Math.floor(Math.random()*activePalette.length)]
                   : (activeThrowType === 'candy') ? '#e63946'
                   : (activeThrowType === 'light') ? '#fff'
                   : (activeThrowType === 'candle') ? '#ffffff'
                   : '#fff';
-    bullets.push({ 
-        x: player.x, y: player.y - 45, targetY: targetY, 
-        speed: 15, r: Math.random() * 5 + 8, color: color, type: activeThrowType 
-    });
+    bullets.push({ x: player.x, y: player.y - 45, targetY: targetY, speed: 15, r: Math.random()*5 + 8, color: color, type: activeThrowType });
     playSound('shoot');
   }
 
-  function update() {
+  function update(){
     updateSnow();
-    
-    for (let i = bullets.length - 1; i >= 0; i--) {
-      let b = bullets[i];
+    for (let i=bullets.length-1;i>=0;i--){
+      const b = bullets[i];
       b.y -= b.speed;
-      if (b.y <= b.targetY) {
+      if (b.y <= b.targetY){
         let hit = false;
-        for (const t of tree.tiers) {
-           if (isInside(b.x, b.y, t)) { hit = true; break; }
+        for (const t of tree.tiers){ if (isInside(b.x,b.y,t)){ hit = true; break; } }
+        if (hit){
+          // If mission and target present at location -> convert target to ornament and reward
+          if (gameState === 'MISSION'){
+            const idx = findTargetAt(b.x, b.y);
+            if (idx !== -1){
+              const t = ghostTargets.splice(idx,1)[0];
+              ornaments.push({ x: t.x, y: t.y, r: b.r, color: b.color, type: b.type });
+              playSound('stick');
+              money += 5;
+              playSound('money');
+              checkButtons(); updateShopUI();
+              // level up if cleared
+              if (ghostTargets.length === 0){ missionLevel++; spawnTargets(missionLevel); }
+              bullets.splice(i,1);
+              continue;
+            }
+          }
+          // Normal placement (creative or mission non-target)
+          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+          playSound('stick');
+          // creative gives no money, mission non-target gives no money per spec
         }
-        if (hit) {
-           ornaments.push({x: b.x, y: b.y, r: b.r, color: b.color, type: b.type});
-           playSound('stick'); // ornament fästes
-           addMoney(1); // Tjäna pengar! (ändrat till 1 kr)
-        }
-        bullets.splice(i, 1);
+        bullets.splice(i,1);
       }
     }
-    
     scoreText.innerText = '🎄 Kulor: ' + ornaments.length;
     moneyText.innerText = '💰 ' + money + ' kr';
   }
 
-  // --- LOGIK: EKONOMI & BUTIK ---
-  function addMoney(amount) {
-    money += amount;
-    if (amount > 0) playSound('money');
-    checkButtons();
-    updateShopUI();
-  }
-  
-  window.toggleShop = (show) => {
-    shopModal.style.display = show ? 'flex' : 'none';
-    checkButtons();
-    updateShopUI();
-  };
-  
-  window.buyPack = (type, cost) => {
-    // If already unlocked: equip it (for ornament types)
-    if (unlocked[type]) {
-      // equip ornament types on click; palette items remain non-equipable
-      if (['candy','light','candle'].includes(type)) {
-        activeThrowType = type;
-      }
-      updateShopUI();
-      return;
-    }
-    if(money >= cost) {
-      money -= cost;
-      if(type === 'gold') {
-        unlocked.gold = true;
-        activePalette.push('#ffd700', '#c0c0c0', '#DAA520', '#E5E4E2');
-        document.getElementById('buyGold').innerText = "Köpt!";
-        document.getElementById('buyGold').disabled = true;
-      }
-      else if(type === 'diamond') {
-        unlocked.diamond = true;
-        activePalette.push('#b9f2ff', '#9b5de5', '#00bbf9', '#fee440');
-        document.getElementById('buyDiamond').innerText = "Köpt!";
-        document.getElementById('buyDiamond').disabled = true;
-      }
-      else if(type === 'candy') {
-        unlocked.candy = true;
-        activeThrowType = 'candy';
-      }
-      else if(type === 'light') {
-        unlocked.light = true;
-        activeThrowType = 'light';
-      }
-      else if(type === 'candle') {
-        unlocked.candle = true;
-        activeThrowType = 'candle';
-      }
-      playSound('buy');
-      checkButtons();
-      updateShopUI();
-    }
-  };
-
-  function checkButtons() {
+  // --- Economy & Shop ---
+  function checkButtons(){
     const goldBtn = document.getElementById('buyGold');
     const diamondBtn = document.getElementById('buyDiamond');
     const candyBtn = document.getElementById('buyCandy');
     const lightBtn = document.getElementById('buyLight');
     const candleBtn = document.getElementById('buyCandle');
+    const bgNightBtn = document.getElementById('buyBg_night');
+    const bgAuroraBtn = document.getElementById('buyBg_aurora');
+    const bgSunBtn = document.getElementById('buyBg_sunset');
 
-    if(unlocked.gold) { goldBtn.disabled = true; } else goldBtn.disabled = (money < 100);
-    if(unlocked.diamond) { diamondBtn.disabled = true; } else diamondBtn.disabled = (money < 500);
-
-    // Ornament items: if unlocked keep enabled (so player can equip), else disable if no money
-    candyBtn.disabled = unlocked.candy ? false : (money < 50);
-    lightBtn.disabled = unlocked.light ? false : (money < 150);
-    candleBtn.disabled = unlocked.candle ? false : (money < 300);
+    if (goldBtn) goldBtn.disabled = unlocked.gold ? true : (money < 100);
+    if (diamondBtn) diamondBtn.disabled = unlocked.diamond ? true : (money < 500);
+    if (candyBtn) candyBtn.disabled = unlocked.candy ? false : (money < 50);
+    if (lightBtn) lightBtn.disabled = unlocked.light ? false : (money < 150);
+    if (candleBtn) candleBtn.disabled = unlocked.candle ? false : (money < 300);
+    if (bgNightBtn) bgNightBtn.disabled = unlocked.bg_night ? false : (money < 100);
+    if (bgAuroraBtn) bgAuroraBtn.disabled = unlocked.bg_aurora ? false : (money < 300);
+    if (bgSunBtn) bgSunBtn.disabled = unlocked.bg_sunset ? false : (money < 500);
   }
 
-  function updateShopUI() {
-    const mapping = [
-      {id:'buyCandy', type:'candy', price:50, label:'Polkagris'},
-      {id:'buyLight', type:'light', price:150, label:'Ljusslinga'},
-      {id:'buyCandle', type:'candle', price:300, label:'Ljus'}
-    ];
-    mapping.forEach(it => {
-      const btn = document.getElementById(it.id);
-      if (!btn) return;
-      if (unlocked[it.type]) {
-        btn.innerText = (activeThrowType === it.type) ? 'Aktiv' : 'Ägd';
-        btn.style.background = (activeThrowType === it.type) ? '#ffd54d' : '#28a745';
-      } else {
-        btn.innerText = it.price + ' kr';
-        btn.style.background = '#28a745';
-      }
+  function updateShopUI(){
+    // ornament items
+    [['buyCandy','candy',50],['buyLight','light',150],['buyCandle','candle',300]].forEach(it=>{
+      const btn = document.getElementById(it[0]); if(!btn) return;
+      if (unlocked[it[1]]) { btn.innerText = (activeThrowType===it[1]) ? 'Aktiv' : 'Ägd'; btn.style.background = (activeThrowType===it[1]) ? '#ffd54d' : '#28a745'; }
+      else { btn.innerText = it[2] + ' kr'; btn.style.background = '#28a745'; }
+    });
+    // backgrounds
+    [['buyBg_day','bg_day',0],['buyBg_night','bg_night',100],['buyBg_aurora','bg_aurora',300],['buyBg_sunset','bg_sunset',500]].forEach(it=>{
+      const btn = document.getElementById(it[0]); if(!btn) return;
+      if (unlocked[it[1]]){ btn.innerText = (activeBackground===it[1]) ? 'Aktiv' : 'Ägd'; btn.style.background = (activeBackground===it[1]) ? '#ffd54d' : '#28a745'; }
+      else { btn.innerText = (it[2]===0 ? 'Fri' : it[2] + ' kr'); btn.style.background = '#28a745'; }
     });
   }
 
-  // --- RITA ALLT ---
-  function draw() {
-    ctx.fillStyle = '#eaf6ff'; ctx.fillRect(0,0,W,H); // Himmel
+  window.toggleShop = (show) => { shopModal.style.display = show ? 'flex' : 'none'; checkButtons(); updateShopUI(); };
+
+  window.buyPack = (type, cost) => {
+    // backgrounds
+    if (type.startsWith('bg_')){
+      if (unlocked[type]){ activeBackground = type; generateStars(); updateShopUI(); return; }
+      if (money >= cost){ money -= cost; unlocked[type] = true; activeBackground = type; playSound('buy'); playSound('money'); checkButtons(); updateShopUI(); return; }
+      return;
+    }
+    // existing items & palettes
+    if (unlocked[type]){
+      if (['candy','light','candle'].includes(type)){ activeThrowType = type; updateShopUI(); }
+      return;
+    }
+    if (money >= cost){
+      money -= cost;
+      if(type === 'gold'){ unlocked.gold = true; activePalette.push('#ffd700','#c0c0c0','#DAA520','#E5E4E2'); document.getElementById('buyGold').innerText = "Köpt!"; document.getElementById('buyGold').disabled = true; }
+      else if(type === 'diamond'){ unlocked.diamond = true; activePalette.push('#b9f2ff','#9b5de5','#00bbf9','#fee440'); document.getElementById('buyDiamond').innerText = "Köpt!"; document.getElementById('buyDiamond').disabled = true; }
+      else if(type === 'candy'){ unlocked.candy = true; activeThrowType = 'candy'; }
+      else if(type === 'light'){ unlocked.light = true; activeThrowType = 'light'; }
+      else if(type === 'candle'){ unlocked.candle = true; activeThrowType = 'candle'; }
+      playSound('buy'); checkButtons(); updateShopUI();
+    }
+  };
+
+  // --- Drawing ---
+  function draw(){
+    // background gradient
+    drawBackground();
 
     // Snö
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    snowflakes.forEach(s => {
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
-    });
+    snowflakes.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); });
 
     // Gran
     ctx.fillStyle = '#6b3b1b'; ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
-    tree.tiers.forEach(t => {
-      ctx.fillStyle = t.color;
-      ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.lineTo(t.x3, t.y3); ctx.fill();
-      ctx.fillStyle = 'rgba(0,0,0,0.15)';
-      ctx.beginPath(); ctx.moveTo(t.x1, t.y1+8); ctx.lineTo(t.x2, t.y2+8); ctx.lineTo(t.x3, t.y3+8); ctx.fill();
+    tree.tiers.forEach(t => { ctx.fillStyle = t.color; ctx.beginPath(); ctx.moveTo(t.x1,t.y1); ctx.lineTo(t.x2,t.y2); ctx.lineTo(t.x3,t.y3); ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.moveTo(t.x1,t.y1+8); ctx.lineTo(t.x2,t.y2+8); ctx.lineTo(t.x3,t.y3+8); ctx.fill();
     });
 
-    if(tree.tiers.length){
-        const top = tree.tiers[2];
-        ctx.fillStyle = '#ffd700'; ctx.shadowBlur = 25; ctx.shadowColor = 'gold';
-        ctx.beginPath(); ctx.arc(top.x1, top.y1, 15, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
+    // ghost targets (mission)
+    if (gameState === 'MISSION'){
+      ctx.save();
+      ghostTargets.forEach(t => {
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 3; ctx.setLineDash([6,6]);
+        ctx.arc(t.x, t.y, t.r, 0, Math.PI*2); ctx.stroke();
+      });
+      ctx.setLineDash([]); ctx.restore();
     }
 
-    // Rita ornament och skott (skott syns i bullets)
-    ornaments.forEach(o => drawOrnament(o));
-    bullets.forEach(b => drawOrnament(b));
+    // star top ornament (tree top)
+    if (tree.tiers.length){
+      const top = tree.tiers[2];
+      ctx.fillStyle = '#ffd700'; ctx.shadowBlur = 25; ctx.shadowColor = 'gold';
+      ctx.beginPath(); ctx.arc(top.x1, top.y1, 15, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // ornaments & bullets
+    ornaments.forEach(o=>drawOrnament(o));
+    bullets.forEach(b=>drawOrnament(b));
 
     drawSanta(player.x, player.y);
   }
 
-  function drawOrnament(o) {
+  function drawOrnament(o){
     const type = o.type || 'ball';
-    if (type === 'ball') {
-      const g = ctx.createRadialGradient(o.x-o.r*0.3, o.y-o.r*0.3, 1, o.x, o.y, o.r);
-      g.addColorStop(0, '#fff'); g.addColorStop(0.3, o.color); g.addColorStop(1, '#222');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
-      // small shine
-      ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(o.x - o.r*0.4, o.y - o.r*0.4, o.r*0.25, 0, Math.PI*2); ctx.fill();
-    }
-    else if (type === 'candy') {
-      // draw candy as small circle with stripes
-      const r = o.r;
-      ctx.save();
-      ctx.translate(o.x, o.y);
-      ctx.rotate((o.x+o.y)%6 / 6);
-      // white base
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, 0, r*1.1, r*0.9, 0, 0, Math.PI*2); ctx.fill();
-      // red stripes
-      ctx.strokeStyle = '#e63946'; ctx.lineWidth = Math.max(2, r*0.4);
-      for (let i=-2; i<=2; i++) {
-        ctx.beginPath(); ctx.ellipse(i * r*0.18, 0, r*0.5, r*0.45, 0, 0, Math.PI*2); ctx.stroke();
-      }
+    if (type === 'ball'){
+      const g = ctx.createRadialGradient(o.x-o.r*0.3,o.y-o.r*0.3,1,o.x,o.y,o.r);
+      g.addColorStop(0,'#fff'); g.addColorStop(0.3,o.color); g.addColorStop(1,'#222');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(o.x - o.r*0.4, o.y - o.r*0.4, o.r*0.25,0,Math.PI*2); ctx.fill();
+    } else if (type === 'candy'){
+      const r = o.r; ctx.save(); ctx.translate(o.x,o.y); ctx.rotate((o.x+o.y)%6/6);
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(0,0,r*1.1,r*0.9,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#e63946'; ctx.lineWidth = Math.max(2,r*0.4);
+      for (let i=-2;i<=2;i++){ ctx.beginPath(); ctx.ellipse(i*r*0.18,0,r*0.5,r*0.45,0,0,Math.PI*2); ctx.stroke(); }
       ctx.restore();
-    }
-    else if (type === 'light') {
-      // bulb with glow
-      ctx.save();
-      ctx.beginPath();
-      ctx.shadowColor = 'rgba(255, 230, 120, 0.8)';
-      ctx.shadowBlur = 20;
-      ctx.fillStyle = o.color || '#fff';
-      ctx.ellipse(o.x, o.y, o.r*0.9, o.r*1.2, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      // screw base
-      ctx.fillStyle = '#666'; ctx.fillRect(o.x - o.r*0.5, o.y + o.r*1.05, o.r, o.r*0.3);
-      ctx.restore();
-    }
-    else if (type === 'candle') {
-      // candle body
-      const w = o.r * 0.8;
-      const h = o.r * 2.0;
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.rect(o.x - w/2, o.y - h, w, h); ctx.fill();
-      // flame
-      ctx.beginPath();
-      ctx.fillStyle = '#ffd54d';
-      ctx.ellipse(o.x, o.y - h - (o.r*0.3), w*0.4, h*0.35, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle = '#ff8f00';
-      ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.25), w*0.25, h*0.2, 0, 0, Math.PI*2); ctx.fill();
+    } else if (type === 'light'){
+      ctx.save(); ctx.beginPath(); ctx.shadowColor='rgba(255,230,120,0.8)'; ctx.shadowBlur=20; ctx.fillStyle=o.color||'#fff';
+      ctx.ellipse(o.x,o.y,o.r*0.9,o.r*1.2,0,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+      ctx.fillStyle='#666'; ctx.fillRect(o.x - o.r*0.5, o.y + o.r*1.05, o.r, o.r*0.3); ctx.restore();
+    } else if (type === 'candle'){
+      const w = o.r*0.8, h = o.r*2.0;
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.rect(o.x - w/2, o.y - h, w, h); ctx.fill();
+      ctx.fillStyle='#ffd54d'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.3), w*0.4, h*0.35, 0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#ff8f00'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.25), w*0.25, h*0.2, 0,0,Math.PI*2); ctx.fill();
     }
   }
 
-  function drawSanta(x, y) {
-    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ffccb0'; ctx.beginPath(); ctx.arc(x, y-22, 16, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.moveTo(x-16, y-28); ctx.lineTo(x+16, y-28); ctx.lineTo(x, y-55); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y-55, 6, 0, Math.PI*2); ctx.fill();
-  }
+  function drawSanta(x,y){ ctx.fillStyle='#d32f2f'; ctx.beginPath(); ctx.arc(x,y,22,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#ffccb0'; ctx.beginPath(); ctx.arc(x,y-22,16,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#d32f2f'; ctx.beginPath(); ctx.moveTo(x-16,y-28); ctx.lineTo(x+16,y-28); ctx.lineTo(x,y-55); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y-55,6,0,Math.PI*2); ctx.fill(); }
 
-  // --- INPUT ---
-  function move(x) { player.x = Math.max(30, Math.min(W-30, x)); }
-  
+  // --- Input (keep mobile double-shot fix) ---
+  function move(x){ player.x = Math.max(30, Math.min(W-30, x)); }
   window.addEventListener('mousemove', e => move(e.clientX));
-  window.addEventListener('mousedown', e => {
-     if(e.target.tagName !== 'BUTTON') shoot(e.clientY);
-  });
+  window.addEventListener('mousedown', e => { if (e.target.tagName !== 'BUTTON') shoot(e.clientY); });
 
-  window.addEventListener('touchmove', e => {
-     move(e.touches[0].clientX); e.preventDefault();
-  }, {passive: false});
-  
+  window.addEventListener('touchmove', e => { move(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
   window.addEventListener('touchstart', e => {
-     if(e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target)) {
-        move(e.touches[0].clientX); shoot(e.touches[0].clientY);
-        e.preventDefault(); // <- BUG FIX: stoppa ghost mousedown (måste vara direkt efter shoot)
-     }
-  }, {passive: false});
+    if (e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target) && !menuOverlay.contains(e.target)){
+      move(e.touches[0].clientX); shoot(e.touches[0].clientY);
+      e.preventDefault(); // mobile double-shot fix: MUST be directly after shoot
+    }
+  }, {passive:false});
 
-  // Koppla knappar
-  document.getElementById('resetBtn').onclick = () => { ornaments=[]; bullets=[]; money=0; addMoney(0); activeThrowType='ball'; updateShopUI(); };
+  // --- UI interactions ---
+  document.getElementById('resetBtn').onclick = () => { ornaments=[]; bullets=[]; money=0; checkButtons(); updateShopUI(); };
   document.getElementById('shopBtn').onclick = () => toggleShop(true);
+  menuBtn.onclick = ()=>{ // back to menu
+    gameState = 'MENU'; menuOverlay.style.display = 'flex';
+  };
 
-  // Start
+  startCreative.onclick = ()=>{
+    gameState='CREATIVE'; menuOverlay.style.display='none';
+    // in creative no earnings, keep unlocked items accessible
+    toggleShop(false); // close shop if open
+  };
+  startMission.onclick = ()=>{
+    gameState='MISSION'; menuOverlay.style.display='none';
+    missionLevel = 1; spawnTargets(missionLevel);
+    toggleShop(false);
+  };
+
+  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
+  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
+
+  // --- Start loop ---
   resize();
-  function loop() { update(); draw(); requestAnimationFrame(loop); }
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
   loop();
 
 })();
