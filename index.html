@@ -188,7 +188,7 @@
   <div class="menu-card">
     <h1 id="menuTitle">DecoTree</h1>
     <p id="menuSubtitle">Välj spelläge</p>
-    <button id="btnResume" class="menu-btn" style="background:#ff9800;color:white;display:none;" onclick="resumeGame()">Fortsätt Spela ⏯️</button>
+    <button id="btnResume" class="menu-btn" style="background:#ff9800;color:white;display:none;" onclick="window.resumeGame()">Fortsätt Spela ⏯️</button>
     <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Fritt Skapande</button>
     <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag</button>
     
@@ -697,6 +697,52 @@
   }
   soundBtn.onclick = (e)=>{ e.stopPropagation(); isMuted=!isMuted; soundBtn.innerText = isMuted ? '🔇' : '🔊'; if (!isMuted) initAudio(); };
   soundBtn.ontouchstart = (e)=>{ e.stopPropagation(); };
+
+  // --- Menu Button Event Listeners ---
+  function toggleMenu(show) {
+    menuOverlay.style.display = show ? 'flex' : 'none';
+  }
+
+  function startGame(mode) {
+    gameState = mode;
+    toggleMenu(false);
+    if (mode === 'MISSION') {
+      missionLevel = 1;
+      spawnTargets(missionLevel);
+    }
+  }
+
+  window.resumeGame = function() {
+    toggleMenu(false);
+  };
+
+  window.startCreativeGame = function() {
+    startGame('CREATIVE');
+  };
+
+  window.startMissionGame = function() {
+    startGame('MISSION');
+  };
+
+  menuBtn.onclick = (e) => {
+    e.stopPropagation();
+    toggleMenu(true);
+  };
+
+  startCreative.onclick = (e) => {
+    e.stopPropagation();
+    window.startCreativeGame();
+  };
+
+  startMission.onclick = (e) => {
+    e.stopPropagation();
+    window.startMissionGame();
+  };
+
+  factoryResetBtn.onclick = (e) => {
+    e.stopPropagation();
+    factoryReset();
+  };
 
   // --- Init / Resize (OPTIMIZED: 30 snowflakes) ---
   function resize(){
@@ -1531,6 +1577,7 @@
   resize();
   updateLanguage();
   renderQuickBar(); // Initial render of quick bar
+  toggleMenu(true); // Show menu on startup
   function loop(){ update(); draw(); requestAnimationFrame(loop); }
   loop();
 
