@@ -844,39 +844,39 @@
     const treeW=treeH*0.85; 
     tree.tiers=[]; 
     
-    // FIXED COLLISION: Much tighter hitboxes - narrower width, adjusted heights
-    // Bottom tier - narrower by 30% (was 15%), bottom raised by 8px
+    // RESTORED VISUAL WIDTH + FIXED BOTTOM COLLISION
+    // Bottom tier - RESTORED to full width, collision raised by 15px
     tree.tiers.push({ 
       x1:cx, 
       y1:bottomY - treeH * 0.42,
-      x2:cx - treeW * 0.3,       // NARROWER: 0.425 * 0.85 = 0.36, use 0.3
-      y2:bottomY - 8,            // RAISED: bottom moved up 8px to match visual branches
-      x3:cx + treeW * 0.3,       // NARROWER: mirror of x2
-      y3:bottomY - 8,            // RAISED: match visual
+      x2:cx - treeW * 0.425,     // RESTORED: full width (was 0.3)
+      y2:bottomY - 15,           // RAISED: collision line 15px above visual bottom
+      x3:cx + treeW * 0.425,     // RESTORED: full width (was 0.3)
+      y3:bottomY - 15,           // RAISED: collision line 15px above visual bottom
       color:'#087023' 
     }); 
     
-    // Middle tier - narrower by 25% (was 15%), proportional height adjustment
+    // Middle tier - RESTORED to full width
     const y2_bot = bottomY - treeH * 0.25; 
     tree.tiers.push({ 
       x1:cx, 
       y1:y2_bot - treeH * 0.42,
-      x2:cx - treeW * 0.225,     // NARROWER: 0.3 * 0.85 = 0.255, use 0.225
-      y2:y2_bot - 5,             // RAISED: bottom moved up 5px
-      x3:cx + treeW * 0.225,     // NARROWER: mirror of x2
-      y3:y2_bot - 5,             // RAISED: match visual
+      x2:cx - treeW * 0.35,      // RESTORED: full width (was 0.225)
+      y2:y2_bot - 5,             // Slightly raised for clean collision
+      x3:cx + treeW * 0.35,      // RESTORED: full width (was 0.225)
+      y3:y2_bot - 5,             // Slightly raised for clean collision
       color:'#0a8a2f' 
     }); 
     
-    // Top tier - narrower by 25%, top moved below star
+    // Top tier - RESTORED to full width
     const y1_bot = y2_bot - treeH * 0.25; 
     tree.tiers.push({ 
       x1:cx, 
-      y1:y1_bot - treeH * 0.25,  // LOWERED from 0.28: star is higher, bullets pass through
-      x2:cx - treeW * 0.135,     // NARROWER: 0.16 * 0.85 = 0.136, use 0.135
-      y2:y1_bot - 3,             // RAISED: bottom moved up 3px
-      x3:cx + treeW * 0.135,     // NARROWER: mirror of x2
-      y3:y1_bot - 3,             // RAISED: match visual
+      y1:y1_bot - treeH * 0.28,
+      x2:cx - treeW * 0.2,       // RESTORED: full width (was 0.135)
+      y2:y1_bot - 3,             // Slightly raised for clean collision
+      x3:cx + treeW * 0.2,       // RESTORED: full width (was 0.135)
+      y3:y1_bot - 3,             // Slightly raised for clean collision
       color:'#0fb24b' 
     }); 
     
