@@ -697,21 +697,20 @@
     const bg = backgrounds[activeBackground] || backgrounds.bg_day;
     
     if (activeBackground === 'bg_day') {
-      // Special rendering for day: sky + snow ground
       // Sky (top 80%)
       ctx.fillStyle = '#87CEEB';
       ctx.fillRect(0, 0, W, H * 0.8);
-      
-      // Snow ground (bottom 20%)
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, H * 0.8, W, H * 0.2);
     } else {
-      // Other backgrounds use gradient
-      const g = ctx.createLinearGradient(0,0,0,H);
+      // Other backgrounds use gradient for sky only (top 80%)
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.8);
       bg.colors.forEach(c=> g.addColorStop(c.p, c.c));
       ctx.fillStyle = g;
-      ctx.fillRect(0,0,W,H);
+      ctx.fillRect(0, 0, W, H * 0.8);
     }
+    
+    // Snow ground for ALL backgrounds (bottom 20%)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, H * 0.8, W, H * 0.2);
     
     if (activeBackground === 'bg_night') drawStars();
   }
