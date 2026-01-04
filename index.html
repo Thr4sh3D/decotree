@@ -1081,15 +1081,22 @@
                   : (activeThrowType === 'glitter') ? '#ffd700'
                   : '#fff';
     
+    const speed = 15;
+    const totalDistance = Math.sqrt((targetX - santaX)**2 + (targetY - santaY)**2);
+    
     bullets.push({
       x: santaX,
       y: santaY,
-      vx: dirX * 15,
-      vy: dirY * 15,
+      vx: dirX * speed,
+      vy: dirY * speed,
       r: Math.random() * 5 + 8,
       color: color,
       type: activeThrowType,
-      life: 100
+      life: 100,
+      targetX: targetX,
+      targetY: targetY,
+      totalDistance: totalDistance,
+      distanceTraveled: 0
     });
     
     playSound('shoot');
@@ -1105,42 +1112,59 @@
       b.y += b.vy;
       b.life--;
       
+      // Track distance traveled
+      const stepDist = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
+      b.distanceTraveled += stepDist;
+      
       if (b.y < -50 || b.y > H || b.x < -50 || b.x > W || b.life <= 0) {
         bullets.splice(i, 1);
         continue;
       }
       
-      let hit = false;
-      for (const t of tree.tiers) {
-        if (isInside(b.x, b.y, t)) {
-          hit = true;
-          break;
-        }
-      }
+      // Only check collision when bullet is CLOSE to target
+      const distToTarget = Math.sqrt((b.x - b.targetX)**2 + (b.y - b.targetY)**2);
+      const bulletSpeed = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
       
-      if (hit) {
-        if (gameState === 'MISSION') {
-          const idx = findTargetAt(b.x, b.y);
-          if (idx !== -1) {
-            const target = ghostTargets[idx];
-            ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
-            ghostTargets.splice(idx, 1);
-            playSound('stick');
-            money += 5;
-            saveGame();
-            checkButtons();
-            updateShopUI();
-            if (ghostTargets.length === 0) {
-              missionLevel++;
-              spawnTargets(missionLevel);
-            }
-            bullets.splice(i, 1);
-            continue;
+      if (distToTarget < bulletSpeed * 2) {
+        // Bullet is close to target - check if it hits the tree
+        let hit = false;
+        for (const t of tree.tiers) {
+          if (isInside(b.x, b.y, t)) {
+            hit = true;
+            break;
           }
         }
-        ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
-        playSound('stick');
-        bullets.splice(i, 1);
+        
+        if (hit) {
+          if (gameState === 'MISSION') {
+            const idx = findTargetAt(b.x, b.y);
+            if (idx !== -1) {
+              const target = ghostTargets[idx];
+              ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
+              ghostTargets.splice(idx, 1);
+              playSound('stick');
+              money += 5;
+              saveGame();
+              checkButtons();
+              updateShopUI();
+              if (ghostTargets.length === 0) {
+                missionLevel++;
+                spawnTargets(missionLevel);
+              }
+              bullets.splice(i, 1);
+              continue;
+            }
+          }
+          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+          playSound('stick');
+          bullets.splice(i, 1);
+        } else {
+          // Bullet passed through target area without hitting tree - continue or fade
+          // Remove if it's too far past target
+          if (distToTarget > bulletSpeed * 5 || b.distanceTraveled > b.totalDistance + 100) {
+            bullets.splice(i, 1);
+          }
+        }
       }
     }
     
