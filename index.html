@@ -3,169 +3,320 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>Christmas Tree Decorating</title>
+<title>DecoTree - Lyxversion</title>
 <style>
   html,body { height:100%; margin:0; overflow: hidden; }
-  body { background:#eaf6ff; display:flex; align-items:stretch; font-family:system-ui, sans-serif; }
+  body { background:#eaf6ff; font-family:system-ui, -apple-system, sans-serif; }
   canvas { display:block; width:100%; height:100%; touch-action: none; }
   
-  .info {
-    position: fixed; left:12px; top:12px;
-    background: rgba(255,255,255,0.92); padding:8px 12px; border-radius:20px;
-    font-size:16px; font-weight:bold; color:#0b3a4a;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-    user-select:none; z-index:1001; pointer-events: none;
-    line-height:1.2; text-align:left;
+  /* UI: Pengar och Info */
+  .ui-bar {
+    position: fixed; top: 10px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    pointer-events: none; z-index: 10;
   }
+  
+  .score-box {
+    background: rgba(255,255,255,0.95);
+    padding: 8px 15px; border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    color: #0b3a4a; font-weight: bold; font-size: 16px;
+    display: flex; flex-direction: column; gap: 4px;
+    pointer-events: auto;
+  }
+  
+  /* Knappar */
+  .btn-group {
+    display: flex; flex-direction: column; gap: 10px; pointer-events: auto;
+  }
+  
+  button {
+    border: none; color: white; font-weight: bold; font-size: 14px;
+    padding: 10px 15px; border-radius: 20px; cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: transform 0.1s;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+  }
+  button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
 
-  #resetBtn {
-    position: fixed; right: 12px; top: 12px;
-    padding: 10px 18px;
-    background: linear-gradient(180deg, #ff5a5a 0%, #d91f2a 60%, #b21016 100%);
-    border: none; color: #fff; font-weight: 700; font-size: 14px;
-    border-radius: 20px;
-    box-shadow: 0 4px 0 #8b0e0e;
-    cursor: pointer; z-index: 1002;
-  }
-  #resetBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b0e0e; }
+  #resetBtn { background: linear-gradient(to bottom, #ff5f5f, #d32f2f); }
+  #shopBtn { background: linear-gradient(to bottom, #4facfe, #00f2fe); color: #005cbf; }
 
-  #shopBtn {
-    position: fixed; right: 12px; top: 60px;
-    padding: 10px 18px;
-    background: linear-gradient(180deg, #4da6ff 0%, #2176d2 60%);
-    border: none; color: #fff; font-weight: 700; font-size: 14px;
-    border-radius: 20px; box-shadow:0 4px 0 #154b7a; cursor:pointer; z-index:1002;
+  /* Sound button (fixed top-left) */
+  #soundBtn {
+    position: fixed; top: 14px; left: 14px; z-index: 120;
+    background: rgba(255,255,255,0.95); color:#0b3a4a; border-radius: 18px;
+    padding: 8px 10px; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    pointer-events: auto; border: none; cursor: pointer;
   }
+  #soundBtn:active { transform: translateY(2px); }
 
-  /* Shop modal */
-  .modal-overlay {
-    position: fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background: rgba(0,0,0,0.4); z-index:1003;
+  /* BUTIK (Modal) */
+  #shopModal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); z-index: 100;
+    justify-content: center; align-items: center;
   }
-  .modal {
-    background:white; padding:20px; border-radius:12px; width:320px; max-width:90%;
-    box-shadow:0 8px 30px rgba(0,0,0,0.3); color:#05333b;
+  .shop-content {
+    background: white; padding: 20px; border-radius: 25px; width: 300px;
+    text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
-  .modal h2 { margin:0 0 12px 0; font-size:18px; }
-  .shop-item { display:flex; justify-content:space-between; align-items:center; margin:8px 0; }
-  .shop-item button { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:700; }
-  .buy { background: linear-gradient(180deg,#ffd166,#f39c12); color:#3a2b00; box-shadow:0 3px 0 rgba(0,0,0,0.15); }
-  .owned { background:#e0e0e0; color:#777; cursor:default; box-shadow:none; }
-  .close-btn { margin-top:12px; padding:8px 12px; border-radius:8px; border:none; background:#ddd; cursor:pointer; }
+  @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  
+  .shop-item {
+    background: #f0f8ff; margin: 10px 0; padding: 15px; border-radius: 15px;
+    display: flex; justify-content: space-between; align-items: center;
+    border: 2px solid #e1e1e1;
+  }
+  .buy-btn {
+    background: #28a745; font-size: 12px; padding: 8px 12px; box-shadow: 0 3px 0 #1e7e34;
+  }
+  .buy-btn:disabled { background: #ccc; box-shadow: none; color: #666; cursor: not-allowed; }
+  .close-btn { background: #666; margin-top: 10px; width: 100%; }
+
 </style>
 </head>
 <body>
 
-<canvas id="game"></canvas>
-<div class="info" id="info">Antal julgranskulor: 0<br>Pengar: 0 kr</div>
-<button id="resetBtn" ontouchstart="event.stopPropagation()">Rensa Granen</button>
-<button id="shopBtn" ontouchstart="event.stopPropagation()">Shop</button>
+<!-- Sound mute/unmute -->
+<button id="soundBtn" ontouchstart="event.stopPropagation()">🔊</button>
 
-<!-- Shop modal -->
-<div id="shopModal" class="modal-overlay" ontouchstart="event.stopPropagation()">
-  <div class="modal" role="dialog" aria-modal="true">
-    <h2>Butik</h2>
-    <div class="shop-item">
-      <div>
-        <strong>Standard</strong><br><small>Gratis — Standardfärger</small>
-      </div>
-      <div><button class="owned" id="buyStandard" disabled>Ägd</button></div>
-    </div>
-    <div class="shop-item">
-      <div>
-        <strong>Lyx</strong><br><small>100 kr — Lägg till Guld & Silver</small>
-      </div>
-      <div><button class="buy" id="buyLyx">Köp 100 kr</button></div>
-    </div>
-    <div class="shop-item">
-      <div>
-        <strong>Diamant</strong><br><small>500 kr — Skimrande Blå/Lila</small>
-      </div>
-      <div><button class="buy" id="buyDiamant">Köp 500 kr</button></div>
-    </div>
-    <button class="close-btn" id="closeShop">Stäng</button>
+<div class="ui-bar">
+  <div class="score-box">
+    <span id="scoreText">🎄 Kulor: 0</span>
+    <span id="moneyText" style="color:#28a745">💰 0 kr</span>
+  </div>
+  <div class="btn-group">
+    <button id="resetBtn" ontouchstart="event.stopPropagation()">Rensa</button>
+    <button id="shopBtn" ontouchstart="event.stopPropagation()">🏪 Affär</button>
   </div>
 </div>
+
+<div id="shopModal">
+  <div class="shop-content">
+    <h2 style="margin-top:0; color:#333">Jul-Butiken</h2>
+    <p>Köp nya färger till dina kulor!</p>
+    
+    <div class="shop-item">
+      <div><b>Guld & Silver</b><br><span style="font-size:12px">Glittrande metallic</span></div>
+      <button class="buy-btn" id="buyGold" onclick="buyPack('gold', 100)">100 kr</button>
+    </div>
+
+    <div class="shop-item">
+      <div><b>Diamant</b><br><span style="font-size:12px">Blå/Lila kristaller</span></div>
+      <button class="buy-btn" id="buyDiamond" onclick="buyPack('diamond', 500)">500 kr</button>
+    </div>
+
+    <button class="close-btn" onclick="toggleShop(false)">Stäng</button>
+  </div>
+</div>
+
+<canvas id="game"></canvas>
 
 <script>
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  const info = document.getElementById('info');
-  const resetBtn = document.getElementById('resetBtn');
-  const shopBtn = document.getElementById('shopBtn');
+  
+  // Element
+  const scoreText = document.getElementById('scoreText');
+  const moneyText = document.getElementById('moneyText');
   const shopModal = document.getElementById('shopModal');
-  const buyLyxBtn = document.getElementById('buyLyx');
-  const buyDiamBtn = document.getElementById('buyDiamant');
-  const closeShop = document.getElementById('closeShop');
+  const soundBtn = document.getElementById('soundBtn');
 
-  // Variabler
+  // Speldata
   let W, H;
+  let money = 0;
   let tree = { tiers: [], trunk: {} };
   let player = { x: 0, y: 0 };
   let ornaments = [];
   let bullets = [];
-  const palette = ['#e63946','#ffb703','#fb8500','#8338ec','#3a86ff','#7bd389','#ff6bcb'];
-
-  // Ekonomi & shop-state
-  let money = 0;
-  const shopState = { standard:true, lyx:false, diamant:false };
-
-  // Snö
   let snowflakes = [];
+  
+  // Färger (Börjar med standard)
+  let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
+  
+  // Köpta paket
+  let unlocked = { gold: false, diamond: false };
 
-  // Initiera och anpassa storlek
+  // --- Ljud (Web Audio API, synth) ---
+  let audioCtx = null;
+  let masterGain = null;
+  let noiseBuffer = null;
+  let isMuted = false;
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1;
+    masterGain.connect(audioCtx.destination);
+
+    // skapa ett kort vitt brus-buffer
+    const sampleRate = audioCtx.sampleRate;
+    const buffer = audioCtx.createBuffer(1, sampleRate * 1, sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+    noiseBuffer = buffer;
+
+    // säkerställ resume på första användargest (i fall AudioContext satte sig i suspended)
+    function resumeOnce() {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      document.removeEventListener('pointerdown', resumeOnce);
+      document.removeEventListener('touchstart', resumeOnce);
+    }
+    document.addEventListener('pointerdown', resumeOnce);
+    document.addEventListener('touchstart', resumeOnce);
+  }
+
+  function playSound(type) {
+    if (isMuted) return;
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+
+    if (type === 'shoot') {
+      // whoosh: filtered noise sweep
+      const src = audioCtx.createBufferSource();
+      src.buffer = noiseBuffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2000, now);
+      filter.frequency.exponentialRampToValueAtTime(300, now + 0.25);
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.6, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      src.connect(filter); filter.connect(g); g.connect(masterGain);
+      src.start(now); src.stop(now + 0.35);
+    }
+
+    if (type === 'stick') {
+      // pop/ding: kort hög sinus
+      const o = audioCtx.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(1500, now);
+      o.frequency.exponentialRampToValueAtTime(2200, now + 0.06);
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(0.9, now + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      o.connect(g); g.connect(masterGain);
+      o.start(now); o.stop(now + 0.2);
+    }
+
+    if (type === 'money') {
+      // ka-ching: tre snabba blippar
+      const freqs = [1200, 1600, 2000];
+      freqs.forEach((f, i) => {
+        const t = now + i * 0.06;
+        const o = audioCtx.createOscillator();
+        o.type = 'square';
+        o.frequency.setValueAtTime(f, t);
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.6, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+        o.connect(g); g.connect(masterGain);
+        o.start(t); o.stop(t + 0.18);
+      });
+    }
+
+    if (type === 'buy') {
+      // magisk ackord
+      const chord = [440, 660, 880];
+      chord.forEach((f, i) => {
+        const o = audioCtx.createOscillator();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f * (1 + (i - 1) * 0.02), now);
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.linearRampToValueAtTime(0.25, now + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+        o.connect(g); g.connect(masterGain);
+        o.start(now); o.stop(now + 1.0);
+      });
+    }
+  }
+
+  // Sound button
+  soundBtn.onclick = (e) => {
+    e.stopPropagation();
+    isMuted = !isMuted;
+    soundBtn.innerText = isMuted ? '🔇' : '🔊';
+    // init audio on first explicit interaction
+    if (!isMuted) initAudio();
+  };
+  soundBtn.ontouchstart = (e) => { e.stopPropagation(); }; // avoid closing shop on touch
+
+  // ensure audio init/unlock attempt on first gesture (non-blocking)
+  document.addEventListener('pointerdown', () => { try { initAudio(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }, { once: true });
+  document.addEventListener('touchstart', () => { try { initAudio(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }, { once: true });
+
+  // Init
   function resize() {
     W = window.innerWidth;
     H = window.innerHeight;
-    canvas.width = W;
-    canvas.height = H;
-    player.x = W / 2;
-    player.y = H - 60;
+    canvas.width = W; canvas.height = H;
+    player.x = W / 2; player.y = H - 60;
     setupTree();
+    // Skapa snöflingor
+    if(snowflakes.length === 0) {
+      for(let i=0; i<50; i++) snowflakes.push(createSnowflake());
+    }
   }
   window.addEventListener('resize', resize);
 
-  // Bygg granen
+  // --- LOGIK: GRANEN ---
   function setupTree() {
     const cx = W / 2;
-    const bottomY = H - 100;
+    const bottomY = H - 110;
     const treeH = Math.min(H * 0.65, W * 0.85);
     const treeW = treeH * 0.85;
-
     tree.tiers = [];
-    
+
     // Botten
     tree.tiers.push({
       x1: cx, y1: bottomY - treeH * 0.45, 
-      x2: cx - treeW/2, y2: bottomY,
-      x3: cx + treeW/2, y3: bottomY,
+      x2: cx - treeW/2, y2: bottomY, x3: cx + treeW/2, y3: bottomY,
       color: '#087023'
     });
-    
     // Mitten
     const y2_bot = bottomY - treeH * 0.25;
     tree.tiers.push({
       x1: cx, y1: y2_bot - treeH * 0.45,
-      x2: cx - treeW * 0.35, y2: y2_bot,
-      x3: cx + treeW * 0.35, y3: y2_bot,
+      x2: cx - treeW * 0.35, y2: y2_bot, x3: cx + treeW * 0.35, y3: y2_bot,
       color: '#0a8a2f'
     });
-
     // Toppen
     const y1_bot = y2_bot - treeH * 0.25;
     tree.tiers.push({
       x1: cx, y1: y1_bot - treeH * 0.45, 
-      x2: cx - treeW * 0.2, y2: y1_bot,
-      x3: cx + treeW * 0.2, y3: y1_bot,
+      x2: cx - treeW * 0.2, y2: y1_bot, x3: cx + treeW * 0.2, y3: y1_bot,
       color: '#0fb24b'
     });
-
-    // Stubben
     tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 };
   }
 
-  // Matte: Är punkten i triangeln?
+  // --- LOGIK: SNÖ ---
+  function createSnowflake() {
+    return {
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 3 + 1,
+      speed: Math.random() * 1 + 0.5,
+      wobble: Math.random() * Math.PI * 2
+    };
+  }
+  function updateSnow() {
+    snowflakes.forEach(s => {
+      s.y += s.speed;
+      s.x += Math.sin(s.wobble) * 0.5;
+      s.wobble += 0.05;
+      if (s.y > H) { s.y = -10; s.x = Math.random() * W; }
+    });
+  }
+
+  // --- LOGIK: SPEL & FYSIK ---
   function isInside(px, py, t) {
     const area = 0.5 * (-t.y2 * t.x3 + t.y1 * (-t.x2 + t.x3) + t.x1 * (t.y2 - t.y3) + t.x2 * t.y3);
     const s = 1 / (2 * area) * (t.y1 * t.x3 - t.x1 * t.y3 + (t.y3 - t.y1) * px + (t.x1 - t.x3) * py);
@@ -173,277 +324,156 @@
     return s > 0 && trig > 0 && (1 - s - trig) > 0;
   }
 
-  // NY SKJUT-LOGIK: Vi skickar med MÅLET (targetY)
   function shoot(targetY) {
+    // Välj färg från aktiva paletten
+    const color = activePalette[Math.floor(Math.random() * activePalette.length)];
     bullets.push({ 
-        x: player.x,      
-        y: player.y - 40, 
-        targetY: targetY, // Hit ska kulan!
-        speed: 15,
-        r: Math.random() * 5 + 8, 
-        color: palette[Math.floor(Math.random() * palette.length)]
+        x: player.x, y: player.y - 45, targetY: targetY, 
+        speed: 15, r: Math.random() * 5 + 8, color: color 
     });
+    playSound('shoot');
   }
 
   function update() {
-    // Snow spawn
-    if (Math.random() < 0.25 && snowflakes.length < 200) {
-      snowflakes.push({ x: Math.random() * W, y: -10, r: Math.random() * 2 + 1, speed: Math.random() * 1.2 + 0.4, drift: (Math.random()-0.5)*0.6 });
-    }
-
-    // Update snow
-    for (let i = snowflakes.length-1; i>=0; i--) {
-      const s = snowflakes[i];
-      s.y += s.speed;
-      s.x += s.drift;
-      if (s.y > H + 10) snowflakes.splice(i,1);
-    }
-
+    updateSnow();
+    
     for (let i = bullets.length - 1; i >= 0; i--) {
       let b = bullets[i];
-      // Flytta kulan uppåt mot målet
       b.y -= b.speed;
-
-      // Har vi nått fram till fingret/musens höjd?
       if (b.y <= b.targetY) {
-        // NU kollar vi om vi är i granen
         let hit = false;
         for (const t of tree.tiers) {
-           if (isInside(b.x, b.y, t)) {
-             hit = true;
-             break;
-           }
+           if (isInside(b.x, b.y, t)) { hit = true; break; }
         }
-
         if (hit) {
            ornaments.push({x: b.x, y: b.y, r: b.r, color: b.color});
-           money += 10; // tjäna pengar för varje fastnad kula
-           updateInfo();
-        } 
-        
-        // Oavsett om vi träffade eller missade så tar skottet slut här
+           playSound('stick'); // ornament fästes
+           addMoney(10); // Tjäna pengar!
+        }
         bullets.splice(i, 1);
       }
     }
+    
+    // Uppdatera texter
+    scoreText.innerText = '🎄 Kulor: ' + ornaments.length;
+    moneyText.innerText = '💰 ' + money + ' kr';
   }
 
+  // --- LOGIK: EKONOMI & BUTIK ---
+  function addMoney(amount) {
+    money += amount;
+    if (amount > 0) playSound('money');
+    checkButtons();
+  }
+  
+  // Gör funktionerna tillgängliga globalt för knapparna
+  window.toggleShop = (show) => {
+    shopModal.style.display = show ? 'flex' : 'none';
+    checkButtons();
+  };
+  
+  window.buyPack = (type, cost) => {
+    if(money >= cost) {
+      money -= cost;
+      if(type === 'gold') {
+        unlocked.gold = true;
+        // Lägg till guldiga färger
+        activePalette.push('#ffd700', '#c0c0c0', '#DAA520', '#E5E4E2');
+        document.getElementById('buyGold').innerText = "Köpt!";
+      }
+      if(type === 'diamond') {
+        unlocked.diamond = true;
+        // Lägg till diamant-färger
+        activePalette.push('#b9f2ff', '#9b5de5', '#00bbf9', '#fee440');
+        document.getElementById('buyDiamond').innerText = "Köpt!";
+      }
+      playSound('buy');
+      addMoney(0); // Uppdatera text
+    }
+  };
+
+  function checkButtons() {
+    // Stäng av köp-knappar om man inte har råd eller redan köpt
+    const goldBtn = document.getElementById('buyGold');
+    const diamondBtn = document.getElementById('buyDiamond');
+    
+    if(unlocked.gold) goldBtn.disabled = true;
+    else goldBtn.disabled = (money < 100);
+
+    if(unlocked.diamond) diamondBtn.disabled = true;
+    else diamondBtn.disabled = (money < 500);
+  }
+
+  // --- RITA ALLT ---
   function draw() {
-    // Rensa
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle = '#eaf6ff';
-    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#eaf6ff'; ctx.fillRect(0,0,W,H); // Himmel
 
-    // Rita snö (bakgrund)
-    drawSnow();
+    // Snö
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    snowflakes.forEach(s => {
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    });
 
-    // Stubbe och gran med lagerad stil
-    drawTree();
+    // Gran
+    ctx.fillStyle = '#6b3b1b'; ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
+    tree.tiers.forEach(t => {
+      ctx.fillStyle = t.color;
+      ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.lineTo(t.x3, t.y3); ctx.fill();
+      // Skugga under
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.beginPath(); ctx.moveTo(t.x1, t.y1+8); ctx.lineTo(t.x2, t.y2+8); ctx.lineTo(t.x3, t.y3+8); ctx.fill();
+    });
 
     // Stjärna
     if(tree.tiers.length){
         const top = tree.tiers[2];
-        ctx.fillStyle = '#ffd700';
-        ctx.shadowBlur = 20; ctx.shadowColor = 'gold';
+        ctx.fillStyle = '#ffd700'; ctx.shadowBlur = 25; ctx.shadowColor = 'gold';
         ctx.beginPath(); ctx.arc(top.x1, top.y1, 15, 0, Math.PI*2); ctx.fill();
         ctx.shadowBlur = 0;
     }
 
-    // Kulor (shiny)
-    ornaments.forEach(o => {
-      let g = ctx.createRadialGradient(o.x-2, o.y-2, 1, o.x, o.y, o.r);
-      g.addColorStop(0, 'white'); g.addColorStop(1, o.color);
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
+    // Kulor & Skott
+    [...ornaments, ...bullets].forEach(o => {
+      const g = ctx.createRadialGradient(o.x-o.r*0.3, o.y-o.r*0.3, 1, o.x, o.y, o.r);
+      g.addColorStop(0, '#fff'); g.addColorStop(0.3, o.color); g.addColorStop(1, '#222');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
     });
 
-    // Skott
-    bullets.forEach(b => {
-      ctx.fillStyle = b.color;
-      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
-    });
-
-    // Tomten
     drawSanta(player.x, player.y);
   }
 
-  // Ny: ritfunktion för trädet med lager och skuggor
-  function drawTree() {
-    // Trunk
-    ctx.fillStyle = '#5D4037';
-    ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
-
-    // Rita tre lager med skugga under varje
-    tree.tiers.forEach((t, idx) => {
-      // Skugga
-      ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.12)';
-      ctx.beginPath();
-      ctx.moveTo(t.x1, t.y1 + 8);
-      ctx.lineTo(t.x2, t.y2 + 8);
-      ctx.lineTo(t.x3, t.y3 + 8);
-      ctx.fill();
-      ctx.restore();
-
-      // Huvudfyllnad med lätt gradient för 'Disney' känsla
-      const g = ctx.createLinearGradient(t.x1, t.y1, t.x2, t.y2);
-      g.addColorStop(0, shadeColor(t.color, 0.08));
-      g.addColorStop(1, shadeColor(t.color, -0.08));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(t.x1, t.y1);
-      // lite mjukare kanter genom små kurvor
-      ctx.lineTo(t.x2, t.y2);
-      ctx.quadraticCurveTo((t.x2 + t.x3)/2, t.y2 - 10, t.x3, t.y3);
-      ctx.lineTo(t.x3, t.y3);
-      ctx.lineTo(t.x1, t.y1);
-      ctx.fill();
-    });
+  function drawSanta(x, y) {
+    // Samma fina tomte som innan
+    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI*2); ctx.fill(); // Kropp
+    ctx.fillStyle = '#ffccb0'; ctx.beginPath(); ctx.arc(x, y-22, 16, 0, Math.PI*2); ctx.fill(); // Huvud
+    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.moveTo(x-16, y-28); ctx.lineTo(x+16, y-28); ctx.lineTo(x, y-55); ctx.fill(); // Mössa
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y-55, 6, 0, Math.PI*2); ctx.fill(); // Tofs
   }
 
-  // Hjälp: enkel färgskuggare
-  function shadeColor(hex, percent) {
-    // hex -> shade by percent (-0.1..0.1)
-    const c = hex.replace('#','');
-    const num = parseInt(c,16);
-    let r = (num >> 16) + Math.round(255 * percent);
-    let g = ((num >> 8) & 0x00FF) + Math.round(255 * percent);
-    let b = (num & 0x0000FF) + Math.round(255 * percent);
-    r = Math.min(255, Math.max(0, r));
-    g = Math.min(255, Math.max(0, g));
-    b = Math.min(255, Math.max(0, b));
-    return '#' + ( (1<<24) + (r<<16) + (g<<8) + b ).toString(16).slice(1);
-  }
-
-  // Ny tomte med kurvor och path
-  function drawSanta(cx, cy) {
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    // Body (splashy rounded coat)
-    ctx.fillStyle = '#d32f2f';
-    ctx.beginPath();
-    ctx.moveTo(0, -10);
-    ctx.bezierCurveTo(30, -5, 34, 25, 0, 35);
-    ctx.bezierCurveTo(-34, 25, -30, -5, 0, -10);
-    ctx.closePath();
-    ctx.fill();
-
-    // Head
-    ctx.fillStyle = '#ffccb0';
-    ctx.beginPath();
-    ctx.arc(0, -28, 14, 0, Math.PI*2);
-    ctx.fill();
-
-    // Hat (curvy)
-    ctx.fillStyle = '#d32f2f';
-    ctx.beginPath();
-    ctx.moveTo(-14, -36);
-    ctx.quadraticCurveTo(0, -62, 22, -46);
-    ctx.quadraticCurveTo(10, -50, -14, -36);
-    ctx.closePath();
-    ctx.fill();
-
-    // White trim
-    ctx.fillStyle = 'white';
-    ctx.beginPath();
-    ctx.ellipse(0, -18, 20, 6, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // Pompom
-    ctx.beginPath();
-    ctx.arc(22, -46, 6, 0, Math.PI*2);
-    ctx.fill();
-
-    // Eyes and smile
-    ctx.fillStyle = '#361f16';
-    ctx.beginPath(); ctx.arc(-4, -30, 1.6, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(6, -30, 1.6, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = '#a0462b';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(1, -24, 6, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
-
-    ctx.restore();
-  }
-
-  // Snow drawing
-  function drawSnow() {
-    ctx.save();
-    ctx.fillStyle = '#fff';
-    ctx.globalAlpha = 0.9;
-    snowflakes.forEach(s => {
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-      ctx.fill();
-    });
-    ctx.restore();
-  }
-
-  // INPUT
+  // --- INPUT ---
   function move(x) { player.x = Math.max(30, Math.min(W-30, x)); }
   
-  // Dator
   window.addEventListener('mousemove', e => move(e.clientX));
   window.addEventListener('mousedown', e => {
-     if(e.target.id !== 'resetBtn' && e.target.id !== 'shopBtn') shoot(e.clientY);
+     if(e.target.tagName !== 'BUTTON') shoot(e.clientY);
   });
 
-  // Mobil
   window.addEventListener('touchmove', e => {
-     move(e.touches[0].clientX);
-     e.preventDefault();
+     move(e.touches[0].clientX); e.preventDefault();
   }, {passive: false});
+  
   window.addEventListener('touchstart', e => {
-     if(e.target.id !== 'resetBtn' && e.target.id !== 'shopBtn') {
-        move(e.touches[0].clientX);
-        shoot(e.touches[0].clientY); // Skjut mot fingrets höjd
+     if(e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target)) {
+        move(e.touches[0].clientX); shoot(e.touches[0].clientY);
      }
-  });
+  }, {passive: false});
 
-  resetBtn.onclick = () => { ornaments = []; updateInfo(); };
+  // Koppla knappar
+  document.getElementById('resetBtn').onclick = () => { ornaments=[]; money=0; addMoney(0); };
+  document.getElementById('shopBtn').onclick = () => toggleShop(true);
 
-  // Info uppdatering
-  function updateInfo() {
-    info.innerHTML = 'Antal julgranskulor: ' + ornaments.length + '<br>Pengar: ' + money + ' kr';
-  }
-
-  // Shop UI
-  shopBtn.onclick = () => { shopModal.style.display = 'flex'; };
-  closeShop.onclick = () => { shopModal.style.display = 'none'; };
-  shopModal.addEventListener('click', (e) => { if (e.target === shopModal) shopModal.style.display = 'none'; });
-
-  buyLyxBtn.onclick = () => {
-    if (shopState.lyx) return;
-    if (money < 100) { alert('Inte tillräckligt med pengar!'); return; }
-    money -= 100;
-    shopState.lyx = true;
-    // Guld & Silver
-    palette.push('#ffd700', '#c0c0c0');
-    buyLyxBtn.classList.remove('buy'); buyLyxBtn.classList.add('owned'); buyLyxBtn.textContent = 'Ägd';
-    buyLyxBtn.disabled = true;
-    updateInfo();
-  };
-
-  buyDiamBtn.onclick = () => {
-    if (shopState.diamant) return;
-    if (money < 500) { alert('Inte tillräckligt med pengar!'); return; }
-    money -= 500;
-    shopState.diamant = true;
-    palette.push('#00c8ff', '#8a2be2');
-    buyDiamBtn.classList.remove('buy'); buyDiamBtn.classList.add('owned'); buyDiamBtn.textContent = 'Ägd';
-    buyDiamBtn.disabled = true;
-    updateInfo();
-  };
-
-  // Init shop buttons state if already owned (start none owned)
-  function initShopButtons() {
-    // standard is owned by default (disabled)
-    document.getElementById('buyStandard').disabled = true;
-  }
-  initShopButtons();
-
-  // Loop
+  // Start
   resize();
-  updateInfo();
   function loop() { update(); draw(); requestAnimationFrame(loop); }
   loop();
 
