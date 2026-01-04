@@ -150,6 +150,7 @@
     <p id="menuSubtitle">Välj spelläge</p>
     <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Fritt Skapande</button>
     <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag</button>
+    <button id="factoryResetBtn" class="menu-btn" style="background:#dc3545;color:white;font-size:13px;padding:10px;margin-top:20px">Nollställ Allt</button>
   </div>
 </div>
 
@@ -243,6 +244,7 @@
   const shopItemsDiv = document.getElementById('shopItems');
   const shopBackgroundsDiv = document.getElementById('shopBackgrounds');
   const langSelect = document.getElementById('langSelect');
+  const factoryResetBtn = document.getElementById('factoryResetBtn');
 
   // Game state
   let W, H;
@@ -295,7 +297,9 @@
       bgDay: 'Dag', bgDayDesc: 'Standard (Gratis)',
       bgNight: 'Natt', bgNightDesc: 'Mörk himmel med stjärnor',
       bgAurora: 'Norrsken', bgAuroraDesc: 'Lila/Grönt',
-      bgSunset: 'Solnedgång', bgSunsetDesc: 'Orange/Rosa/Lila'
+      bgSunset: 'Solnedgång', bgSunsetDesc: 'Orange/Rosa/Lila',
+      resetAll: 'Nollställ Allt',
+      resetAllConfirm: 'Är du säker? All progress raderas permanent!'
     },
     en: {
       menuTitle: 'DecoTree', menuSubtitle: 'Choose game mode',
@@ -315,7 +319,9 @@
       bgDay: 'Day', bgDayDesc: 'Default (Free)',
       bgNight: 'Night', bgNightDesc: 'Dark sky with stars',
       bgAurora: 'Aurora', bgAuroraDesc: 'Purple/Green',
-      bgSunset: 'Sunset', bgSunsetDesc: 'Orange/Pink/Purple'
+      bgSunset: 'Sunset', bgSunsetDesc: 'Orange/Pink/Purple',
+      resetAll: 'Reset All Progress',
+      resetAllConfirm: 'Are you sure? All progress will be permanently deleted!'
     },
     es: {
       menuTitle: 'DecoTree', menuSubtitle: 'Elige modo de juego',
@@ -335,7 +341,9 @@
       bgDay: 'Día', bgDayDesc: 'Predeterminado (Gratis)',
       bgNight: 'Noche', bgNightDesc: 'Cielo oscuro con estrellas',
       bgAurora: 'Aurora', bgAuroraDesc: 'Morado/Verde',
-      bgSunset: 'Atardecer', bgSunsetDesc: 'Naranja/Rosa/Morado'
+      bgSunset: 'Atardecer', bgSunsetDesc: 'Naranja/Rosa/Morado',
+      resetAll: 'Restablecer Todo',
+      resetAllConfirm: '¿Estás seguro? ¡Todo el progreso se eliminará permanentemente!'
     },
     fr: {
       menuTitle: 'DecoTree', menuSubtitle: 'Choisir le mode',
@@ -355,7 +363,9 @@
       bgDay: 'Jour', bgDayDesc: 'Par défaut (Gratuit)',
       bgNight: 'Nuit', bgNightDesc: 'Ciel sombre avec étoiles',
       bgAurora: 'Aurore', bgAuroraDesc: 'Violet/Vert',
-      bgSunset: 'Coucher de soleil', bgSunsetDesc: 'Orange/Rose/Violet'
+      bgSunset: 'Coucher de soleil', bgSunsetDesc: 'Orange/Rose/Violet',
+      resetAll: 'Tout Réinitialiser',
+      resetAllConfirm: 'Êtes-vous sûr? Toute progression sera définitivement supprimée!'
     },
     de: {
       menuTitle: 'DecoTree', menuSubtitle: 'Spielmodus wählen',
@@ -375,7 +385,9 @@
       bgDay: 'Tag', bgDayDesc: 'Standard (Kostenlos)',
       bgNight: 'Nacht', bgNightDesc: 'Dunkler Himmel mit Sternen',
       bgAurora: 'Aurora', bgAuroraDesc: 'Lila/Grün',
-      bgSunset: 'Sonnenuntergang', bgSunsetDesc: 'Orange/Rosa/Lila'
+      bgSunset: 'Sonnenuntergang', bgSunsetDesc: 'Orange/Rosa/Lila',
+      resetAll: 'Alles Zurücksetzen',
+      resetAllConfirm: 'Sind Sie sicher? Aller Fortschritt wird dauerhaft gelöscht!'
     },
     pt: {
       menuTitle: 'DecoTree', menuSubtitle: 'Escolha o modo',
@@ -395,7 +407,9 @@
       bgDay: 'Dia', bgDayDesc: 'Padrão (Grátis)',
       bgNight: 'Noite', bgNightDesc: 'Céu escuro com estrelas',
       bgAurora: 'Aurora', bgAuroraDesc: 'Roxo/Verde',
-      bgSunset: 'Pôr do Sol', bgSunsetDesc: 'Laranja/Rosa/Roxo'
+      bgSunset: 'Pôr do Sol', bgSunsetDesc: 'Laranja/Rosa/Roxo',
+      resetAll: 'Redefinir Tudo',
+      resetAllConfirm: 'Tem certeza? Todo o progresso será excluído permanentemente!'
     },
     it: {
       menuTitle: 'DecoTree', menuSubtitle: 'Scegli modalità',
@@ -415,7 +429,9 @@
       bgDay: 'Giorno', bgDayDesc: 'Predefinito (Gratuito)',
       bgNight: 'Notte', bgNightDesc: 'Cielo scuro con stelle',
       bgAurora: 'Aurora', bgAuroraDesc: 'Viola/Verde',
-      bgSunset: 'Tramonto', bgSunsetDesc: 'Arancione/Rosa/Viola'
+      bgSunset: 'Tramonto', bgSunsetDesc: 'Arancione/Rosa/Viola',
+      resetAll: 'Ripristina Tutto',
+      resetAllConfirm: 'Sei sicuro? Tutti i progressi verranno eliminati in modo permanente!'
     },
     ru: {
       menuTitle: 'DecoTree', menuSubtitle: 'Выберите режим',
@@ -435,7 +451,9 @@
       bgDay: 'День', bgDayDesc: 'По умолчанию (Бесплатно)',
       bgNight: 'Ночь', bgNightDesc: 'Темное небо со звездами',
       bgAurora: 'Аврора', bgAuroraDesc: 'Фиолетовый/Зеленый',
-      bgSunset: 'Закат', bgSunsetDesc: 'Оранжевый/Розовый/Фиолетовый'
+      bgSunset: 'Закат', bgSunsetDesc: 'Оранжевый/Розовый/Фиолетовый',
+      resetAll: 'Сбросить Всё',
+      resetAllConfirm: 'Вы уверены? Весь прогресс будет безвозвратно удален!'
     },
     zh: {
       menuTitle: 'DecoTree', menuSubtitle: '选择游戏模式',
@@ -455,7 +473,9 @@
       bgDay: '白天', bgDayDesc: '默认（免费）',
       bgNight: '夜晚', bgNightDesc: '带星星的黑暗天空',
       bgAurora: '极光', bgAuroraDesc: '紫/绿',
-      bgSunset: '日落', bgSunsetDesc: '橙/粉/紫'
+      bgSunset: '日落', bgSunsetDesc: '橙/粉/紫',
+      resetAll: '重置全部',
+      resetAllConfirm: '你确定吗？所有进度将被永久删除！'
     },
     ja: {
       menuTitle: 'DecoTree', menuSubtitle: 'ゲームモードを選択',
@@ -475,7 +495,9 @@
       bgDay: '昼', bgDayDesc: 'デフォルト（無料）',
       bgNight: '夜', bgNightDesc: '星空',
       bgAurora: 'オーロラ', bgAuroraDesc: '紫/緑',
-      bgSunset: '夕焼け', bgSunsetDesc: 'オレンジ/ピンク/紫'
+      bgSunset: '夕焼け', bgSunsetDesc: 'オレンジ/ピンク/紫',
+      resetAll: 'すべてリセット',
+      resetAllConfirm: '本当によろしいですか？すべての進行状況が完全に削除されます！'
     }
   };
 
@@ -494,6 +516,7 @@
     tabItems.innerText = t.items;
     tabBackgrounds.innerText = t.backgrounds;
     document.getElementById('shopCloseBtn').innerText = t.close;
+    factoryResetBtn.innerText = t.resetAll;
     
     // Item names/descriptions
     document.getElementById('itemStandardName').innerText = t.itemStandard;
@@ -1060,13 +1083,46 @@
   }, {passive:false});
 
   // --- UI interactions ---
-  document.getElementById('resetBtn').onclick = () => { ornaments=[]; bullets=[]; if (gameState === 'CREATIVE') money=0; checkButtons(); updateShopUI(); };
+  // MODIFIED: resetBtn now only clears ornaments and bullets (keeps progress)
+  document.getElementById('resetBtn').onclick = () => { 
+    ornaments = []; 
+    bullets = []; 
+    ghostTargets = [];
+  };
+  
   document.getElementById('shopBtn').onclick = () => toggleShop(true);
   menuBtn.onclick = ()=>{ gameState = 'MENU'; menuOverlay.style.display = 'flex'; bullets = []; };
+  
+  factoryResetBtn.onclick = factoryReset;
+  
   startCreative.onclick = ()=>{ gameState='CREATIVE'; menuOverlay.style.display='none'; ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };
   startMission.onclick = ()=>{ gameState='MISSION'; menuOverlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };
   tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
   tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
+
+  // --- Factory Reset Function ---
+  function factoryReset() {
+    const t = translations[currentLang];
+    if (!confirm(t.resetAllConfirm)) return;
+    
+    // Reset all progress
+    money = 0;
+    unlocked = { 
+      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
+    };
+    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
+    activeThrowType = 'ball';
+    activeBackground = 'bg_day';
+    ornaments = [];
+    bullets = [];
+    ghostTargets = [];
+    missionLevel = 1;
+    
+    checkButtons();
+    updateShopUI();
+    updateLanguage();
+  }
 
   // Start
   resize();
