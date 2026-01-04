@@ -1513,7 +1513,113 @@
     glitter: '✨'
   };
 
-  // ...existing code for factoryReset, buyPack, etc...
+  // --- Factory Reset Function ---
+  function factoryReset() {
+    const t = translations[currentLang];
+    if (!confirm(t.resetAllConfirm)) return;
+    if (!confirm(t.resetAllConfirm2)) return;
+    
+    money = 0;
+    unlocked = { 
+      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+      garland: false, glitter: false,
+      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
+    };
+    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
+    activeThrowType = 'ball';
+    activeBackground = 'bg_day'; 
+    ornaments = [];
+    bullets = [];
+    ghostTargets = [];
+    missionLevel = 1;
+    
+    updateAllUI();
+    updateLanguage();
+  }
+
+  // --- Buy Pack Function ---
+  window.buyPack = (type, cost) => {
+    if (type.startsWith('bg_')){
+      if (unlocked[type]){ 
+        activeBackground = type; 
+        generateStars(); 
+        updateShopUI(); 
+        return; 
+      }
+      if (money >= cost){ 
+        money -= cost; 
+        unlocked[type] = true; 
+        activeBackground = type; 
+        playSound('buy'); 
+        updateAllUI();
+        return; 
+      }
+      return;
+    }
+    
+    if(type === 'standard'){
+      activeThrowType = 'ball';
+      updateAllUI();
+      return;
+    }
+    
+    if(type === 'gold' || type === 'diamond'){
+      if(unlocked[type]) return;
+      if(money >= cost){
+        money -= cost;
+        unlocked[type] = true;
+        if(type === 'gold') activePalette.push('#ffd700','#c0c0c0','#DAA520','#E5E4E2');
+        else if(type === 'diamond') activePalette.push('#b9f2ff','#9b5de5','#00bbf9','#fee440');
+        playSound('buy');
+        updateAllUI();
+      }
+      return;
+    }
+    
+    if(['candy','light','candle','garland','glitter'].includes(type)){
+      if(unlocked[type]){
+        activeThrowType = type;
+        updateAllUI();
+        return;
+      }
+      if(money >= cost){
+        money -= cost;
+        unlocked[type] = true;
+        activeThrowType = type;
+        playSound('buy');
+        updateAllUI();
+        renderQuickBar();
+      }
+    }
+  };
+
+  // --- Touch/Mouse Input for Shooting ---
+  canvas.addEventListener('pointerdown', (e) => {
+    if (gameState === 'MENU') return;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    // Allow shooting at any point below the tree
+    if (clickY < H * 0.5) {
+      shoot(clickY);
+    }
+  });
+
+  // --- Game Loop ---
+  resize();
+  updateLanguage();
+  renderQuickBar();
+  toggleMenu(true);
+  
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  
+  loop();
+
 })();
 </script>
 </body>
