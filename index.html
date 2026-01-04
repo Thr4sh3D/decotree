@@ -1291,7 +1291,7 @@
       const bottomY = t.visualY2 !== undefined ? t.visualY2 : t.y2;
       const tierHeight = bottomY - topY;
       
-      // Calculate WIDE, FLUFFY visual width (ignore old x2/x3 - use curved control points)
+      // Calculate WIDE, FLUFFY visual width
       const centerX = t.x1;
       const maxWidth = tierHeight * 1.3; // Extra wide for chubby look
       const leftBaseX = centerX - maxWidth;
@@ -1300,15 +1300,15 @@
       // === 1. DROP SHADOW (beneath tier) ===
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 15;
       ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 4;
+      ctx.shadowOffsetY = 5;
       
       // Shadow shape: same as main tier but offset down
-      const shadowBottomY = bottomY + 4;
+      const shadowBottomY = bottomY + 5;
       const shadowGradient = ctx.createLinearGradient(0, topY, 0, shadowBottomY);
-      shadowGradient.addColorStop(0, 'rgba(0,0,0,0.1)');
-      shadowGradient.addColorStop(1, 'rgba(0,0,0,0.25)');
+      shadowGradient.addColorStop(0, 'rgba(0,0,0,0.08)');
+      shadowGradient.addColorStop(1, 'rgba(0,0,0,0.2)');
       ctx.fillStyle = shadowGradient;
       ctx.beginPath();
       ctx.moveTo(centerX, topY);
@@ -1325,7 +1325,6 @@
       ctx.restore();
       
       // === 2. MAIN TIER with 3D GRADIENT ===
-      // Deep green at top, vibrant green at bottom
       const tierGradient = ctx.createLinearGradient(0, topY, 0, bottomY);
       tierGradient.addColorStop(0, '#0f380f');    // Deep forest green
       tierGradient.addColorStop(0.5, '#1a5c1a'); // Mid green
@@ -1335,8 +1334,7 @@
       ctx.beginPath();
       ctx.moveTo(centerX, topY);
       
-      // LEFT SIDE: Fluffy curved branch that swoops outward
-      // Control point pulls LEFT and slightly DOWN for natural sweep
+      // LEFT SIDE: Fluffy curved branch swoops outward
       const leftCtrlX = centerX - maxWidth * 0.7;
       const leftCtrlY = topY + tierHeight * 0.55;
       ctx.quadraticCurveTo(leftCtrlX, leftCtrlY, leftBaseX, bottomY);
@@ -1358,7 +1356,6 @@
       ctx.fillStyle = 'rgba(255,255,255,0.15)';
       ctx.beginPath();
       ctx.moveTo(centerX - maxWidth * 0.1, topY + tierHeight * 0.1);
-      // Subtle inner light sweep
       const highlightCtrlX = centerX - maxWidth * 0.4;
       const highlightCtrlY = topY + tierHeight * 0.4;
       ctx.quadraticCurveTo(highlightCtrlX, highlightCtrlY, centerX - maxWidth * 0.15, bottomY - tierHeight * 0.1);
@@ -1400,13 +1397,30 @@
       const top = tree.tiers[2];
       const starY = top.visualY1 !== undefined ? top.visualY1 : top.y1;
       ctx.save();
-      ctx.fillStyle = '#ffd700';
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      
+      // === STAR GLOW EFFECT ===
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+      ctx.shadowBlur = 35;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-      drawStar(ctx, top.x1, starY + 5, 5, 30, 15);
+      
+      // === RADIAL GRADIENT FILL (White center to Gold edge) ===
+      const starGradient = ctx.createRadialGradient(top.x1 - 8, starY - 8, 5, top.x1, starY, 25);
+      starGradient.addColorStop(0, '#ffffff');      // White center
+      starGradient.addColorStop(0.4, '#ffed4e');    // Bright yellow
+      starGradient.addColorStop(1, '#ffd700');      // Gold edge
+      
+      ctx.fillStyle = starGradient;
+      drawStar(ctx, top.x1, starY, 5, 30, 15);
       ctx.fill();
+      
+      // === OUTER GLOW LAYER (extra shimmer) ===
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+      ctx.shadowBlur = 20;
+      ctx.strokeStyle = 'rgba(255, 255, 200, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
       ctx.shadowBlur = 0;
       ctx.restore();
     }
@@ -1459,35 +1473,37 @@
       ctx.fillStyle='#fff'; ctx.fillRect(o.x - w/2, o.y - h, w, h);
       ctx.fillStyle='#ffd54d'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - 5, w*0.4, h*0.35, 0,0,Math.PI*2); ctx.fill();
     } else if (type === 'garland'){
-      // ENHANCED GARLAND: Fluffy pine garland with berries
+      // PROFESSIONAL GARLAND: Thick rope with hanging curve & berries
       ctx.save();
       const r = o.r;
       
-      // Define garland curve path
-      const garlandStartX = o.x - r * 2;
-      const garlandStartY = o.y;
-      const garlandEndX = o.x + r * 2;
-      const garlandEndY = o.y;
-      const garlandControlX = o.x;
-      const garlandControlY = o.y + r * 2.5;
+      // Define garland bezier curve path (hanging catenary-like shape)
+      const garlandStartX = o.x - r * 2.2;
+      const garlandStartY = o.y - r * 0.5;
+      const garlandEndX = o.x + r * 2.2;
+      const garlandEndY = o.y - r * 0.5;
+      const garlandCp1X = o.x - r * 1.2;
+      const garlandCp1Y = o.y + r * 2.8;
+      const garlandCp2X = o.x + r * 1.2;
+      const garlandCp2Y = o.y + r * 2.8;
       
-      // === Shadow layer (depth) ===
-      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+      // === Shadow rope (depth) ===
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
       ctx.lineWidth = 14;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.beginPath();
-      ctx.moveTo(garlandStartX + 2, garlandStartY + 4);
-      ctx.quadraticCurveTo(garlandControlX + 2, garlandControlY + 4, garlandEndX + 2, garlandEndY + 4);
+      ctx.moveTo(garlandStartX + 2, garlandStartY + 3);
+      ctx.bezierCurveTo(garlandCp1X + 2, garlandCp1Y + 3, garlandCp2X + 2, garlandCp2Y + 3, garlandEndX + 2, garlandEndY + 3);
       ctx.stroke();
       
-      // === Main garland rope with gradient ===
+      // === Main garland rope with RED/GREEN gradient ===
       const garlandGrad = ctx.createLinearGradient(garlandStartX, garlandStartY, garlandEndX, garlandEndY);
-      garlandGrad.addColorStop(0, '#1a4d2e');
-      garlandGrad.addColorStop(0.25, '#2d7a4f');
-      garlandGrad.addColorStop(0.5, '#4caf50');
-      garlandGrad.addColorStop(0.75, '#2d7a4f');
-      garlandGrad.addColorStop(1, '#1a4d2e');
+      garlandGrad.addColorStop(0, '#1a4d2e');      // Deep green
+      garlandGrad.addColorStop(0.25, '#2d7a4f');   // Mid green
+      garlandGrad.addColorStop(0.5, '#c41e3a');    // Crimson red (middle)
+      garlandGrad.addColorStop(0.75, '#2d7a4f');   // Mid green
+      garlandGrad.addColorStop(1, '#1a4d2e');      // Deep green
       
       ctx.strokeStyle = garlandGrad;
       ctx.lineWidth = 12;
@@ -1495,88 +1511,165 @@
       ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(garlandStartX, garlandStartY);
-      ctx.quadraticCurveTo(garlandControlX, garlandControlY, garlandEndX, garlandEndY);
+      ctx.bezierCurveTo(garlandCp1X, garlandCp1Y, garlandCp2X, garlandCp2Y, garlandEndX, garlandEndY);
       ctx.stroke();
       
-      // === Tinsel strand ===
-      const tinselStartX = o.x - r * 2.5;
-      const tinselStartY = o.y;
-      const tinselEndX = o.x + r * 2.5;
-      const tinselEndY = o.y;
-      const tinselCp1X = o.x - r * 1.2;
-      const tinselCp1Y = o.y + r * 2.5;
-      const tinselCp2X = o.x + r * 1.2;
-      const tinselCp2Y = o.y + r * 2.5;
+      // === Rope highlight (left edge for 3D) ===
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(garlandStartX - 4, garlandStartY);
+      ctx.bezierCurveTo(garlandCp1X - 5, garlandCp1Y, garlandCp2X - 5, garlandCp2Y, garlandEndX - 4, garlandEndY);
+      ctx.stroke();
+      
+      // === Draw berries along the curve ===
+      const berryCount = 18;
+      for (let i = 0; i <= berryCount; i++) {
+        const t = i / berryCount;
+        // Calculate point on bezier curve
+        const mt = 1 - t;
+        const bx = Math.pow(mt, 3) * garlandStartX +
+                   3 * Math.pow(mt, 2) * t * garlandCp1X +
+                   3 * mt * Math.pow(t, 2) * garlandCp2X +
+                   Math.pow(t, 3) * garlandEndX;
+        const by = Math.pow(mt, 3) * garlandStartY +
+                   3 * Math.pow(mt, 2) * t * garlandCp1Y +
+                   3 * mt * Math.pow(t, 2) * garlandCp2Y +
+                   Math.pow(t, 3) * garlandEndY;
+        
+        // Draw berry (small circle)
+        const berryRadius = r * 0.35;
+        
+        // Berry shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.arc(bx + 1, by + 1, berryRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Berry (alternating red/dark red)
+        const isRedBerry = i % 2 === 0;
+        ctx.fillStyle = isRedBerry ? '#d41e3a' : '#8b0000';
+        ctx.beginPath();
+        ctx.arc(bx, by, berryRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Berry shine
+        ctx.fillStyle = isRedBerry ? '#ff5555' : '#cc3333';
+        ctx.beginPath();
+        ctx.arc(bx - berryRadius * 0.35, by - berryRadius * 0.35, berryRadius * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    } else if (type === 'glitter'){
+      // PROFESSIONAL GLITTER: Smooth metallic curve with sparkling reflections
+      ctx.save();
+      const r = o.r;
+      
+      // Define glitter bezier curve (elegant S-curve)
+      const glitterStartX = o.x - r * 2.3;
+      const glitterStartY = o.y - r * 0.3;
+      const glitterEndX = o.x + r * 2.3;
+      const glitterEndY = o.y + r * 0.3;
+      const glitterCp1X = o.x - r * 0.8;
+      const glitterCp1Y = o.y - r * 1.8;
+      const glitterCp2X = o.x + r * 0.8;
+      const glitterCp2Y = o.y + r * 1.8;
       
       // === Shadow tinsel (depth) ===
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(glitterStartX + 1.5, glitterStartY + 1.5);
+      ctx.bezierCurveTo(glitterCp1X + 1.5, glitterCp1Y + 1.5, glitterCp2X + 1.5, glitterCp2Y + 1.5, glitterEndX + 1.5, glitterEndY + 1.5);
+      ctx.stroke();
+      
+      // === Main glitter strand with SILVER/GOLD gradient ===
+      const glitterGrad = ctx.createLinearGradient(glitterStartX, glitterStartY, glitterEndX, glitterEndY);
+      glitterGrad.addColorStop(0, '#b8860b');      // Dark gold
+      glitterGrad.addColorStop(0.25, '#ffd700');   // Bright gold
+      glitterGrad.addColorStop(0.5, '#f0f8ff');    // Alice blue (silver)
+      glitterGrad.addColorStop(0.75, '#ffd700');   // Bright gold
+      glitterGrad.addColorStop(1, '#b8860b');      // Dark gold
+      
+      ctx.strokeStyle = glitterGrad;
       ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(tinselStartX + 2, tinselStartY + 2);
-      ctx.bezierCurveTo(tinselCp1X + 2, tinselCp1Y + 2, tinselCp2X + 2, tinselCp2Y + 2, tinselEndX + 2, tinselEndY + 2);
+      ctx.moveTo(glitterStartX, glitterStartY);
+      ctx.bezierCurveTo(glitterCp1X, glitterCp1Y, glitterCp2X, glitterCp2Y, glitterEndX, glitterEndY);
       ctx.stroke();
       
-      // === Main base strand with metallic gradient ===
-      const tinselGrad = ctx.createLinearGradient(tinselStartX, tinselStartY, tinselEndX, tinselEndY);
-      tinselGrad.addColorStop(0, '#8b7355');
-      tinselGrad.addColorStop(0.25, '#d4af37');
-      tinselGrad.addColorStop(0.5, '#e8d5c4');
-      tinselGrad.addColorStop(0.75, '#d4af37');
-      tinselGrad.addColorStop(1, '#8b7355');
-      
-      ctx.strokeStyle = tinselGrad;
-      ctx.lineWidth = 1.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(tinselStartX, tinselStartY);
-      ctx.bezierCurveTo(tinselCp1X, tinselCp1Y, tinselCp2X, tinselCp2Y, tinselEndX, tinselEndY);
-      ctx.stroke();
-      
-      // === Sparkling tinsel strands ===
-      const sparkCount = 25;
-      for (let i = 0; i < sparkCount; i++) {
-        const t = Math.random();
+      // === Sparkling reflections along the curve ===
+      const sparkleCount = 20;
+      for (let i = 0; i <= sparkleCount; i++) {
+        const t = i / sparkleCount;
+        // Calculate point on bezier curve
+        const mt = 1 - t;
+        const sx = Math.pow(mt, 3) * glitterStartX +
+                   3 * Math.pow(mt, 2) * t * glitterCp1X +
+                   3 * mt * Math.pow(t, 2) * glitterCp2X +
+                   Math.pow(t, 3) * glitterEndX;
+        const sy = Math.pow(mt, 3) * glitterStartY +
+                   3 * Math.pow(mt, 2) * t * glitterCp1Y +
+                   3 * mt * Math.pow(t, 2) * glitterCp2Y +
+                   Math.pow(t, 3) * glitterEndY;
         
-        const px = Math.pow(1-t, 3) * tinselStartX + 
-                   3 * Math.pow(1-t, 2) * t * tinselCp1X + 
-                   3 * (1-t) * Math.pow(t, 2) * tinselCp2X + 
-                   Math.pow(t, 3) * tinselEndX;
-        const py = Math.pow(1-t, 3) * tinselStartY + 
-                   3 * Math.pow(1-t, 2) * t * tinselCp1Y + 
-                   3 * (1-t) * Math.pow(t, 2) * tinselCp2Y + 
-                   Math.pow(t, 3) * tinselEndY;
+        // Draw radiating sparkle (4-pointed star / cross)
+        const sparkleSize = r * (0.4 + Math.random() * 0.3);
+        const sparkleOpacity = 0.4 + Math.random() * 0.5;
         
-        const sparkLen = r * (0.5 + Math.random() * 1.5);
-        const sparkAngle = Math.random() * Math.PI * 2;
-        const sparkEndX = px + Math.cos(sparkAngle) * sparkLen;
-        const sparkEndY = py + Math.sin(sparkAngle) * sparkLen;
-        
-        ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.8)' : 'rgba(255,215,0,0.7)';
-        ctx.lineWidth = 0.8 + Math.random() * 0.6;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${sparkleOpacity})`;
+        ctx.lineWidth = 1.2 + Math.random() * 0.8;
         ctx.lineCap = 'round';
+        
+        // Horizontal line
         ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(sparkEndX, sparkEndY);
+        ctx.moveTo(sx - sparkleSize, sy);
+        ctx.lineTo(sx + sparkleSize, sy);
         ctx.stroke();
+        
+        // Vertical line
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - sparkleSize);
+        ctx.lineTo(sx, sy + sparkleSize);
+        ctx.stroke();
+        
+        // Diagonal 1 (only for some sparkles)
+        if (Math.random() > 0.5) {
+          ctx.strokeStyle = `rgba(255, 215, 0, ${sparkleOpacity * 0.7})`;
+          const diagDist = sparkleSize * 0.7;
+          ctx.beginPath();
+          ctx.moveTo(sx - diagDist, sy - diagDist);
+          ctx.lineTo(sx + diagDist, sy + diagDist);
+          ctx.stroke();
+          
+          // Diagonal 2
+          ctx.beginPath();
+          ctx.moveTo(sx + diagDist, sy - diagDist);
+          ctx.lineTo(sx - diagDist, sy + diagDist);
+          ctx.stroke();
+        }
       }
       
-      // === Bright highlights ===
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      const highlightCount = 8;
-      for (let i = 0; i < highlightCount; i++) {
-        const t = i / (highlightCount - 1);
-        const hx = Math.pow(1-t, 3) * tinselStartX + 
-                   3 * Math.pow(1-t, 2) * t * tinselCp1X + 
-                   3 * (1-t) * Math.pow(t, 2) * tinselCp2X + 
-                   Math.pow(t, 3) * tinselEndX;
-        const hy = Math.pow(1-t, 3) * tinselStartY + 
-                   3 * Math.pow(1-t, 2) * t * tinselCp1Y + 
-                   3 * (1-t) * Math.pow(t, 2) * tinselCp2Y + 
-                   Math.pow(t, 3) * tinselEndY;
+      // === Bright highlight dots along curve ===
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      for (let i = 0; i <= sparkleCount; i += 2) {
+        const t = i / sparkleCount;
+        const mt = 1 - t;
+        const hx = Math.pow(mt, 3) * glitterStartX +
+                   3 * Math.pow(mt, 2) * t * glitterCp1X +
+                   3 * mt * Math.pow(t, 2) * glitterCp2X +
+                   Math.pow(t, 3) * glitterEndX;
+        const hy = Math.pow(mt, 3) * glitterStartY +
+                   3 * Math.pow(mt, 2) * t * glitterCp1Y +
+                   3 * mt * Math.pow(t, 2) * glitterCp2Y +
+                   Math.pow(t, 3) * glitterEndY;
         
         ctx.beginPath();
-        ctx.arc(hx, hy, 1.5, 0, Math.PI * 2);
+        ctx.arc(hx, hy, 1.3, 0, Math.PI * 2);
         ctx.fill();
       }
       
