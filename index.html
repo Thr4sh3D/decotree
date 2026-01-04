@@ -100,6 +100,49 @@
   .shop-tab { padding:6px 10px; cursor:pointer; border-radius:8px; background:#eee; }
   .shop-tab.active { background:#dff3ff; color:#005cbf; font-weight:bold; }
 
+  /* Quick Switch Sidebar */
+  #quickBar {
+    position: fixed;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+    pointer-events: auto;
+  }
+
+  .quick-btn {
+    font-size: 24px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .quick-btn:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .quick-btn.active {
+    border-color: gold;
+    background: #fff;
+    box-shadow: 0 0 10px gold, 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .quick-btn:active {
+    transform: scale(0.95);
+  }
+
   /* small helpers for stars */
   .hidden { display:none; }
 </style>
@@ -128,6 +171,7 @@
   <div class="menu-card">
     <h1 id="menuTitle">DecoTree</h1>
     <p id="menuSubtitle">Välj spelläge</p>
+    <button id="btnResume" class="menu-btn" style="background:#ff9800;color:white;display:none;" onclick="resumeGame()">Fortsätt Spela ⏯️</button>
     <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Fritt Skapande</button>
     <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag</button>
     
@@ -212,7 +256,6 @@
         <button class="buy-btn" id="buyBg_day" onclick="buyPack('bg_day', 0)">Fri</button>
       </div>
       <div class="shop-item">
-        <div><b id="bgNightName">Natt</b><br><span id="bgNightDesc" style="font-size:12px">Mörk himmel med stjärnor</span></div>
         <button class="buy-btn" id="buyBg_night" onclick="buyPack('bg_night', 100)">100 🪙</button>
       </div>
       <div class="shop-item">
@@ -228,6 +271,9 @@
     <button class="close-btn" id="shopCloseBtn" onclick="toggleShop(false)">Stäng</button>
   </div>
 </div>
+
+<!-- Quick Switch Sidebar -->
+<div id="quickBar"></div>
 
 <canvas id="game"></canvas>
 
@@ -251,6 +297,7 @@
   const shopBackgroundsDiv = document.getElementById('shopBackgrounds');
   const langSelect = document.getElementById('langSelect');
   const factoryResetBtn = document.getElementById('factoryResetBtn');
+  const quickBar = document.getElementById('quickBar');
 
   // Game state
   let W, H;
@@ -656,12 +703,43 @@
     const treeH=Math.min(H*0.65, W*0.85); 
     const treeW=treeH*0.85; 
     tree.tiers=[]; 
-    tree.tiers.push({ x1:cx, y1:bottomY - treeH * 0.45, x2:cx - treeW/2, y2:bottomY, x3:cx + treeW/2, y3:bottomY, color:'#087023' }); 
+    
+    // FIXED COLLISION: Narrower and shorter triangles to match visual curved branches
+    // Bottom tier - narrower by 15%
+    tree.tiers.push({ 
+      x1:cx, 
+      y1:bottomY - treeH * 0.42,  // Slightly lower top point
+      x2:cx - treeW * 0.425,      // Narrower left (was 0.5)
+      y2:bottomY, 
+      x3:cx + treeW * 0.425,      // Narrower right (was 0.5)
+      y3:bottomY, 
+      color:'#087023' 
+    }); 
+    
+    // Middle tier - narrower by 15%
     const y2_bot = bottomY - treeH * 0.25; 
-    tree.tiers.push({ x1:cx, y1:y2_bot - treeH * 0.45, x2:cx - treeW * 0.35, y2:y2_bot, x3:cx + treeW * 0.35, y3:y2_bot, color:'#0a8a2f' }); 
+    tree.tiers.push({ 
+      x1:cx, 
+      y1:y2_bot - treeH * 0.42,   // Slightly lower
+      x2:cx - treeW * 0.3,        // Narrower left (was 0.35)
+      y2:y2_bot, 
+      x3:cx + treeW * 0.3,        // Narrower right (was 0.35)
+      y3:y2_bot, 
+      color:'#0a8a2f' 
+    }); 
+    
+    // Top tier - MUCH narrower and MUCH lower to avoid star collision
     const y1_bot = y2_bot - treeH * 0.25; 
-    // STAR COLLISION FIX: Lower the top tier's y1 point so star doesn't catch bullets
-    tree.tiers.push({ x1:cx, y1:y1_bot - treeH * 0.35, x2:cx - treeW * 0.2, y2:y1_bot, x3:cx + treeW * 0.2, y3:y1_bot, color:'#0fb24b' }); 
+    tree.tiers.push({ 
+      x1:cx, 
+      y1:y1_bot - treeH * 0.28,   // LOWERED from 0.35 - star is now safe above
+      x2:cx - treeW * 0.16,       // NARROWER left (was 0.2)
+      y2:y1_bot, 
+      x3:cx + treeW * 0.16,       // NARROWER right (was 0.2)
+      y3:y1_bot, 
+      color:'#0fb24b' 
+    }); 
+    
     tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 }; 
   }
 
@@ -804,116 +882,37 @@
     moneyText.innerText = '💰 ' + money + ' ' + t.money;
   }
 
-  // --- NEW: 3-State Shop System ---
-  function checkButtons(){
-    const itemMap = [
-      ['buyStandard','standard',0],['buyGold','gold',100],['buyDiamond','diamond',500],
-      ['buyCandy','candy',50],['buyLight','light',150],['buyCandle','candle',300],
-      ['buyGarland','garland',200],['buyGlitter','glitter',350]
-    ];
-    const bgMap = [
-      ['buyBg_day','bg_day',0],['buyBg_night','bg_night',100],
-      ['buyBg_aurora','bg_aurora',300],['buyBg_sunset','bg_sunset',500]
-    ];
-    
-    itemMap.forEach(([btnId, type, cost])=>{
-      const btn = document.getElementById(btnId);
-      if(!btn) return;
-      if(!unlocked[type]) btn.disabled = (money < cost);
-      else btn.disabled = false;
-    });
-    
-    bgMap.forEach(([btnId, type, cost])=>{
-      const btn = document.getElementById(btnId);
-      if(!btn) return;
-      if(!unlocked[type]) btn.disabled = (money < cost);
-      else btn.disabled = false;
-    });
+  // --- NEW: Centralized UI Update Function ---
+  function updateAllUI() {
+    checkButtons();
+    updateShopUI();
+    renderQuickBar();
   }
 
-  function updateShopUI(){
+  // --- Factory Reset Function ---
+  function factoryReset() {
     const t = translations[currentLang];
+    if (!confirm(t.resetAllConfirm)) return;
+    if (!confirm(t.resetAllConfirm2)) return;
     
-    // Items (ornaments)
-    const itemMap = [
-      {id:'buyStandard', type:'standard', activeType:'ball', price:0},
-      {id:'buyCandy', type:'candy', activeType:'candy', price:50},
-      {id:'buyLight', type:'light', activeType:'light', price:150},
-      {id:'buyCandle', type:'candle', activeType:'candle', price:300},
-      {id:'buyGarland', type:'garland', activeType:'garland', price:200},
-      {id:'buyGlitter', type:'glitter', activeType:'glitter', price:350}
-    ];
+    // Reset all progress
+    money = 0;
+    unlocked = { 
+      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+      garland: false, glitter: false,
+      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
+    };
+    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
+    activeThrowType = 'ball';
+    activeBackground = 'bg_day'; 
+    ornaments = [];
+    bullets = [];
+    ghostTargets = [];
+    missionLevel = 1;
     
-    itemMap.forEach(it=>{
-      const btn = document.getElementById(it.id);
-      if(!btn) return;
-      
-      if(!unlocked[it.type]){
-        // State 1: Not owned -> Buy [Price]
-        btn.innerText = t.buy + ' ' + (it.price===0 ? t.free : it.price + ' ' + t.money);
-        btn.style.background = '#28a745';
-        btn.disabled = (money < it.price);
-      } else if(activeThrowType === it.activeType){
-        // State 3: Active -> Equipped (disabled/green)
-        btn.innerText = t.equipped;
-        btn.style.background = '#ffd54d';
-        btn.disabled = true;
-      } else {
-        // State 2: Owned but inactive -> Equip
-        btn.innerText = t.equip;
-        btn.style.background = '#28a745';
-        btn.disabled = false;
-      }
-    });
-    
-    // Palettes (gold/diamond) - one-time purchases
-    const goldBtn = document.getElementById('buyGold');
-    if(goldBtn){
-      if(unlocked.gold){ goldBtn.innerText = t.equipped; goldBtn.disabled = true; goldBtn.style.background = '#ccc'; }
-      else { goldBtn.innerText = t.buy + ' 100 ' + t.money; goldBtn.disabled = (money < 100); goldBtn.style.background = '#28a745'; }
-    }
-    const diamondBtn = document.getElementById('buyDiamond');
-    if(diamondBtn){
-      if(unlocked.diamond){ diamondBtn.innerText = t.equipped; diamondBtn.disabled = true; diamondBtn.style.background = '#ccc'; }
-      else { diamondBtn.innerText = t.buy + ' 500 ' + t.money; diamondBtn.disabled = (money < 500); diamondBtn.style.background = '#28a745'; }
-    }
-    
-    // Backgrounds
-    const bgMap = [
-      {id:'buyBg_day', type:'bg_day', price:0},
-      {id:'buyBg_night', type:'bg_night', price:100},
-      {id:'buyBg_aurora', type:'bg_aurora', price:300},
-      {id:'buyBg_sunset', type:'bg_sunset', price:500}
-    ];
-    
-    bgMap.forEach(bg=>{
-      const btn = document.getElementById(bg.id);
-      if(!btn) return;
-      
-      if(!unlocked[bg.type]){
-        // Not owned -> Buy
-        btn.innerText = t.buy + ' ' + (bg.price===0 ? t.free : bg.price + ' ' + t.money);
-        btn.style.background = '#28a745';
-        btn.disabled = (money < bg.price);
-      } else if(activeBackground === bg.type){
-        // Active
-        btn.innerText = t.equipped;
-        btn.style.background = '#ffd54d';
-        btn.disabled = true;
-      } else {
-        // Owned but inactive
-        btn.innerText = t.equip;
-        btn.style.background = '#28a745';
-        btn.disabled = false;
-      }
-    });
+    updateAllUI();
+    updateLanguage();
   }
-
-  window.toggleShop = (show) => { 
-    shopModal.style.display = show ? 'flex' : 'none'; 
-    checkButtons(); 
-    updateShopUI(); 
-  };
 
   window.buyPack = (type, cost) => {
     // Backgrounds
@@ -929,8 +928,7 @@
         unlocked[type] = true; 
         activeBackground = type; 
         playSound('buy'); 
-        checkButtons(); 
-        updateShopUI(); 
+        updateAllUI();
         return; 
       }
       return;
@@ -939,7 +937,7 @@
     // Standard ornament (free, switch to ball mode)
     if(type === 'standard'){
       activeThrowType = 'ball';
-      updateShopUI();
+      updateAllUI();
       return;
     }
     
@@ -952,8 +950,7 @@
         if(type === 'gold') activePalette.push('#ffd700','#c0c0c0','#DAA520','#E5E4E2');
         else if(type === 'diamond') activePalette.push('#b9f2ff','#9b5de5','#00bbf9','#fee440');
         playSound('buy');
-        checkButtons();
-        updateShopUI();
+        updateAllUI();
       }
       return;
     }
@@ -963,7 +960,7 @@
       if(unlocked[type]){
         // Already owned -> equip
         activeThrowType = type;
-        updateShopUI();
+        updateAllUI();
         return;
       }
       // Buy
@@ -972,8 +969,8 @@
         unlocked[type] = true;
         activeThrowType = type;
         playSound('buy');
-        checkButtons();
-        updateShopUI();
+        updateAllUI();
+        renderQuickBar(); // Update quick bar to show new item
       }
     }
   };
@@ -1165,283 +1162,357 @@
       ctx.fillStyle='#ffd54d'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.3), w*0.4, h*0.35, 0,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='#ff8f00'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.25), w*0.25, h*0.2, 0,0,Math.PI*2); ctx.fill();
     } else if (type === 'garland'){
-      // Hanging garland - thick draped red/green curve
+      // UPGRADED GARLAND: Thick fluffy rope with 3D gradient texture
       const r = o.r;
       ctx.save();
-      ctx.strokeStyle = '#d32f2f';
-      ctx.lineWidth = r * 0.5;
-      ctx.lineCap = 'round';
       
-      // Draw drooping curve
+      // Define curve path
+      const startX = o.x - r * 2;
+      const startY = o.y;
+      const endX = o.x + r * 2;
+      const endY = o.y;
+      const controlX = o.x;
+      const controlY = o.y + r * 2.5; // Deep droop
+      
+      // Draw shadow first
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = r * 0.8;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(o.x - r * 2, o.y);
-      ctx.bezierCurveTo(
-        o.x - r, o.y + r * 2,
-        o.x + r, o.y + r * 2,
-        o.x + r * 2, o.y
-      );
+      ctx.moveTo(startX + 2, startY + 4);
+      ctx.quadraticCurveTo(controlX + 2, controlY + 4, endX + 2, endY + 4);
       ctx.stroke();
       
-      // Add green accent
-      ctx.strokeStyle = '#0a8a2f';
-      ctx.lineWidth = r * 0.3;
+      // Create gradient perpendicular to curve for 3D tubular effect
+      const grad = ctx.createLinearGradient(o.x - r * 1.5, controlY - r, o.x + r * 1.5, controlY + r);
+      grad.addColorStop(0, '#1a5928'); // Dark green edge
+      grad.addColorStop(0.3, '#2d8f3f'); // Medium green
+      grad.addColorStop(0.5, '#4caf50'); // Bright green center (highlight)
+      grad.addColorStop(0.7, '#2d8f3f'); // Medium green
+      grad.addColorStop(1, '#1a5928'); // Dark green edge
+      
+      // Draw main fluffy rope
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = r * 0.7;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(o.x - r * 1.5, o.y + r * 0.3);
-      ctx.bezierCurveTo(
-        o.x - r * 0.5, o.y + r * 1.5,
-        o.x + r * 0.5, o.y + r * 1.5,
-        o.x + r * 1.5, o.y + r * 0.3
-      );
+      ctx.moveTo(startX, startY);
+      ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+      ctx.stroke();
+      
+      // Add red decorative ribbon accent
+      ctx.strokeStyle = '#c62828';
+      ctx.lineWidth = r * 0.2;
+      ctx.beginPath();
+      ctx.moveTo(startX + r * 0.3, startY + r * 0.2);
+      ctx.quadraticCurveTo(controlX + r * 0.1, controlY - r * 0.3, endX - r * 0.3, endY + r * 0.2);
+      ctx.stroke();
+      
+      // Add highlights for texture
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = r * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(startX + r * 0.1, startY - r * 0.1);
+      ctx.quadraticCurveTo(controlX - r * 0.2, controlY - r * 0.5, endX - r * 0.1, endY - r * 0.1);
       ctx.stroke();
       
       ctx.restore();
     } else if (type === 'glitter'){
-      // Glitter string - thin gold curve with sparkles
+      // UPGRADED GLITTER STRING: Sparkling tinsel with radiating sparks
       const r = o.r;
       ctx.save();
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = r * 0.2;
-      ctx.lineCap = 'round';
       
-      // Draw drooping curve
+      // Define curve path
+      const startX = o.x - r * 2.5;
+      const startY = o.y;
+      const endX = o.x + r * 2.5;
+      const endY = o.y;
+      const cp1X = o.x - r * 1.2;
+      const cp1Y = o.y + r * 2.5;
+      const cp2X = o.x + r * 1.2;
+      const cp2Y = o.y + r * 2.5;
+      
+      // Draw shadow
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+      ctx.lineWidth = r * 0.25;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(o.x - r * 2.5, o.y);
-
-
-      ctx.bezierCurveTo(
-        o.x - r * 1.2, o.y + r * 2.5,
-        o.x + r * 1.2, o.y + r * 2.5,
-        o.x + r * 2.5, o.y
-      );
+      ctx.moveTo(startX + 1, startY + 3);
+      ctx.bezierCurveTo(cp1X + 1, cp1Y + 3, cp2X + 1, cp2Y + 3, endX + 1, endY + 3);
       ctx.stroke();
       
-      // Add sparkle dots along the curve
+      // Create metallic gradient for base string
+      const grad = ctx.createLinearGradient(startX, startY, endX, endY);
+      grad.addColorStop(0, '#b8860b'); // Dark gold
+      grad.addColorStop(0.25, '#ffd700'); // Gold
+      grad.addColorStop(0.5, '#ffed4e'); // Bright yellow
+      grad.addColorStop(0.75, '#ffd700'); // Gold
+      grad.addColorStop(1, '#b8860b'); // Dark gold
+      
+      // Draw main gold string
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = r * 0.3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, endX, endY);
+      ctx.stroke();
+      
+      // Add glowing effect
+      ctx.strokeStyle = 'rgba(255, 237, 78, 0.5)';
+      ctx.lineWidth = r * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, endX, endY);
+      ctx.stroke();
+      
+      // Add sparkling sparks radiating along the curve
+      const sparkCount = 15;
+      for (let i = 0; i < sparkCount; i++) {
+        const t = i / (sparkCount - 1);
+        
+        // Calculate point on bezier curve
+        const x = Math.pow(1-t, 3) * startX +
+                  3 * Math.pow(1-t, 2) * t * cp1X +
+                  3 * (1-t) * Math.pow(t, 2) * cp2X +
+                  Math.pow(t, 3) * endX;
+        const y = Math.pow(1-t, 3) * startY +
+                  3 * Math.pow(1-t, 2) * t * cp1Y +
+                  3 * (1-t) * Math.pow(t, 2) * cp2Y +
+                  Math.pow(t, 3) * endY;
+        
+        // Draw radiating spark lines (random length and angle)
+        const sparkLength = r * (0.4 + Math.random() * 0.6);
+        const sparkAngle = Math.random() * Math.PI * 2;
+        const sparkEndX = x + Math.cos(sparkAngle) * sparkLength;
+        const sparkEndY = y + Math.sin(sparkAngle) * sparkLength;
+        
+        // Alternate between bright white and golden sparks
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.8)' : 'rgba(255,237,78,0.7)';
+        ctx.lineWidth = r * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(sparkEndX, sparkEndY);
+        ctx.stroke();
+      }
+      
+      // Add bright sparkle dots at key points
       ctx.fillStyle = '#fff';
-      const sparkleCount = 8;
-      for (let i = 0; i < sparkleCount; i++) {
-        const t = i / (sparkleCount - 1);
-        // Bezier curve point calculation
-        const x = Math.pow(1-t, 3) * (o.x - r * 2.5) +
-                  3 * Math.pow(1-t, 2) * t * (o.x - r * 1.2) +
-                  3 * (1-t) * Math.pow(t, 2) * (o.x + r * 1.2) +
-                  Math.pow(t, 3) * (o.x + r * 2.5);
-        const y = Math.pow(1-t, 3) * o.y +
-                  3 * Math.pow(1-t, 2) * t * (o.y + r * 2.5) +
-                  3 * (1-t) * Math.pow(t,  2) * (o.y + r * 2.5) +
-                  Math.pow(t, 3) * o.y;
+      for (let i = 0; i < 8; i++) {
+        const t = i / 7;
+        const x = Math.pow(1-t, 3) * startX +
+                  3 * Math.pow(1-t, 2) * t * cp1X +
+                  3 * (1-t) * Math.pow(t, 2) * cp2X +
+                  Math.pow(t, 3) * endX;
+        const y = Math.pow(1-t, 3) * startY +
+                  3 * Math.pow(1-t, 2) * t * cp1Y +
+                  3 * (1-t) * Math.pow(t, 2) * cp2Y +
+                  Math.pow(t, 3) * endY;
         
         ctx.beginPath();
-        ctx.arc(x, y, r * 0.15, 0, Math.PI * 2);
+        ctx.arc(x, y, r * 0.2, 0, Math.PI * 2);
         ctx.fill();
       }
+      
       ctx.restore();
     }
   }
 
-  // Santa - UPGRADED: More details and smoother shape
+  // UPGRADED SANTA: Detailed cartoon illustration
   function drawSanta(x, y) {
-    ctx.fillStyle = '#000';
     ctx.save();
-    ctx.fillRect(x - 24, y - 3, 48, 8);
     
-    // Body (red coat with rounded rectangular shape)
+    // Shadow under Santa
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 5, 26, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // FEET/BOOTS (black)
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(x - 12, y - 2, 8, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x + 12, y - 2, 8, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // BODY (red coat)
     ctx.fillStyle = '#d32f2f';
     ctx.beginPath();
-    ctx.ellipse(x, y, 24, 28, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x - 6, y - 4, 12, 10);
-    ctx.fillStyle = '#ffd700';
-    ctx.beginPath();
-    ctx.arc(x, y - 22, 16, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(x - 5, y - 24, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + 5, y - 24, 2, 0, Math.PI * 2);
+    ctx.ellipse(x, y - 18, 22, 26, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Fluffy white beard (multiple overlapping circles)
+    // White coat trim (bottom)
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.arc(x, y - 14, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x - 8, y - 16, 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + 8, y - 16, 7, 0, Math.PI * 2);
+    ctx.ellipse(x, y - 5, 23, 6, 0, 0, Math.PI);
     ctx.fill();
     
+    // ARMS (red, rounded)
+    // Left arm
+    ctx.fillStyle = '#c62828';
+    ctx.beginPath();
+    ctx.ellipse(x - 20, y - 15, 7, 18, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Right arm
+    ctx.beginPath();
+    ctx.ellipse(x + 20, y - 15, 7, 18, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // HANDS (peach colored mittens)
+    ctx.fillStyle = '#ffcc99';
+    ctx.beginPath();
+    ctx.arc(x - 22, y - 3, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 22, y - 3, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // BELT (black with gold buckle)
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 22, y - 12, 44, 8);
+    
+    // Gold buckle
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(x - 6, y - 11, 12, 6);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 4, y - 10, 8, 4);
+    
+    // HEAD (peach face)
+    ctx.fillStyle = '#ffcc99';
+    ctx.beginPath();
+    ctx.arc(x, y - 35, 14, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // BEARD (fluffy white, multiple circles)
+    ctx.fillStyle = '#fff';
+    // Main beard body
+    ctx.beginPath();
+    ctx.arc(x, y - 28, 11, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Left beard puff
+    ctx.beginPath();
+    ctx.arc(x - 9, y - 30, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Right beard puff
+    ctx.beginPath();
+    ctx.arc(x + 9, y - 30, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Bottom beard puffs
+    ctx.beginPath();
+    ctx.arc(x - 6, y - 24, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 6, y - 24, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y - 23, 7, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // EYES (small black dots)
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(x - 5, y - 37, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 5, y - 37, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // NOSE (red round nose)
+    ctx.fillStyle = '#ff6b6b';
+    ctx.beginPath();
+    ctx.arc(x, y - 33, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // HAT (red floppy Santa hat)
     ctx.fillStyle = '#d32f2f';
     ctx.beginPath();
-    ctx.moveTo(x - 10, y - 10);
-    ctx.lineTo(x - 14, y - 28);
-    ctx.lineTo(x + 14, y - 28);
-    ctx.lineTo(x + 10, y - 10);
+    ctx.moveTo(x - 15, y - 42);
+    // Floppy curved top
+    ctx.quadraticCurveTo(x - 8, y - 60, x + 5, y - 65);
+    ctx.lineTo(x + 15, y - 42);
     ctx.closePath();
     ctx.fill();
     
-    // Hat (droopy red cap)
-    ctx.fillStyle = '#d32f2f';
+    // White hat brim
+    ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.moveTo(x - 16, y - 28);
-    ctx.quadraticCurveTo(x - 8, y - 50, x + 4, y - 56);
-    ctx.lineTo(x + 16, y - 28);
+    ctx.ellipse(x, y - 42, 16, 4, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // White hat trim
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(x - 16, y - 30, 32, 4);
-    
-    // White pom-pom at tip
+    // White pom-pom at hat tip
     ctx.beginPath();
-    ctx.arc(x + 4, y - 56, 6, 0, Math.PI * 2);
+    ctx.arc(x + 5, y - 65, 5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add shine to pom-pom
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.arc(x + 3, y - 67, 2, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();
   }
 
-  // --- Input (keep mobile double-shot fix) ---
-  function move(x){ player.x = Math.max(30, Math.min(W-30, x)); }
-  
-  window.addEventListener('mousemove', e => {
-    if (gameState !== 'MENU') move(e.clientX);
-  });
-  
-  window.addEventListener('mousedown', e => {
-    if (gameState !== 'MENU' && e.target.tagName !== 'BUTTON'){
-      shoot(e.clientY);
-    }
-  });
-  
-  window.addEventListener('touchstart', e => {
-    if (gameState !== 'MENU' && e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target) && !menuOverlay.contains(e.target)){
-      move(e.touches[0].clientX);
-      shoot(e.touches[0].clientY);
-      e.preventDefault(); // mobile double-shot fix
-    }
-  }, {passive:false});
-  
-  window.addEventListener('touchmove', e => {
-    // Allow scrolling inside shop modal
-    if (e.target.closest('#shopModal')) return;
-    
-    if (gameState !== 'MENU'){
-      move(e.touches[0].clientX);
-      e.preventDefault();
-    }
-  }, {passive:false});
+  // --- Quick Switch Buttons (sidebar) ---
+  const itemEmojis = {
+    ball: '🔴',
+    candy: '🍭',
+    light: '💡',
+    candle: '🕯️',
+    garland: '🎀',
+    glitter: '✨'
+  };
 
-  // --- Cheat Code: Add click listener to money display ---
-  moneyText.style.cursor = 'pointer';
-  moneyText.style.transition = 'transform 0.2s';
-  moneyText.addEventListener('click', (e) => {
-    e.stopPropagation();
-    cheatClicks++;
+  function renderQuickBar() {
+    // Clear existing buttons
+    quickBar.innerHTML = '';
     
-    // Reset timer
-    if (cheatTimer) clearTimeout(cheatTimer);
-    cheatTimer = setTimeout(() => { cheatClicks = 0; }, 2000);
+    // Define ornament types in order
+    const ornamentTypes = ['ball', 'candy', 'light', 'candle', 'garland', 'glitter'];
     
-    // Check if 7 clicks reached
-    if (cheatClicks >= 7) {
-      money += 1000;
-      cheatClicks = 0;
-      playSound('buy');
+    ornamentTypes.forEach((type) => {
+      // Only show if unlocked (standard/ball is always unlocked)
+      const unlockKey = type === 'ball' ? 'standard' : type;
+      if (!unlocked[unlockKey]) return;
       
-      const t = translations[currentLang];
-      moneyText.innerText = '💰 ' + money + ' ' + t.money;
-      checkButtons();
-      updateShopUI();
+      const btn = document.createElement('div');
+      btn.className = 'quick-btn';
       
-      // Visual feedback
-      moneyText.style.transform = 'scale(1.2)';
-      setTimeout(() => { moneyText.style.transform = 'scale(1)'; }, 200);
-    }
-  });
-
-  // --- UI interactions ---
-  document.getElementById('resetBtn').onclick = () => { 
-    ornaments = []; 
-    bullets = []; 
-    ghostTargets = []; 
-  };
-  
-  document.getElementById('shopBtn').onclick = () => toggleShop(true);
-  
-  menuBtn.onclick = ()=>{ 
-    gameState = 'MENU'; 
-    menuOverlay.style.display = 'flex'; 
-    bullets = []; 
-  };
-  
-  startCreative.onclick = ()=>{ 
-    gameState='CREATIVE'; 
-    menuOverlay.style.display='none'; 
-    ornaments = []; 
-    bullets = []; 
-    ghostTargets = []; 
-    toggleShop(false); 
-  };
-  
-  startMission.onclick = ()=>{ 
-    gameState='MISSION'; 
-    menuOverlay.style.display='none'; 
-    ornaments = []; 
-    bullets = []; 
-    missionLevel = 1; 
-    spawnTargets(missionLevel); 
-    toggleShop(false); 
-  };
-  
-  tabItems.onclick = ()=>{ 
-    tabItems.classList.add('active'); 
-    tabBackgrounds.classList.remove('active'); 
-    shopItemsDiv.classList.remove('hidden'); 
-    shopBackgroundsDiv.classList.add('hidden'); 
-  };
-  
-  tabBackgrounds.onclick = ()=>{ 
-    tabBackgrounds.classList.add('active'); 
-    tabItems.classList.remove('active'); 
-    shopBackgroundsDiv.classList.remove('hidden'); 
-    shopItemsDiv.classList.add('hidden'); 
-  };
-
-  factoryResetBtn.onclick = factoryReset;
-
-  // --- Factory Reset Function ---
-  function factoryReset() {
-    const t = translations[currentLang];
-    if (!confirm(t.resetAllConfirm)) return;
-    if (!confirm(t.resetAllConfirm2)) return;
-    
-    // Reset all progress
-    money = 0;
-    unlocked = { 
-      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
-      garland: false, glitter: false,
-      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
-    };
-    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
-    activeThrowType = 'ball';
-    activeBackground = 'bg_day'; 
-    ornaments = [];
-    bullets = [];
-    ghostTargets = [];
-    missionLevel = 1;
-    
-    checkButtons();
-    updateShopUI();
-    updateLanguage();
+      // Add active class if this is the current active throw type
+      if (activeThrowType === type) {
+        btn.classList.add('active');
+      }
+      
+      // Set emoji
+      btn.innerHTML = itemEmojis[type];
+      
+      // Click handler
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        activeThrowType = type;
+        renderQuickBar(); // Re-render to update active state
+        updateShopUI(); // Update shop buttons too
+      };
+      
+      // Touch support
+      btn.ontouchstart = (e) => {
+        e.stopPropagation();
+      };
+      
+      quickBar.appendChild(btn);
+    });
   }
 
   // Start
   resize();
   updateLanguage();
+  renderQuickBar(); // Initial render of quick bar
   function loop(){ update(); draw(); requestAnimationFrame(loop); }
   loop();
 
