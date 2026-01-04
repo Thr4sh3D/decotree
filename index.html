@@ -99,6 +99,15 @@
 
   /* small helpers for stars */
   .hidden { display:none; }
+
+  /* Language selector */
+  .lang-selector {
+    position: absolute; top: 10px; right: 10px;
+  }
+  .lang-selector select {
+    padding: 6px 10px; border-radius: 8px; border: 1px solid #ddd;
+    background: white; font-size: 13px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -123,8 +132,22 @@
 <!-- Main Menu overlay -->
 <div id="menuOverlay">
   <div class="menu-card">
-    <h1>DecoTree</h1>
-    <p>Välj spelläge</p>
+    <div class="lang-selector">
+      <select id="langSelect">
+        <option value="sv">🇸🇪 Svenska</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="pt">🇵🇹 Português</option>
+        <option value="it">🇮🇹 Italiano</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="ja">🇯🇵 日本語</option>
+      </select>
+    </div>
+    <h1 id="menuTitle">DecoTree</h1>
+    <p id="menuSubtitle">Välj spelläge</p>
     <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Fritt Skapande</button>
     <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag</button>
   </div>
@@ -132,7 +155,7 @@
 
 <div id="shopModal">
   <div class="shop-content">
-    <h2 style="margin-top:0; color:#333">Jul-Butiken</h2>
+    <h2 id="shopTitle" style="margin-top:0; color:#333">Jul-Butiken</h2>
 
     <div class="shop-tabs">
       <div id="tabItems" class="shop-tab active">Föremål</div>
@@ -140,56 +163,62 @@
     </div>
 
     <div id="shopItems">
-      <p>Köp nya färger & ornament till dina kulor!</p>
+      <p id="shopItemsDesc">Köp nya färger & ornament till dina kulor!</p>
+      
       <div class="shop-item">
-        <div><b>Guld & Silver</b><br><span style="font-size:12px">Glittrande metallic</span></div>
+        <div><b id="itemStandardName">Standard Kula</b><br><span id="itemStandardDesc" style="font-size:12px">Röd julkula (Gratis)</span></div>
+        <button class="buy-btn" id="buyStandard" onclick="buyPack('standard', 0)">Fri</button>
+      </div>
+      
+      <div class="shop-item">
+        <div><b id="itemGoldName">Guld & Silver</b><br><span id="itemGoldDesc" style="font-size:12px">Glittrande metallic</span></div>
         <button class="buy-btn" id="buyGold" onclick="buyPack('gold', 100)">100 kr</button>
       </div>
 
       <div class="shop-item">
-        <div><b>Diamant</b><br><span style="font-size:12px">Blå/Lila kristaller</span></div>
+        <div><b id="itemDiamondName">Diamant</b><br><span id="itemDiamondDesc" style="font-size:12px">Blå/Lila kristaller</span></div>
         <button class="buy-btn" id="buyDiamond" onclick="buyPack('diamond', 500)">500 kr</button>
       </div>
 
       <hr style="border:none; height:1px; background:#eee; margin:10px 0;">
 
       <div class="shop-item">
-        <div><b>Polkagris</b><br><span style="font-size:12px">Randig polkagris</span></div>
+        <div><b id="itemCandyName">Polkagris</b><br><span id="itemCandyDesc" style="font-size:12px">Randig polkagris</span></div>
         <button class="buy-btn" id="buyCandy" onclick="buyPack('candy', 50)">50 kr</button>
       </div>
 
       <div class="shop-item">
-        <div><b>Ljusslinga</b><br><span style="font-size:12px">Glittrande ljus</span></div>
+        <div><b id="itemLightName">Ljusslinga</b><br><span id="itemLightDesc" style="font-size:12px">Glittrande ljus</span></div>
         <button class="buy-btn" id="buyLight" onclick="buyPack('light', 150)">150 kr</button>
       </div>
 
       <div class="shop-item">
-        <div><b>Ljus</b><br><span style="font-size:12px">Vitt ljus med låga</span></div>
+        <div><b id="itemCandleName">Ljus</b><br><span id="itemCandleDesc" style="font-size:12px">Vitt ljus med låga</span></div>
         <button class="buy-btn" id="buyCandle" onclick="buyPack('candle', 300)">300 kr</button>
       </div>
     </div>
 
     <div id="shopBackgrounds" class="hidden">
-      <p>Köp bakgrunder</p>
+      <p id="shopBgDesc">Köp bakgrunder</p>
       <div class="shop-item">
-        <div><b>Dag</b><br><span style="font-size:12px">Standard (Gratis)</span></div>
+        <div><b id="bgDayName">Dag</b><br><span id="bgDayDesc" style="font-size:12px">Standard (Gratis)</span></div>
         <button class="buy-btn" id="buyBg_day" onclick="buyPack('bg_day', 0)">Fri</button>
       </div>
       <div class="shop-item">
-        <div><b>Natt</b><br><span style="font-size:12px">Mörk himmel med stjärnor</span></div>
+        <div><b id="bgNightName">Natt</b><br><span id="bgNightDesc" style="font-size:12px">Mörk himmel med stjärnor</span></div>
         <button class="buy-btn" id="buyBg_night" onclick="buyPack('bg_night', 100)">100 kr</button>
       </div>
       <div class="shop-item">
-        <div><b>Norrsken</b><br><span style="font-size:12px">Lila/Grönt</span></div>
+        <div><b id="bgAuroraName">Norrsken</b><br><span id="bgAuroraDesc" style="font-size:12px">Lila/Grönt</span></div>
         <button class="buy-btn" id="buyBg_aurora" onclick="buyPack('bg_aurora', 300)">300 kr</button>
       </div>
       <div class="shop-item">
-        <div><b>Solnedgång</b><br><span style="font-size:12px">Orange/Rosa/Lila</span></div>
+        <div><b id="bgSunsetName">Solnedgång</b><br><span id="bgSunsetDesc" style="font-size:12px">Orange/Rosa/Lila</span></div>
         <button class="buy-btn" id="buyBg_sunset" onclick="buyPack('bg_sunset', 500)">500 kr</button>
       </div>
     </div>
 
-    <button class="close-btn" onclick="toggleShop(false)">Stäng</button>
+    <button class="close-btn" id="shopCloseBtn" onclick="toggleShop(false)">Stäng</button>
   </div>
 </div>
 
@@ -213,6 +242,7 @@
   const tabBackgrounds = document.getElementById('tabBackgrounds');
   const shopItemsDiv = document.getElementById('shopItems');
   const shopBackgroundsDiv = document.getElementById('shopBackgrounds');
+  const langSelect = document.getElementById('langSelect');
 
   // Game state
   let W, H;
@@ -222,28 +252,284 @@
   let ornaments = [];
   let bullets = [];
   let snowflakes = [];
-
   let gameState = 'MENU';
   let ghostTargets = [];
   let missionLevel = 1;
 
   // Färger och items
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
-  let unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false,
-                   bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false };
+  let unlocked = { 
+    standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+    bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
+  };
 
-  // active settings
-  let activeThrowType = 'ball'; // 'ball'|'candy'|'light'|'candle'
-  let activeBackground = 'bg_day'; // background id
+  let activeThrowType = 'ball';
+  let activeBackground = 'bg_day';
+  let currentLang = 'sv';
 
-  // Background definitions
   const backgrounds = {
-    bg_day: { id:'bg_day', name:'Dag', price:0, colors:[{p:0,c:'#eaf6ff'},{p:1,c:'#ffffff'}] },
-    bg_night: { id:'bg_night', name:'Natt', price:100, colors:[{p:0,c:'#001022'},{p:1,c:'#000010'}] },
-    bg_aurora: { id:'bg_aurora', name:'Norrsken', price:300, colors:[{p:0,c:'#311b63'},{p:0.6,c:'#5eead4'},{p:1,c:'#0f172a'}] },
-    bg_sunset: { id:'bg_sunset', name:'Solnedgång', price:500, colors:[{p:0,c:'#ff7e5f'},{p:0.6,c:'#fbd786'},{p:1,c:'#c94b4b'}] }
+    bg_day: { id:'bg_day', price:0, colors:[{p:0,c:'#eaf6ff'},{p:1,c:'#ffffff'}] },
+    bg_night: { id:'bg_night', price:100, colors:[{p:0,c:'#001022'},{p:1,c:'#000010'}] },
+    bg_aurora: { id:'bg_aurora', price:300, colors:[{p:0,c:'#311b63'},{p:0.6,c:'#5eead4'},{p:1,c:'#0f172a'}] },
+    bg_sunset: { id:'bg_sunset', price:500, colors:[{p:0,c:'#ff7e5f'},{p:0.6,c:'#fbd786'},{p:1,c:'#c94b4b'}] }
   };
   let stars = [];
+
+  // --- 10-Language System ---
+  const translations = {
+    sv: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Välj spelläge',
+      creative: 'Fritt Skapande', mission: 'Uppdrag',
+      ornaments: 'Kulor', money: 'kr',
+      reset: 'Rensa', shop: 'Affär', menu: 'Meny',
+      shopTitle: 'Jul-Butiken', shopItemsDesc: 'Köp nya färger & ornament!',
+      items: 'Föremål', backgrounds: 'Bakgrunder', close: 'Stäng',
+      buy: 'Köp', equip: 'Välj', equipped: 'Vald', free: 'Fri',
+      shopBgDesc: 'Köp bakgrunder',
+      itemStandard: 'Standard Kula', itemStandardDesc: 'Röd julkula (Gratis)',
+      itemGold: 'Guld & Silver', itemGoldDesc: 'Glittrande metallic',
+      itemDiamond: 'Diamant', itemDiamondDesc: 'Blå/Lila kristaller',
+      itemCandy: 'Polkagris', itemCandyDesc: 'Randig polkagris',
+      itemLight: 'Ljusslinga', itemLightDesc: 'Glittrande ljus',
+      itemCandle: 'Ljus', itemCandleDesc: 'Vitt ljus med låga',
+      bgDay: 'Dag', bgDayDesc: 'Standard (Gratis)',
+      bgNight: 'Natt', bgNightDesc: 'Mörk himmel med stjärnor',
+      bgAurora: 'Norrsken', bgAuroraDesc: 'Lila/Grönt',
+      bgSunset: 'Solnedgång', bgSunsetDesc: 'Orange/Rosa/Lila'
+    },
+    en: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Choose game mode',
+      creative: 'Free Creative', mission: 'Missions',
+      ornaments: 'Ornaments', money: 'kr',
+      reset: 'Clear', shop: 'Shop', menu: 'Menu',
+      shopTitle: 'Christmas Shop', shopItemsDesc: 'Buy new colors & ornaments!',
+      items: 'Items', backgrounds: 'Backgrounds', close: 'Close',
+      buy: 'Buy', equip: 'Equip', equipped: 'Equipped', free: 'Free',
+      shopBgDesc: 'Buy backgrounds',
+      itemStandard: 'Standard Ball', itemStandardDesc: 'Red Christmas ball (Free)',
+      itemGold: 'Gold & Silver', itemGoldDesc: 'Shiny metallic',
+      itemDiamond: 'Diamond', itemDiamondDesc: 'Blue/Purple crystals',
+      itemCandy: 'Candy Cane', itemCandyDesc: 'Striped candy',
+      itemLight: 'Lights', itemLightDesc: 'Glowing bulbs',
+      itemCandle: 'Candle', itemCandleDesc: 'White candle with flame',
+      bgDay: 'Day', bgDayDesc: 'Default (Free)',
+      bgNight: 'Night', bgNightDesc: 'Dark sky with stars',
+      bgAurora: 'Aurora', bgAuroraDesc: 'Purple/Green',
+      bgSunset: 'Sunset', bgSunsetDesc: 'Orange/Pink/Purple'
+    },
+    es: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Elige modo de juego',
+      creative: 'Creativo Libre', mission: 'Misiones',
+      ornaments: 'Adornos', money: 'kr',
+      reset: 'Limpiar', shop: 'Tienda', menu: 'Menú',
+      shopTitle: 'Tienda Navideña', shopItemsDesc: '¡Compra nuevos colores y adornos!',
+      items: 'Artículos', backgrounds: 'Fondos', close: 'Cerrar',
+      buy: 'Comprar', equip: 'Equipar', equipped: 'Equipado', free: 'Gratis',
+      shopBgDesc: 'Comprar fondos',
+      itemStandard: 'Bola Estándar', itemStandardDesc: 'Bola navideña roja (Gratis)',
+      itemGold: 'Oro y Plata', itemGoldDesc: 'Metálico brillante',
+      itemDiamond: 'Diamante', itemDiamondDesc: 'Cristales azul/morado',
+      itemCandy: 'Bastón de Caramelo', itemCandyDesc: 'Caramelo rayado',
+      itemLight: 'Luces', itemLightDesc: 'Bombillas brillantes',
+      itemCandle: 'Vela', itemCandleDesc: 'Vela blanca con llama',
+      bgDay: 'Día', bgDayDesc: 'Predeterminado (Gratis)',
+      bgNight: 'Noche', bgNightDesc: 'Cielo oscuro con estrellas',
+      bgAurora: 'Aurora', bgAuroraDesc: 'Morado/Verde',
+      bgSunset: 'Atardecer', bgSunsetDesc: 'Naranja/Rosa/Morado'
+    },
+    fr: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Choisir le mode',
+      creative: 'Créatif Libre', mission: 'Missions',
+      ornaments: 'Décorations', money: 'kr',
+      reset: 'Effacer', shop: 'Boutique', menu: 'Menu',
+      shopTitle: 'Boutique de Noël', shopItemsDesc: 'Achetez de nouvelles couleurs!',
+      items: 'Articles', backgrounds: 'Arrière-plans', close: 'Fermer',
+      buy: 'Acheter', equip: 'Équiper', equipped: 'Équipé', free: 'Gratuit',
+      shopBgDesc: 'Acheter des arrière-plans',
+      itemStandard: 'Boule Standard', itemStandardDesc: 'Boule de Noël rouge (Gratuit)',
+      itemGold: 'Or et Argent', itemGoldDesc: 'Métallique brillant',
+      itemDiamond: 'Diamant', itemDiamondDesc: 'Cristaux bleu/violet',
+      itemCandy: 'Canne de Bonbon', itemCandyDesc: 'Bonbon rayé',
+      itemLight: 'Lumières', itemLightDesc: 'Ampoules brillantes',
+      itemCandle: 'Bougie', itemCandleDesc: 'Bougie blanche avec flamme',
+      bgDay: 'Jour', bgDayDesc: 'Par défaut (Gratuit)',
+      bgNight: 'Nuit', bgNightDesc: 'Ciel sombre avec étoiles',
+      bgAurora: 'Aurore', bgAuroraDesc: 'Violet/Vert',
+      bgSunset: 'Coucher de soleil', bgSunsetDesc: 'Orange/Rose/Violet'
+    },
+    de: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Spielmodus wählen',
+      creative: 'Freies Kreativ', mission: 'Missionen',
+      ornaments: 'Schmuck', money: 'kr',
+      reset: 'Löschen', shop: 'Geschäft', menu: 'Menü',
+      shopTitle: 'Weihnachtsshop', shopItemsDesc: 'Kaufe neue Farben und Schmuck!',
+      items: 'Artikel', backgrounds: 'Hintergründe', close: 'Schließen',
+      buy: 'Kaufen', equip: 'Ausrüsten', equipped: 'Ausgerüstet', free: 'Kostenlos',
+      shopBgDesc: 'Hintergründe kaufen',
+      itemStandard: 'Standard Kugel', itemStandardDesc: 'Rote Weihnachtskugel (Kostenlos)',
+      itemGold: 'Gold & Silber', itemGoldDesc: 'Glänzend metallisch',
+      itemDiamond: 'Diamant', itemDiamondDesc: 'Blau/Lila Kristalle',
+      itemCandy: 'Zuckerstange', itemCandyDesc: 'Gestreifte Süßigkeit',
+      itemLight: 'Lichter', itemLightDesc: 'Leuchtende Glühbirnen',
+      itemCandle: 'Kerze', itemCandleDesc: 'Weiße Kerze mit Flamme',
+      bgDay: 'Tag', bgDayDesc: 'Standard (Kostenlos)',
+      bgNight: 'Nacht', bgNightDesc: 'Dunkler Himmel mit Sternen',
+      bgAurora: 'Aurora', bgAuroraDesc: 'Lila/Grün',
+      bgSunset: 'Sonnenuntergang', bgSunsetDesc: 'Orange/Rosa/Lila'
+    },
+    pt: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Escolha o modo',
+      creative: 'Criativo Livre', mission: 'Missões',
+      ornaments: 'Enfeites', money: 'kr',
+      reset: 'Limpar', shop: 'Loja', menu: 'Menu',
+      shopTitle: 'Loja de Natal', shopItemsDesc: 'Compre novas cores e enfeites!',
+      items: 'Itens', backgrounds: 'Fundos', close: 'Fechar',
+      buy: 'Comprar', equip: 'Equipar', equipped: 'Equipado', free: 'Grátis',
+      shopBgDesc: 'Comprar fundos',
+      itemStandard: 'Bola Padrão', itemStandardDesc: 'Bola de Natal vermelha (Grátis)',
+      itemGold: 'Ouro e Prata', itemGoldDesc: 'Metálico brilhante',
+      itemDiamond: 'Diamante', itemDiamondDesc: 'Cristais azul/roxo',
+      itemCandy: 'Bengala de Doce', itemCandyDesc: 'Doce listrado',
+      itemLight: 'Luzes', itemLightDesc: 'Lâmpadas brilhantes',
+      itemCandle: 'Vela', itemCandleDesc: 'Vela branca com chama',
+      bgDay: 'Dia', bgDayDesc: 'Padrão (Grátis)',
+      bgNight: 'Noite', bgNightDesc: 'Céu escuro com estrelas',
+      bgAurora: 'Aurora', bgAuroraDesc: 'Roxo/Verde',
+      bgSunset: 'Pôr do Sol', bgSunsetDesc: 'Laranja/Rosa/Roxo'
+    },
+    it: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Scegli modalità',
+      creative: 'Creativo Libero', mission: 'Missioni',
+      ornaments: 'Decorazioni', money: 'kr',
+      reset: 'Cancella', shop: 'Negozio', menu: 'Menu',
+      shopTitle: 'Negozio di Natale', shopItemsDesc: 'Compra nuovi colori e decorazioni!',
+      items: 'Articoli', backgrounds: 'Sfondi', close: 'Chiudi',
+      buy: 'Comprare', equip: 'Equipaggiare', equipped: 'Equipaggiato', free: 'Gratuito',
+      shopBgDesc: 'Comprare sfondi',
+      itemStandard: 'Palla Standard', itemStandardDesc: 'Palla di Natale rossa (Gratuito)',
+      itemGold: 'Oro e Argento', itemGoldDesc: 'Metallico lucido',
+      itemDiamond: 'Diamante', itemDiamondDesc: 'Cristalli blu/viola',
+      itemCandy: 'Bastoncino di Zucchero', itemCandyDesc: 'Caramella a strisce',
+      itemLight: 'Luci', itemLightDesc: 'Lampadine luminose',
+      itemCandle: 'Candela', itemCandleDesc: 'Candela bianca con fiamma',
+      bgDay: 'Giorno', bgDayDesc: 'Predefinito (Gratuito)',
+      bgNight: 'Notte', bgNightDesc: 'Cielo scuro con stelle',
+      bgAurora: 'Aurora', bgAuroraDesc: 'Viola/Verde',
+      bgSunset: 'Tramonto', bgSunsetDesc: 'Arancione/Rosa/Viola'
+    },
+    ru: {
+      menuTitle: 'DecoTree', menuSubtitle: 'Выберите режим',
+      creative: 'Свободное творчество', mission: 'Миссии',
+      ornaments: 'Украшения', money: 'кр',
+      reset: 'Очистить', shop: 'Магазин', menu: 'Меню',
+      shopTitle: 'Рождественский магазин', shopItemsDesc: 'Купите новые цвета и украшения!',
+      items: 'Предметы', backgrounds: 'Фоны', close: 'Закрыть',
+      buy: 'Купить', equip: 'Экипировать', equipped: 'Экипировано', free: 'Бесплатно',
+      shopBgDesc: 'Купить фоны',
+      itemStandard: 'Стандартный шар', itemStandardDesc: 'Красный рождественский шар (Бесплатно)',
+      itemGold: 'Золото и серебро', itemGoldDesc: 'Блестящий металлик',
+      itemDiamond: 'Алмаз', itemDiamondDesc: 'Синие/фиолетовые кристаллы',
+      itemCandy: 'Конфетная трость', itemCandyDesc: 'Полосатая конфета',
+      itemLight: 'Огни', itemLightDesc: 'Светящиеся лампочки',
+      itemCandle: 'Свеча', itemCandleDesc: 'Белая свеча с пламенем',
+      bgDay: 'День', bgDayDesc: 'По умолчанию (Бесплатно)',
+      bgNight: 'Ночь', bgNightDesc: 'Темное небо со звездами',
+      bgAurora: 'Аврора', bgAuroraDesc: 'Фиолетовый/Зеленый',
+      bgSunset: 'Закат', bgSunsetDesc: 'Оранжевый/Розовый/Фиолетовый'
+    },
+    zh: {
+      menuTitle: 'DecoTree', menuSubtitle: '选择游戏模式',
+      creative: '自由创作', mission: '任务',
+      ornaments: '装饰品', money: '克朗',
+      reset: '清除', shop: '商店', menu: '菜单',
+      shopTitle: '圣诞商店', shopItemsDesc: '购买新颜色和装饰品！',
+      items: '物品', backgrounds: '背景', close: '关闭',
+      buy: '购买', equip: '装备', equipped: '已装备', free: '免费',
+      shopBgDesc: '购买背景',
+      itemStandard: '标准球', itemStandardDesc: '红色圣诞球（免费）',
+      itemGold: '金银', itemGoldDesc: '闪亮金属',
+      itemDiamond: '钻石', itemDiamondDesc: '蓝/紫水晶',
+      itemCandy: '拐杖糖', itemCandyDesc: '条纹糖果',
+      itemLight: '灯光', itemLightDesc: '发光灯泡',
+      itemCandle: '蜡烛', itemCandleDesc: '白色蜡烛带火焰',
+      bgDay: '白天', bgDayDesc: '默认（免费）',
+      bgNight: '夜晚', bgNightDesc: '带星星的黑暗天空',
+      bgAurora: '极光', bgAuroraDesc: '紫/绿',
+      bgSunset: '日落', bgSunsetDesc: '橙/粉/紫'
+    },
+    ja: {
+      menuTitle: 'DecoTree', menuSubtitle: 'ゲームモードを選択',
+      creative: '自由創作', mission: 'ミッション',
+      ornaments: '飾り', money: 'クローナ',
+      reset: 'クリア', shop: 'ショップ', menu: 'メニュー',
+      shopTitle: 'クリスマスショップ', shopItemsDesc: '新しい色と飾りを購入！',
+      items: 'アイテム', backgrounds: '背景', close: '閉じる',
+      buy: '購入', equip: '装備', equipped: '装備済み', free: '無料',
+      shopBgDesc: '背景を購入',
+      itemStandard: 'スタンダードボール', itemStandardDesc: '赤いクリスマスボール（無料）',
+      itemGold: 'ゴールド＆シルバー', itemGoldDesc: '輝くメタリック',
+      itemDiamond: 'ダイヤモンド', itemDiamondDesc: '青/紫のクリスタル',
+      itemCandy: 'キャンディケイン', itemCandyDesc: 'ストライプキャンディ',
+      itemLight: 'ライト', itemLightDesc: '光る電球',
+      itemCandle: 'キャンドル', itemCandleDesc: '白いキャンドルと炎',
+      bgDay: '昼', bgDayDesc: 'デフォルト（無料）',
+      bgNight: '夜', bgNightDesc: '星空',
+      bgAurora: 'オーロラ', bgAuroraDesc: '紫/緑',
+      bgSunset: '夕焼け', bgSunsetDesc: 'オレンジ/ピンク/紫'
+    }
+  };
+
+  function updateLanguage() {
+    const t = translations[currentLang];
+    document.getElementById('menuTitle').innerText = t.menuTitle;
+    document.getElementById('menuSubtitle').innerText = t.menuSubtitle;
+    startCreative.innerText = t.creative;
+    startMission.innerText = t.mission;
+    menuBtn.innerText = t.menu;
+    document.getElementById('resetBtn').innerText = t.reset;
+    document.getElementById('shopBtn').innerText = '🏪 ' + t.shop;
+    document.getElementById('shopTitle').innerText = t.shopTitle;
+    document.getElementById('shopItemsDesc').innerText = t.shopItemsDesc;
+    document.getElementById('shopBgDesc').innerText = t.shopBgDesc;
+    tabItems.innerText = t.items;
+    tabBackgrounds.innerText = t.backgrounds;
+    document.getElementById('shopCloseBtn').innerText = t.close;
+    
+    // Item names/descriptions
+    document.getElementById('itemStandardName').innerText = t.itemStandard;
+    document.getElementById('itemStandardDesc').innerText = t.itemStandardDesc;
+    document.getElementById('itemGoldName').innerText = t.itemGold;
+    document.getElementById('itemGoldDesc').innerText = t.itemGoldDesc;
+    document.getElementById('itemDiamondName').innerText = t.itemDiamond;
+    document.getElementById('itemDiamondDesc').innerText = t.itemDiamondDesc;
+    document.getElementById('itemCandyName').innerText = t.itemCandy;
+    document.getElementById('itemCandyDesc').innerText = t.itemCandyDesc;
+    document.getElementById('itemLightName').innerText = t.itemLight;
+    document.getElementById('itemLightDesc').innerText = t.itemLightDesc;
+    document.getElementById('itemCandleName').innerText = t.itemCandle;
+    document.getElementById('itemCandleDesc').innerText = t.itemCandleDesc;
+    
+    document.getElementById('bgDayName').innerText = t.bgDay;
+    document.getElementById('bgDayDesc').innerText = t.bgDayDesc;
+    document.getElementById('bgNightName').innerText = t.bgNight;
+    document.getElementById('bgNightDesc').innerText = t.bgNightDesc;
+    document.getElementById('bgAuroraName').innerText = t.bgAurora;
+    document.getElementById('bgAuroraDesc').innerText = t.bgAuroraDesc;
+    document.getElementById('bgSunsetName').innerText = t.bgSunset;
+    document.getElementById('bgSunsetDesc').innerText = t.bgSunsetDesc;
+    
+    // Update score/money text
+    scoreText.innerText = '🎄 ' + t.ornaments + ': ' + ornaments.length;
+    moneyText.innerText = '💰 ' + money + ' ' + t.money;
+    
+    // Update all shop buttons
+    updateShopUI();
+  }
+
+  langSelect.addEventListener('change', ()=>{
+    currentLang = langSelect.value;
+    updateLanguage();
+  });
 
   // --- Audio (same as before) ---
   let audioCtx = null, masterGain = null, noiseBuffer = null, isMuted = false;
@@ -370,170 +656,225 @@
   }
 
   function shoot(targetY){
-    // FIX: Ensure we always create a NEW object
     const color = (activeThrowType === 'ball') ? activePalette[Math.floor(Math.random()*activePalette.length)]
                   : (activeThrowType === 'candy') ? '#e63946'
                   : (activeThrowType === 'light') ? '#fff'
                   : (activeThrowType === 'candle') ? '#ffffff'
                   : '#fff';
     
-    const newBullet = {
-      x: player.x,
-      y: player.y - 45,
-      targetY: targetY,
-      speed: 15,
-      r: Math.random()*5 + 8,
-      color: color,
-      type: activeThrowType
-    };
-    
-    bullets.push(newBullet); // CRITICAL: Push new object every time
+    bullets.push({
+      x: player.x, y: player.y - 45, targetY: targetY, speed: 15,
+      r: Math.random()*5 + 8, color: color, type: activeThrowType
+    });
     playSound('shoot');
   }
 
   function update(){
-    if (gameState === 'MENU') return; // Skip updates on menu
-    
+    if (gameState === 'MENU') return;
     updateSnow();
     
-    // OPTIMIZED: Process bullets with proper cleanup
     for (let i=bullets.length-1; i>=0; i--){
       const b = bullets[i];
       b.y -= b.speed;
+      if (b.y < -50){ bullets.splice(i,1); continue; }
       
-      // Check if off-screen (cleanup)
-      if (b.y < -50){
-        bullets.splice(i,1);
-        continue;
-      }
-      
-      // Check if reached target Y
       if (b.y <= b.targetY){
         let hit = false;
-        
-        // Check tree collision
-        for (const t of tree.tiers){
-          if (isInside(b.x, b.y, t)){
-            hit = true;
-            break;
-          }
-        }
+        for (const t of tree.tiers){ if (isInside(b.x, b.y, t)){ hit = true; break; } }
         
         if (hit){
-          // MISSION MODE: Check for ghost target hit
           if (gameState === 'MISSION'){
             const idx = findTargetAt(b.x, b.y);
             if (idx !== -1){
-              // Hit a target!
               const target = ghostTargets[idx];
-              ornaments.push({
-                x: target.x,
-                y: target.y,
-                r: b.r,
-                color: b.color,
-                type: b.type
-              });
-              
-              ghostTargets.splice(idx, 1); // Remove target
-              
-              playSound('stick');
-              money += 5;
-              playSound('money');
-              
-              checkButtons();
-              updateShopUI();
-              
-              // Level up if all targets cleared
-              if (ghostTargets.length === 0){
-                missionLevel++;
-                spawnTargets(missionLevel);
-              }
-              
-              bullets.splice(i, 1);
-              continue;
+              ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
+              ghostTargets.splice(idx, 1);
+              playSound('stick'); money += 5; playSound('money');
+              checkButtons(); updateShopUI();
+              if (ghostTargets.length === 0){ missionLevel++; spawnTargets(missionLevel); }
+              bullets.splice(i, 1); continue;
             }
           }
-          
-          // Normal placement (creative or mission miss)
-          ornaments.push({
-            x: b.x,
-            y: b.y,
-            r: b.r,
-            color: b.color,
-            type: b.type
-          });
+          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
           playSound('stick');
-          
-          // No money in creative, no money for mission misses
         }
-        
-        // Remove bullet after processing
         bullets.splice(i, 1);
       }
     }
     
-    scoreText.innerText = '🎄 Kulor: ' + ornaments.length;
-    moneyText.innerText = '💰 ' + money + ' kr';
+    const t = translations[currentLang];
+    scoreText.innerText = '🎄 ' + t.ornaments + ': ' + ornaments.length;
+    moneyText.innerText = '💰 ' + money + ' ' + t.money;
   }
 
-  // --- Economy & Shop ---
+  // --- NEW: 3-State Shop System ---
   function checkButtons(){
-    const goldBtn = document.getElementById('buyGold');
-    const diamondBtn = document.getElementById('buyDiamond');
-    const candyBtn = document.getElementById('buyCandy');
-    const lightBtn = document.getElementById('buyLight');
-    const candleBtn = document.getElementById('buyCandle');
-    const bgNightBtn = document.getElementById('buyBg_night');
-    const bgAuroraBtn = document.getElementById('buyBg_aurora');
-    const bgSunBtn = document.getElementById('buyBg_sunset');
-
-    if (goldBtn) goldBtn.disabled = unlocked.gold ? true : (money < 100);
-    if (diamondBtn) diamondBtn.disabled = unlocked.diamond ? true : (money < 500);
-    if (candyBtn) candyBtn.disabled = unlocked.candy ? false : (money < 50);
-    if (lightBtn) lightBtn.disabled = unlocked.light ? false : (money < 150);
-    if (candleBtn) candleBtn.disabled = unlocked.candle ? false : (money < 300);
-    if (bgNightBtn) bgNightBtn.disabled = unlocked.bg_night ? false : (money < 100);
-    if (bgAuroraBtn) bgAuroraBtn.disabled = unlocked.bg_aurora ? false : (money < 300);
-    if (bgSunBtn) bgSunBtn.disabled = unlocked.bg_sunset ? false : (money < 500);
+    const itemMap = [
+      ['buyStandard','standard',0],['buyGold','gold',100],['buyDiamond','diamond',500],
+      ['buyCandy','candy',50],['buyLight','light',150],['buyCandle','candle',300]
+    ];
+    const bgMap = [
+      ['buyBg_day','bg_day',0],['buyBg_night','bg_night',100],
+      ['buyBg_aurora','bg_aurora',300],['buyBg_sunset','bg_sunset',500]
+    ];
+    
+    itemMap.forEach(([btnId, type, cost])=>{
+      const btn = document.getElementById(btnId);
+      if(!btn) return;
+      if(!unlocked[type]) btn.disabled = (money < cost);
+      else btn.disabled = false;
+    });
+    
+    bgMap.forEach(([btnId, type, cost])=>{
+      const btn = document.getElementById(btnId);
+      if(!btn) return;
+      if(!unlocked[type]) btn.disabled = (money < cost);
+      else btn.disabled = false;
+    });
   }
 
   function updateShopUI(){
-    // ornament items
-    [['buyCandy','candy',50],['buyLight','light',150],['buyCandle','candle',300]].forEach(it=>{
-      const btn = document.getElementById(it[0]); if(!btn) return;
-      if (unlocked[it[1]]) { btn.innerText = (activeThrowType===it[1]) ? 'Aktiv' : 'Ägd'; btn.style.background = (activeThrowType===it[1]) ? '#ffd54d' : '#28a745'; }
-      else { btn.innerText = it[2] + ' kr'; btn.style.background = '#28a745'; }
+    const t = translations[currentLang];
+    
+    // Items (ornaments)
+    const itemMap = [
+      {id:'buyStandard', type:'standard', activeType:'ball', price:0},
+      {id:'buyCandy', type:'candy', activeType:'candy', price:50},
+      {id:'buyLight', type:'light', activeType:'light', price:150},
+      {id:'buyCandle', type:'candle', activeType:'candle', price:300}
+    ];
+    
+    itemMap.forEach(it=>{
+      const btn = document.getElementById(it.id);
+      if(!btn) return;
+      
+      if(!unlocked[it.type]){
+        // State 1: Not owned -> Buy [Price]
+        btn.innerText = t.buy + ' ' + (it.price===0 ? t.free : it.price + ' ' + t.money);
+        btn.style.background = '#28a745';
+        btn.disabled = (money < it.price);
+      } else if(activeThrowType === it.activeType){
+        // State 3: Active -> Equipped (disabled/green)
+        btn.innerText = t.equipped;
+        btn.style.background = '#ffd54d';
+        btn.disabled = true;
+      } else {
+        // State 2: Owned but inactive -> Equip
+        btn.innerText = t.equip;
+        btn.style.background = '#28a745';
+        btn.disabled = false;
+      }
     });
-    // backgrounds
-    [['buyBg_day','bg_day',0],['buyBg_night','bg_night',100],['buyBg_aurora','bg_aurora',300],['buyBg_sunset','bg_sunset',500]].forEach(it=>{
-      const btn = document.getElementById(it[0]); if(!btn) return;
-      if (unlocked[it[1]]){ btn.innerText = (activeBackground===it[1]) ? 'Aktiv' : 'Ägd'; btn.style.background = (activeBackground===it[1]) ? '#ffd54d' : '#28a745'; }
-      else { btn.innerText = (it[2]===0 ? 'Fri' : it[2] + ' kr'); btn.style.background = '#28a745'; }
+    
+    // Palettes (gold/diamond) - one-time purchases
+    const goldBtn = document.getElementById('buyGold');
+    if(goldBtn){
+      if(unlocked.gold){ goldBtn.innerText = t.equipped; goldBtn.disabled = true; goldBtn.style.background = '#ccc'; }
+      else { goldBtn.innerText = t.buy + ' 100 ' + t.money; goldBtn.disabled = (money < 100); goldBtn.style.background = '#28a745'; }
+    }
+    const diamondBtn = document.getElementById('buyDiamond');
+    if(diamondBtn){
+      if(unlocked.diamond){ diamondBtn.innerText = t.equipped; diamondBtn.disabled = true; diamondBtn.style.background = '#ccc'; }
+      else { diamondBtn.innerText = t.buy + ' 500 ' + t.money; diamondBtn.disabled = (money < 500); diamondBtn.style.background = '#28a745'; }
+    }
+    
+    // Backgrounds
+    const bgMap = [
+      {id:'buyBg_day', type:'bg_day', price:0},
+      {id:'buyBg_night', type:'bg_night', price:100},
+      {id:'buyBg_aurora', type:'bg_aurora', price:300},
+      {id:'buyBg_sunset', type:'bg_sunset', price:500}
+    ];
+    
+    bgMap.forEach(bg=>{
+      const btn = document.getElementById(bg.id);
+      if(!btn) return;
+      
+      if(!unlocked[bg.type]){
+        // Not owned -> Buy
+        btn.innerText = t.buy + ' ' + (bg.price===0 ? t.free : bg.price + ' ' + t.money);
+        btn.style.background = '#28a745';
+        btn.disabled = (money < bg.price);
+      } else if(activeBackground === bg.type){
+        // Active
+        btn.innerText = t.equipped;
+        btn.style.background = '#ffd54d';
+        btn.disabled = true;
+      } else {
+        // Owned but inactive
+        btn.innerText = t.equip;
+        btn.style.background = '#28a745';
+        btn.disabled = false;
+      }
     });
   }
 
-  window.toggleShop = (show) => { shopModal.style.display = show ? 'flex' : 'none'; checkButtons(); updateShopUI(); };
+  window.toggleShop = (show) => { 
+    shopModal.style.display = show ? 'flex' : 'none'; 
+    checkButtons(); 
+    updateShopUI(); 
+  };
 
   window.buyPack = (type, cost) => {
-    // backgrounds
+    // Backgrounds
     if (type.startsWith('bg_')){
-      if (unlocked[type]){ activeBackground = type; generateStars(); updateShopUI(); return; }
-      if (money >= cost){ money -= cost; unlocked[type] = true; activeBackground = type; playSound('buy'); playSound('money'); checkButtons(); updateShopUI(); return; }
+      if (unlocked[type]){ 
+        activeBackground = type; 
+        generateStars(); 
+        updateShopUI(); 
+        return; 
+      }
+      if (money >= cost){ 
+        money -= cost; 
+        unlocked[type] = true; 
+        activeBackground = type; 
+        playSound('buy'); 
+        checkButtons(); 
+        updateShopUI(); 
+        return; 
+      }
       return;
     }
-    // existing items & palettes
-    if (unlocked[type]){
-      if (['candy','light','candle'].includes(type)){ activeThrowType = type; updateShopUI(); }
+    
+    // Standard ornament (free, switch to ball mode)
+    if(type === 'standard'){
+      activeThrowType = 'ball';
+      updateShopUI();
       return;
     }
-    if (money >= cost){
-      money -= cost;
-      if(type === 'gold'){ unlocked.gold = true; activePalette.push('#ffd700','#c0c0c0','#DAA520','#E5E4E2'); document.getElementById('buyGold').innerText = "Köpt!"; document.getElementById('buyGold').disabled = true; }
-      else if(type === 'diamond'){ unlocked.diamond = true; activePalette.push('#b9f2ff','#9b5de5','#00bbf9','#fee440'); document.getElementById('buyDiamond').innerText = "Köpt!"; document.getElementById('buyDiamond').disabled = true; }
-      else if(type === 'candy'){ unlocked.candy = true; activeThrowType = 'candy'; }
-      else if(type === 'light'){ unlocked.light = true; activeThrowType = 'light'; }
-      else if(type === 'candle'){ unlocked.candle = true; activeThrowType = 'candle'; }
-      playSound('buy'); checkButtons(); updateShopUI();
+    
+    // Gold/Diamond palettes (one-time)
+    if(type === 'gold' || type === 'diamond'){
+      if(unlocked[type]) return;
+      if(money >= cost){
+        money -= cost;
+        unlocked[type] = true;
+        if(type === 'gold') activePalette.push('#ffd700','#c0c0c0','#DAA520','#E5E4E2');
+        else if(type === 'diamond') activePalette.push('#b9f2ff','#9b5de5','#00bbf9','#fee440');
+        playSound('buy');
+        checkButtons();
+        updateShopUI();
+      }
+      return;
+    }
+    
+    // Special ornaments (candy/light/candle)
+    if(['candy','light','candle'].includes(type)){
+      if(unlocked[type]){
+        // Already owned -> equip
+        activeThrowType = type;
+        updateShopUI();
+        return;
+      }
+      // Buy
+      if(money >= cost){
+        money -= cost;
+        unlocked[type] = true;
+        activeThrowType = type;
+        playSound('buy');
+        checkButtons();
+        updateShopUI();
+      }
     }
   };
 
@@ -657,62 +998,18 @@
   }, {passive:false});
 
   // --- UI interactions ---
-  document.getElementById('resetBtn').onclick = () => {
-    ornaments=[];
-    bullets=[];
-    if (gameState === 'CREATIVE') money=0; // Only reset money in creative
-    checkButtons();
-    updateShopUI();
-  };
-  
+  document.getElementById('resetBtn').onclick = () => { ornaments=[]; bullets=[]; if (gameState === 'CREATIVE') money=0; checkButtons(); updateShopUI(); };
   document.getElementById('shopBtn').onclick = () => toggleShop(true);
-  
-  menuBtn.onclick = ()=>{
-    gameState = 'MENU';
-    menuOverlay.style.display = 'flex';
-    bullets = []; // Clear bullets when returning to menu
-  };
+  menuBtn.onclick = ()=>{ gameState = 'MENU'; menuOverlay.style.display = 'flex'; bullets = []; };
+  startCreative.onclick = ()=>{ gameState='CREATIVE'; menuOverlay.style.display='none'; ornaments = []; bullets = []; ghostTargets = []; toggleShop(false); };
+  startMission.onclick = ()=>{ gameState='MISSION'; menuOverlay.style.display='none'; ornaments = []; bullets = []; missionLevel = 1; spawnTargets(missionLevel); toggleShop(false); };
+  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
+  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
 
-  startCreative.onclick = ()=>{
-    gameState='CREATIVE';
-    menuOverlay.style.display='none';
-    ornaments = [];
-    bullets = [];
-    ghostTargets = [];
-    toggleShop(false);
-  };
-  
-  startMission.onclick = ()=>{
-    gameState='MISSION';
-    menuOverlay.style.display='none';
-    ornaments = [];
-    bullets = [];
-    missionLevel = 1;
-    spawnTargets(missionLevel);
-    toggleShop(false);
-  };
-
-  tabItems.onclick = ()=>{
-    tabItems.classList.add('active');
-    tabBackgrounds.classList.remove('active');
-    shopItemsDiv.classList.remove('hidden');
-    shopBackgroundsDiv.classList.add('hidden');
-  };
-  
-  tabBackgrounds.onclick = ()=>{
-    tabBackgrounds.classList.add('active');
-    tabItems.classList.remove('active');
-    shopBackgroundsDiv.classList.remove('hidden');
-    shopItemsDiv.classList.add('hidden');
-  };
-
-  // --- Start loop ---
+  // Start
   resize();
-  function loop(){
-    update();
-    draw();
-    requestAnimationFrame(loop);
-  }
+  updateLanguage();
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
   loop();
 
 })();
