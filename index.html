@@ -2,232 +2,238 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>DecoTree - Debug Version</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Christmas Tree Decorating</title>
 <style>
-  /* Enkel setup: Ingen scroll, fullskärm */
-  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #eaf6ff; }
-  canvas { display: block; touch-action: none; } /* Stoppa zoom/scroll på mobil */
+  html,body { height:100%; margin:0; overflow: hidden; }
+  body { background:#eaf6ff; display:flex; align-items:stretch; font-family:system-ui, sans-serif; }
+  canvas { display:block; width:100%; height:100%; touch-action: none; }
   
-  #ui {
-    position: absolute; top: 10px; left: 10px; right: 10px;
-    display: flex; justify-content: space-between; pointer-events: none;
+  .info {
+    position: fixed; left:12px; top:12px;
+    background: rgba(255,255,255,0.92); padding:8px 12px; border-radius:20px;
+    font-size:16px; font-weight:bold; color:#0b3a4a;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    user-select:none; z-index:1001; pointer-events: none;
   }
-  .score-box { background: rgba(255,255,255,0.9); padding: 10px; border-radius: 10px; font-family: sans-serif; font-weight: bold; }
-  
+
   #resetBtn {
-    pointer-events: auto; /* Gör knappen klickbar */
-    background: #d32f2f; color: white; border: none; padding: 10px 20px;
-    font-size: 16px; font-weight: bold; border-radius: 20px;
-    box-shadow: 0 4px #b71c1c;
+    position: fixed; right: 12px; top: 12px;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, #ff5a5a 0%, #d91f2a 60%, #b21016 100%);
+    border: none; color: #fff; font-weight: 700; font-size: 14px;
+    border-radius: 20px;
+    box-shadow: 0 4px 0 #8b0e0e;
+    cursor: pointer; z-index: 1002;
   }
-  #resetBtn:active { transform: translateY(2px); box-shadow: 0 2px #b71c1c; }
+  #resetBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b0e0e; }
 </style>
 </head>
 <body>
 
-<div id="ui">
-  <div class="score-box" id="score">Antal: 0</div>
-  <button id="resetBtn" onclick="resetGame()" ontouchstart="event.stopPropagation()">Rensa</button>
-</div>
-
-<canvas id="gameCanvas"></canvas>
+<canvas id="game"></canvas>
+<div class="info" id="info">Antal julgranskulor: 0</div>
+<button id="resetBtn" ontouchstart="event.stopPropagation()">Rensa Granen</button>
 
 <script>
-  const canvas = document.getElementById('gameCanvas');
+(() => {
+  const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  const scoreEl = document.getElementById('score');
+  const info = document.getElementById('info');
+  const resetBtn = document.getElementById('resetBtn');
 
   // Variabler
-  let width, height;
+  let W, H;
+  let tree = { tiers: [], trunk: {} };
+  let player = { x: 0, y: 0 };
   let ornaments = [];
   let bullets = [];
-  let tiers = []; // Granens delar
-  
-  // Spelare
-  let player = { x: 0, y: 0 };
+  const palette = ['#e63946','#ffb703','#fb8500','#8338ec','#3a86ff','#7bd389','#ff6bcb'];
 
-  // --- 1. SKÄRM-HANTERING (FÖRENKLAD) ---
+  // Initiera och anpassa storlek
   function resize() {
-    // Vi tvingar canvasen att vara exakt lika stor som fönstret
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    
-    // Nollställ spelarens position om fönstret ändras
-    player.x = width / 2;
-    player.y = height - 60;
-    
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W;
+    canvas.height = H;
+    player.x = W / 2;
+    player.y = H - 60;
     setupTree();
   }
   window.addEventListener('resize', resize);
 
-  // --- 2. BYGG GRANEN ---
+  // Bygg granen
   function setupTree() {
-    tiers = [];
-    const cx = width / 2;
-    const bottomY = height - 120;
-    
-    // Enklare matte för trianglarna
-    const treeH = Math.min(height * 0.6, width * 0.8);
-    const treeW = treeH * 0.8;
-    
-    // Skapa 3 trianglar (Topp, Mitten, Botten)
-    // Varje triangel sparas som 3 punkter: {x1,y1, x2,y2, x3,y3}
+    const cx = W / 2;
+    const bottomY = H - 100;
+    const treeH = Math.min(H * 0.65, W * 0.85);
+    const treeW = treeH * 0.85;
+
+    tree.tiers = [];
     
     // Botten
-    tiers.push({
-      x1: cx, y1: bottomY - treeH * 0.6, 
+    tree.tiers.push({
+      x1: cx, y1: bottomY - treeH * 0.45, 
       x2: cx - treeW/2, y2: bottomY,
       x3: cx + treeW/2, y3: bottomY,
       color: '#087023'
     });
     
     // Mitten
-    tiers.push({
-      x1: cx, y1: bottomY - treeH * 0.8,
-      x2: cx - treeW * 0.35, y2: bottomY - treeH * 0.25,
-      x3: cx + treeW * 0.35, y3: bottomY - treeH * 0.25,
+    const y2_bot = bottomY - treeH * 0.25;
+    tree.tiers.push({
+      x1: cx, y1: y2_bot - treeH * 0.45,
+      x2: cx - treeW * 0.35, y2: y2_bot,
+      x3: cx + treeW * 0.35, y3: y2_bot,
       color: '#0a8a2f'
     });
 
     // Toppen
-    tiers.push({
-      x1: cx, y1: bottomY - treeH, // Absoluta toppen
-      x2: cx - treeW * 0.2, y2: bottomY - treeH * 0.55,
-      x3: cx + treeW * 0.2, y3: bottomY - treeH * 0.55,
+    const y1_bot = y2_bot - treeH * 0.25;
+    tree.tiers.push({
+      x1: cx, y1: y1_bot - treeH * 0.45, 
+      x2: cx - treeW * 0.2, y2: y1_bot,
+      x3: cx + treeW * 0.2, y3: y1_bot,
       color: '#0fb24b'
     });
+
+    // Stubben
+    tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 };
   }
 
-  // --- 3. KOLLISIONSMATEMATIK ---
-  // Kollar om punkt (px, py) är inuti triangeln t
+  // Matte: Är punkten i triangeln?
   function isInside(px, py, t) {
-    // Barycentric coordinates
     const area = 0.5 * (-t.y2 * t.x3 + t.y1 * (-t.x2 + t.x3) + t.x1 * (t.y2 - t.y3) + t.x2 * t.y3);
     const s = 1 / (2 * area) * (t.y1 * t.x3 - t.x1 * t.y3 + (t.y3 - t.y1) * px + (t.x1 - t.x3) * py);
     const trig = 1 / (2 * area) * (t.x1 * t.y2 - t.y1 * t.x2 + (t.y1 - t.y2) * px + (t.x2 - t.x1) * py);
-    const u = 1 - s - trig;
-    
-    // Om s, trig och u är större än 0, är vi inuti
-    return s > 0 && trig > 0 && u > 0;
+    return s > 0 && trig > 0 && (1 - s - trig) > 0;
   }
 
-  // --- 4. INPUT & SKJUTA ---
-  function shoot() {
-    bullets.push({
-      x: player.x,
-      y: player.y - 40,
-      vx: 0,
-      vy: -15, // Snabbare skott
-      color: `hsl(${Math.random()*360}, 100%, 50%)`,
-      r: 10
+  // NY SKJUT-LOGIK: Vi skickar med MÅLET (targetY)
+  function shoot(targetY) {
+    bullets.push({ 
+        x: player.x,      
+        y: player.y - 40, 
+        targetY: targetY, // Hit ska kulan!
+        speed: 15,
+        r: Math.random() * 5 + 8, 
+        color: palette[Math.floor(Math.random() * palette.length)]
     });
   }
 
-  function move(x) {
-    player.x = x;
-    if(player.x < 0) player.x = 0;
-    if(player.x > width) player.x = width;
+  function update() {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      let b = bullets[i];
+      // Flytta kulan uppåt mot målet
+      b.y -= b.speed;
+
+      // Har vi nått fram till fingret/musens höjd?
+      if (b.y <= b.targetY) {
+        // NU kollar vi om vi är i granen
+        let hit = false;
+        for (const t of tree.tiers) {
+           if (isInside(b.x, b.y, t)) {
+             hit = true;
+             break;
+           }
+        }
+
+        if (hit) {
+           ornaments.push({x: b.x, y: b.y, r: b.r, color: b.color});
+           info.textContent = 'Antal julgranskulor: ' + ornaments.length;
+        } 
+        
+        // Oavsett om vi träffade eller missade så tar skottet slut här
+        bullets.splice(i, 1);
+      }
+    }
   }
 
-  // Lyssna på mus/touch
-  canvas.addEventListener('mousemove', e => move(e.clientX));
-  canvas.addEventListener('mousedown', shoot);
-  
-  canvas.addEventListener('touchmove', e => {
-    move(e.touches[0].clientX);
-    e.preventDefault();
-  }, {passive: false});
-  
-  canvas.addEventListener('touchstart', e => {
-    if(e.target.tagName !== 'BUTTON') { // Skjut inte om man trycker på knappen
-        move(e.touches[0].clientX);
-        shoot();
+  function draw() {
+    // Rensa
+    ctx.fillStyle = '#eaf6ff';
+    ctx.fillRect(0,0,W,H);
+
+    // Stubbe
+    ctx.fillStyle = '#5D4037';
+    ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
+
+    // Gran
+    tree.tiers.forEach(t => {
+      ctx.fillStyle = t.color;
+      ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.lineTo(t.x3, t.y3); ctx.fill();
+      // Skugga
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.beginPath(); ctx.moveTo(t.x1, t.y1+5); ctx.lineTo(t.x2, t.y2+5); ctx.lineTo(t.x3, t.y3+5); ctx.fill();
+    });
+
+    // Stjärna
+    if(tree.tiers.length){
+        const top = tree.tiers[2];
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowBlur = 20; ctx.shadowColor = 'gold';
+        ctx.beginPath(); ctx.arc(top.x1, top.y1, 15, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
     }
+
+    // Kulor
+    ornaments.forEach(o => {
+      let g = ctx.createRadialGradient(o.x-2, o.y-2, 1, o.x, o.y, o.r);
+      g.addColorStop(0, 'white'); g.addColorStop(1, o.color);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
+    });
+
+    // Skott
+    bullets.forEach(b => {
+      ctx.fillStyle = b.color;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    });
+
+    // Tomten
+    drawSanta(player.x, player.y);
+  }
+
+  function drawSanta(x, y) {
+    ctx.fillStyle = '#d32f2f'; // Kropp
+    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffccb0'; // Huvud
+    ctx.beginPath(); ctx.arc(x, y-20, 15, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#d32f2f'; // Mössa
+    ctx.beginPath(); ctx.moveTo(x-15, y-25); ctx.lineTo(x+15, y-25); ctx.lineTo(x, y-50); ctx.fill();
+    ctx.fillStyle = 'white'; // Tofs
+    ctx.beginPath(); ctx.arc(x, y-50, 5, 0, Math.PI*2); ctx.fill();
+  }
+
+  // INPUT
+  function move(x) { player.x = Math.max(30, Math.min(W-30, x)); }
+  
+  // Dator
+  window.addEventListener('mousemove', e => move(e.clientX));
+  window.addEventListener('mousedown', e => {
+     if(e.target.id !== 'resetBtn') shoot(e.clientY);
   });
 
-  function resetGame() {
-    ornaments = [];
-    scoreEl.innerText = "Antal: 0";
-  }
+  // Mobil
+  window.addEventListener('touchmove', e => {
+     move(e.touches[0].clientX);
+     e.preventDefault();
+  }, {passive: false});
+  window.addEventListener('touchstart', e => {
+     if(e.target.id !== 'resetBtn') {
+        move(e.touches[0].clientX);
+        shoot(e.touches[0].clientY); // Skjut mot fingrets höjd
+     }
+  });
 
-  // --- 5. SPEL-LOOP (Update & Draw) ---
-  function loop() {
-    // Rensa skärmen
-    ctx.clearRect(0,0,width,height);
+  resetBtn.onclick = () => { ornaments = []; info.textContent = 'Antal julgranskulor: 0'; };
 
-    // Rita Granen
-    tiers.forEach(t => {
-      ctx.fillStyle = t.color;
-      ctx.beginPath();
-      ctx.moveTo(t.x1, t.y1);
-      ctx.lineTo(t.x2, t.y2);
-      ctx.lineTo(t.x3, t.y3);
-      ctx.fill();
-
-      // --- DEBUG: RITA RÖDA LINJER RUNT "HITBOXEN" ---
-      ctx.strokeStyle = 'red';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    });
-    
-    // Rita Stjärna (Gul cirkel för nu)
-    if(tiers.length > 0) {
-        ctx.fillStyle = 'gold';
-        ctx.beginPath(); 
-        ctx.arc(tiers[2].x1, tiers[2].y1, 15, 0, Math.PI*2); 
-        ctx.fill();
-    }
-
-    // Uppdatera Skott
-    for(let i=bullets.length-1; i>=0; i--) {
-      let b = bullets[i];
-      b.y += b.vy; // Flytta uppåt
-
-      let hit = false;
-      // Kolla alla 3 trianglar
-      for(let t of tiers) {
-        if(isInside(b.x, b.y, t)) {
-           hit = true;
-           break;
-        }
-      }
-
-      if(hit) {
-        ornaments.push(b); // Spara som kula
-        bullets.splice(i, 1); // Ta bort skottet
-        scoreEl.innerText = "Antal: " + ornaments.length;
-      } else if (b.y < 0) {
-        bullets.splice(i, 1); // Missade
-      } else {
-        // Rita skottet
-        ctx.fillStyle = b.color;
-        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
-      }
-    }
-
-    // Rita fastnade kulor
-    ornaments.forEach(o => {
-      ctx.fillStyle = o.color;
-      ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
-      // Vit prick (glans)
-      ctx.fillStyle = 'white';
-      ctx.beginPath(); ctx.arc(o.x-3, o.y-3, 3, 0, Math.PI*2); ctx.fill();
-    });
-
-    // Rita Gubben (Enkel röd cirkel för att utesluta grafikfel)
-    ctx.fillStyle = 'red';
-    ctx.beginPath(); ctx.arc(player.x, player.y, 20, 0, Math.PI*2); ctx.fill();
-
-    requestAnimationFrame(loop);
-  }
-
-  // Start
+  // Loop
   resize();
+  function loop() { update(); draw(); requestAnimationFrame(loop); }
   loop();
 
+})();
 </script>
 </body>
 </html>
