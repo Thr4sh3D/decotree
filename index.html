@@ -10,11 +10,11 @@
   canvas { display:block; width:100%; height:100%; touch-action: none; }
   .info {
     position: fixed; left:12px; top:12px;
-    background: rgba(255,255,255,0.88); padding:8px 10px; border-radius:8px;
+    background: rgba(255,255,255,0.92); padding:8px 10px; border-radius:8px;
     font-size:14px; color:#0b3a4a;
     box-shadow:0 2px 8px rgba(0,0,0,0.08);
     user-select:none;
-    z-index: 1001;
+    z-index:1001;
   }
   /* Glossy red holiday button top-right */
   #resetBtn {
@@ -63,12 +63,12 @@
 
   window.addEventListener('resize', resizeCanvas, { passive: true });
 
-  // Game layout parameters (relative)
-  let W=innerWidth, H=innerHeight;
-  let cx, cy;
-  // tree: tiers array (3 triangles) and trunk rect
-  let tree = { tiers: [], trunk: {}, width:0, height:0 };
-  let player = { x:0, y:0, w:80, h:18, color:'#4d2' };
+  // Game state
+  let W = innerWidth, H = innerHeight;
+  let cx = W/2, cy = H/2;
+  // tree: tiers array (three triangles) each with explicit x1,y1,x2,y2,x3,y3
+  let tree = { tiers: [], trunk: {}, width: 0, height: 0 };
+  let player = { x:0, y:0, w:80, h:18 };
   const ornaments = [];
   const palette = ['#e63946','#ffb703','#fb8500','#8338ec','#3a86ff','#7bd389','#ff6bcb'];
 
@@ -76,58 +76,53 @@
     W = canvas.clientWidth;
     H = canvas.clientHeight;
     cx = W / 2;
-    cy = H / 2.2; // tree center reference
-    tree.height = Math.min(H * 0.6, W * 0.6);
+    cy = H / 2.2;
+    tree.height = Math.min(H * 0.62, W * 0.62);
     tree.width = tree.height * 0.9;
 
-    // tier heights
+    // Tier heights
     const h1 = tree.height * 0.28; // top
     const h2 = tree.height * 0.36; // middle
     const h3 = tree.height * 0.36; // bottom
 
-    // top apex
+    // Top apex Y
     const topApexY = cy - tree.height * 0.5;
 
-    // Top tier
+    // Top triangle coordinates
     const top = {
-      v1: { x: cx, y: topApexY },
-      v2: { x: cx - tree.width * 0.28, y: topApexY + h1 },
-      v3: { x: cx + tree.width * 0.28, y: topApexY + h1 },
+      x1: cx, y1: topApexY,
+      x2: cx - tree.width * 0.28, y2: topApexY + h1,
+      x3: cx + tree.width * 0.28, y3: topApexY + h1,
       color: '#0fb24b'
     };
 
-    // Middle apex overlaps top base to avoid gaps
+    // Middle triangle apex placed to overlap top base
     const overlap = Math.min(h1, h2) * 0.45;
-    const midApexY = top.v2.y - overlap;
+    const midApexY = top.y2 - overlap;
     const middle = {
-      v1: { x: cx, y: midApexY },
-      v2: { x: cx - tree.width * 0.45, y: midApexY + h2 },
-      v3: { x: cx + tree.width * 0.45, y: midApexY + h2 },
+      x1: cx, y1: midApexY,
+      x2: cx - tree.width * 0.45, y2: midApexY + h2,
+      x3: cx + tree.width * 0.45, y3: midApexY + h2,
       color: '#0a8a2f'
     };
 
-    // Bottom apex overlaps middle base
+    // Bottom triangle apex placed to overlap middle base
     const overlap2 = Math.min(h2, h3) * 0.45;
-    const botApexY = middle.v2.y - overlap2;
+    const botApexY = middle.y2 - overlap2;
     const bottom = {
-      v1: { x: cx, y: botApexY },
-      v2: { x: cx - tree.width * 0.6, y: botApexY + h3 },
-      v3: { x: cx + tree.width * 0.6, y: botApexY + h3 },
+      x1: cx, y1: botApexY,
+      x2: cx - tree.width * 0.6, y2: botApexY + h3,
+      x3: cx + tree.width * 0.6, y3: botApexY + h3,
       color: '#087023'
     };
 
     tree.tiers = [top, middle, bottom];
 
-    // Trunk positioned exactly at bottom base of lowest triangle
-    const bottomBaseY = Math.max(bottom.v2.y, bottom.v3.y);
+    // Trunk exactly at bottom base of lowest triangle
+    const bottomBaseY = Math.max(bottom.y2, bottom.y3);
     const trunkW = tree.width * 0.16;
     const trunkH = Math.max(24, tree.height * 0.12);
-    tree.trunk = {
-      x: cx - trunkW * 0.5,
-      y: bottomBaseY,
-      w: trunkW,
-      h: trunkH
-    };
+    tree.trunk = { x: cx - trunkW*0.5, y: bottomBaseY, w: trunkW, h: trunkH };
 
     player.w = Math.max(48, W * 0.12);
     player.h = Math.max(12, H * 0.03);
@@ -135,62 +130,75 @@
     if (!player.x) player.x = cx;
   }
 
-  function clear() {
+  function clearScreen() {
     ctx.fillStyle = '#eaf6ff';
     ctx.fillRect(0,0,W,H);
   }
 
   function drawTree() {
-    // shadows
-    for (let i = 0; i < tree.tiers.length; i++) {
-      const t = tree.tiers[i];
+    // draw subtle shadow below tiers
+    for (let t of tree.tiers) {
       ctx.beginPath();
-      ctx.moveTo(t.v1.x, t.v1.y + 6);
-      ctx.lineTo(t.v2.x, t.v2.y + 6);
-      ctx.lineTo(t.v3.x, t.v3.y + 6);
+      ctx.moveTo(t.x1, t.y1 + 6);
+      ctx.lineTo(t.x2, t.y2 + 6);
+      ctx.lineTo(t.x3, t.y3 + 6);
       ctx.closePath();
       ctx.fillStyle = 'rgba(0,0,0,0.06)';
       ctx.fill();
     }
 
-    // draw tiers bottom-to-top
+    // draw tiers bottom-to-top for overlap
     for (let i = tree.tiers.length - 1; i >= 0; i--) {
       const t = tree.tiers[i];
       ctx.beginPath();
-      ctx.moveTo(t.v1.x, t.v1.y);
-      ctx.lineTo(t.v2.x, t.v2.y);
-      ctx.lineTo(t.v3.x, t.v3.y);
+      ctx.moveTo(t.x1, t.y1);
+      ctx.lineTo(t.x2, t.y2);
+      ctx.lineTo(t.x3, t.y3);
       ctx.closePath();
       ctx.fillStyle = t.color;
       ctx.fill();
 
-      // subtle trim
+      // subtle highlight
       ctx.beginPath();
       const inset = Math.min(tree.width, tree.height) * 0.03;
-      ctx.moveTo(t.v1.x, t.v1.y + inset);
-      ctx.lineTo(t.v2.x + inset, t.v2.y - inset);
-      ctx.lineTo(t.v3.x - inset, t.v3.y - inset);
+      ctx.moveTo(t.x1, t.y1 + inset);
+      ctx.lineTo(t.x2 + inset, t.y2 - inset);
+      ctx.lineTo(t.x3 - inset, t.y3 - inset);
       ctx.closePath();
       ctx.fillStyle = 'rgba(255,255,255,0.03)';
       ctx.fill();
     }
 
-    // trunk attached directly to bottom base
+    // trunk attached to bottom base
     ctx.fillStyle = '#6b3b1b';
     ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
   }
 
-  // Draw a 5-point star centered at (x,y)
-  function drawStar(x, y, radius = 18, color = '#ffd700') {
+  // precise barycentric point-in-triangle check using explicit coordinates
+  function pointInTriangleBarycentric(px, py, tri) {
+    const x1 = tri.x1, y1 = tri.y1;
+    const x2 = tri.x2, y2 = tri.y2;
+    const x3 = tri.x3, y3 = tri.y3;
+    const denom = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3);
+    if (Math.abs(denom) < 1e-9) return false; // degenerate triangle
+    const a = ((y2 - y3)*(px - x3) + (x3 - x2)*(py - y3)) / denom;
+    const b = ((y3 - y1)*(px - x3) + (x1 - x3)*(py - y3)) / denom;
+    const c = 1 - a - b;
+    // allow very small epsilon to tolerate numeric errors and let ornament enter slightly
+    const eps = -0.02;
+    return a >= eps && b >= eps && c >= eps;
+  }
+
+  // star drawing (big and bright)
+  function drawStar(x, y, radius = 36, color = '#ffd700') {
     const spikes = 5;
     const outer = radius;
     const inner = radius * 0.48;
     let rot = Math.PI / 2 * 3;
-    const cxs = x;
-    const cys = y;
+    const cxs = x, cys = y;
     ctx.save();
     ctx.shadowColor = 'rgba(255,220,80,0.95)';
-    ctx.shadowBlur = Math.max(12, radius * 1.2);
+    ctx.shadowBlur = Math.max(12, radius * 1.4);
     ctx.beginPath();
     ctx.moveTo(cxs, cys - outer);
     for (let i = 0; i < spikes; i++) {
@@ -198,7 +206,6 @@
       const oy = cys + Math.sin(rot) * outer;
       ctx.lineTo(ox, oy);
       rot += Math.PI / spikes;
-
       const ix = cxs + Math.cos(rot) * inner;
       const iy = cys + Math.sin(rot) * inner;
       ctx.lineTo(ix, iy);
@@ -209,25 +216,22 @@
     ctx.fill();
     ctx.restore();
 
-    // small bright center
     ctx.beginPath();
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.arc(cxs, cys, Math.max(3, radius * 0.16), 0, Math.PI*2);
+    ctx.arc(cxs, cys, Math.max(3, radius*0.14), 0, Math.PI*2);
     ctx.fill();
   }
 
-  // Draw Santa-like player (kept as-is)
+  // keep Santa player as before
   function drawPlayer() {
     const cxp = player.x;
-    const baseline = player.y + player.h;
     const headR = Math.max(10, player.h * 1.6);
     const headX = cxp;
     const headY = player.y - headR - 6;
 
-    // body
     ctx.save();
+    // body
     ctx.translate(headX, headY + headR * 0.8);
-
     const bodyW = player.w * 0.9;
     const bodyH = player.h * 3.6;
     ctx.beginPath();
@@ -237,19 +241,17 @@
     ctx.closePath();
     ctx.fillStyle = '#d92a2a';
     ctx.fill();
-
-    // white trim at bottom
+    // trim
     ctx.beginPath();
     ctx.fillStyle = '#fff';
     ctx.ellipse(0, bodyH - Math.max(6, player.h*0.3), bodyW*0.45, Math.max(8, player.h*0.45), 0, 0, Math.PI);
     ctx.fill();
-
     ctx.restore();
 
     // head
     ctx.beginPath();
     ctx.fillStyle = '#ffd8b6';
-    ctx.arc(headX, headY, headR, 0, Math.PI * 2);
+    ctx.arc(headX, headY, headR, 0, Math.PI*2);
     ctx.fill();
 
     // eyes
@@ -263,7 +265,6 @@
     ctx.beginPath();
     ctx.strokeStyle = '#7a2a2a';
     ctx.lineWidth = Math.max(1, headR*0.08);
-    ctx.beginPath();
     ctx.arc(headX, headY + headR*0.12, headR*0.32, 0.15*Math.PI, 0.85*Math.PI);
     ctx.stroke();
 
@@ -290,6 +291,7 @@
     ctx.fill();
   }
 
+  // ornaments with shiny gradient
   function drawOrnaments() {
     for (const o of ornaments) {
       const lx = o.x - o.r*0.35;
@@ -299,10 +301,9 @@
       g.addColorStop(0.15, lighten(o.color, 0.25));
       g.addColorStop(0.6, o.color);
       g.addColorStop(1, darken(o.color, 0.25));
-
       ctx.beginPath();
       ctx.fillStyle = g;
-      ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+      ctx.arc(o.x, o.y, o.r, 0, Math.PI*2);
       ctx.fill();
 
       ctx.beginPath();
@@ -319,7 +320,7 @@
     }
   }
 
-  // color helpers
+  // small color helpers
   function hexToRgb(hex) {
     const h = hex.replace('#','');
     const bigint = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
@@ -343,16 +344,19 @@
     return `rgba(${r},${g},${b},1)`;
   }
 
-  // robust point-in-triangle with epsilon for edge cases
-  function pointInTriangle(pt, a, b, c) {
-    const sign = (p1,p2,p3) => (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-    const d1 = sign(pt, a, b);
-    const d2 = sign(pt, b, c);
-    const d3 = sign(pt, c, a);
-    const eps = 1e-6;
-    const hasNeg = (d1 < -eps) || (d2 < -eps) || (d3 < -eps);
-    const hasPos = (d1 > eps) || (d2 > eps) || (d3 > eps);
-    return !(hasNeg && hasPos);
+  // precise barycentric point-in-triangle used for collision
+  function pointInTriangleBarycentric(px, py, tri) {
+    const x1 = tri.x1, y1 = tri.y1;
+    const x2 = tri.x2, y2 = tri.y2;
+    const x3 = tri.x3, y3 = tri.y3;
+    const denom = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+    if (Math.abs(denom) < 1e-9) return false; // degenerate
+    const a = ((y2 - y3) * (px - x3) + (x3 - x2) * (py - y3)) / denom;
+    const b = ((y3 - y1) * (px - x3) + (x1 - x3) * (py - y3)) / denom;
+    const c = 1 - a - b;
+    // small negative epsilon permits tiny penetration before sticking (visual)
+    const eps = -0.02;
+    return a >= eps && b >= eps && c >= eps;
   }
 
   function throwOrnament(targetX, targetY) {
@@ -366,57 +370,57 @@
     const vy = (dy / len) * speed;
     const color = palette[Math.floor(Math.random() * palette.length)];
     const r = Math.max(6, Math.min(14, Math.round(Math.min(W,H) / 60 * (0.8 + Math.random()*0.6))));
-    ornaments.push({ x: originX, y: originY, vx, vy, r, color, stuck:false });
+    ornaments.push({ x: originX, y: originY, vx, vy, r, color, stuck: false });
   }
 
   function pruneOrnaments() {
     for (let i = ornaments.length - 1; i >= 0; i--) {
       const o = ornaments[i];
       if (o.stuck) continue;
-      if (o.x < -100 || o.x > W + 100 || o.y < -200 || o.y > H + 200) {
-        ornaments.splice(i,1);
-      }
+      if (o.x < -100 || o.x > W + 100 || o.y < -200 || o.y > H + 200) ornaments.splice(i,1);
     }
   }
 
-  // update loop with CRITICAL collision check across all three tiers
+  // update loop: check collision against all three tiers using barycentric math
   function update(delta) {
     for (const o of ornaments) {
       if (o.stuck) continue;
       o.x += o.vx * (delta / 16.67);
       o.y += o.vy * (delta / 16.67);
 
+      // Check collision against every green tier (precise geometry)
       let stuckNow = false;
-      // check all tiers
       for (const t of tree.tiers) {
-        if (pointInTriangle({x:o.x, y:o.y}, t.v1, t.v2, t.v3)) {
+        if (pointInTriangleBarycentric(o.x, o.y, t)) {
           stuckNow = true;
           break;
         }
       }
+
       if (stuckNow) {
         o.stuck = true;
         o.vx = 0; o.vy = 0;
+        // nudge slightly outward from tree center for nicer visual
         const treeCenter = { x: cx, y: cy + tree.height * 0.06 };
         const nx = o.x - treeCenter.x;
         const ny = o.y - treeCenter.y;
         const nlen = Math.hypot(nx, ny) || 1;
         const push = o.r * 0.2;
-        o.x += (nx/nlen) * push;
-        o.y += (ny/nlen) * push;
+        o.x += (nx / nlen) * push;
+        o.y += (ny / nlen) * push;
       }
     }
     pruneOrnaments();
   }
 
   function render() {
-    clear();
+    clearScreen();
     drawTree();
-    // Star: make 3x larger than before for visibility
+    // Big bright star at top apex (3x larger than prior base)
     if (tree.tiers && tree.tiers.length > 0) {
-      const apex = tree.tiers[0].v1;
+      const apex = tree.tiers[0];
       const baseRadius = Math.max(12, tree.width * 0.035);
-      drawStar(apex.x, apex.y, baseRadius * 3, '#ffd700');
+      drawStar(apex.x1, apex.y1, baseRadius * 3, '#ffd700');
     }
     drawOrnaments();
     drawPlayer();
@@ -431,7 +435,7 @@
     return { x, y };
   }
 
-  // Input handling (unchanged behavior). Note: button has ontouchstart to stop propagation.
+  // Input handlers (preserve behavior). Reset button has ontouchstart to stop propagation.
   let isPointerDown = false;
   window.addEventListener('mousemove', (e) => {
     const p = toCanvasCoords(e.clientX, e.clientY);
@@ -467,11 +471,11 @@
     if (e.key === 'ArrowRight' || e.key === 'd') player.x += step;
     player.x = Math.min(W - player.w/2, Math.max(player.w/2, player.x));
     if (e.key === ' ' || e.key === 'Enter') {
-      throwOrnament(player.x, player.y - H*0.25);
+      throwOrnament(player.x, player.y - H * 0.25);
     }
   });
 
-  // Reset clears ornaments array
+  // Reset button clears ornaments
   resetBtn.addEventListener('click', () => {
     ornaments.length = 0;
     info.textContent = 'Antal julgranskulor: 0';
@@ -491,7 +495,6 @@
   resizeCanvas();
   computeLayout();
   player.x = cx;
-
   requestAnimationFrame(loop);
 
 })();
