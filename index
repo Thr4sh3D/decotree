@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Holiday Decorator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling */
+            background-color: #2c3e50; /* Dark festive background */
+            touch-action: none; /* Disable touch gestures on mobile */
+        }
+        canvas {
+            display: block;
+        }
+        #instructions {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: sans-serif;
+            pointer-events: none; /* Let clicks pass through */
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="instructions">
+        Click or Tap anywhere to throw an ornament!
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+/**
+ * Game Configuration & State
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const COLORS = ['#FF0000', '#FFD700', '#00FFFF', '#FF69B4', '#FFFFFF'];
+let width, height;
+
+// Game Objects
+const character = {
+    x: 0,
+    y: 0,
+    size: 40,
+    angle: 0,
+    color: '#e74c3c'
+};
+
+const tree = {
+    top: { x: 0, y: 0 },
+    left: { x: 0, y: 0 },
+    right: { x: 0, y: 0 },
+    color: '#27ae60'
+};
+
+const ornaments = [];
+
+/**
+ * Initialization & Resizing
+ */
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Center character at bottom
+    character.x = width / 2;
+    character.y = height - 60;
+
+    // Define Tree Triangle (Responsive)
+    const treeHeight = height * 0.7;
+    const treeBaseHalfWidth = Math.min(width * 0.4, 300); // Max width cap
+    
+    tree.top = { x: width / 2, y: 100 };
+    tree.left = { x: (width / 2) - treeBaseHalfWidth, y: 100 + treeHeight };
+    tree.right = { x: (width / 2) + treeBaseHalfWidth, y: 100 + treeHeight };
+}
+
+window.addEventListener('resize', resize);
+resize(); // Initial call
+
+/**
+ * Input Handling
+ */
+const mouse = { x: width / 2, y: height / 2 };
+
+// Helper: Calculate angle from character to input
+function updateCharacterAngle(targetX, targetY) {
+    const dx = targetX - character.x;
+    const dy = targetY - character.y;
+    // + Math.PI/2 because our square "faces" up (-y), but 0 rad is right (+x)
+    character.angle = Math.atan2(dy, dx) + Math.PI / 2;
+}
+
+// Helper: Throw logic
+function throwOrnament(targetX, targetY) {
+    // Calculate direction vector
+    const dx = targetX - character.x;
+    const dy = targetY - character.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Normalize vector and apply speed
+    const speed = 15;
+    const velocityX = (dx / distance) * speed;
+    const velocityY = (dy / distance) * speed;
+
+    ornaments.push({
+        x: character.x,
+        y: character.y,
+        vx: velocityX,
+        vy: velocityY,
+        targetX: targetX,
+        targetY: targetY,
+        radius: 8 + Math.random() * 5, // Random size
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        isStuck: false
+    });
+}
+
+// Desktop Events
+window.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    updateCharacterAngle(mouse.x, mouse.y);
+});
+
+window.addEventListener('mousedown', (e) => {
+    throwOrnament(e.clientX, e.clientY);
+});
+
+// Mobile Events
+window.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Stop scroll
+    const touch = e.touches[0];
+    updateCharacterAngle(touch.clientX, touch.clientY);
+    throwOrnament(touch.clientX, touch.clientY);
+}, { passive: false });
+
+/**
+ * Game Logic (Physics)
+ */
+function update() {
+    ornaments.forEach(orn => {
+        if (orn.isStuck) return;
+
+        // Apply velocity
+        orn.x += orn.vx;
+        orn.y += orn.vy;
+
+        // Distance check logic (Simple collision)
+        // Check distance to target destination
+        const dx = orn.targetX - orn.x;
+        const dy = orn.targetY - orn.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // If closer than speed (one frame away), snap to target and stick
+        if (dist < 20) {
+            orn.x = orn.targetX;
+            orn.y = orn.targetY;
+            orn.isStuck = true;
+        }
+    });
+}
+
+/**
+ * Rendering
+ */
+function draw() {
+    // Clear screen
+    ctx.clearRect(0, 0, width, height);
+
+    // 1. Draw Tree
+    ctx.fillStyle = tree.color;
+    ctx.beginPath();
+    ctx.moveTo(tree.top.x, tree.top.y);
+    ctx.lineTo(tree.left.x, tree.left.y);
+    ctx.lineTo(tree.right.x, tree.right.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Draw Ornaments
+    ornaments.forEach(orn => {
+        ctx.beginPath();
+        ctx.arc(orn.x, orn.y, orn.radius, 0, Math.PI * 2);
+        ctx.fillStyle = orn.color;
+        ctx.fill();
+        ctx.strokeStyle = "rgba(0,0,0,0.2)";
+        ctx.stroke();
+    });
+
+    // 3. Draw Character
+    ctx.save(); // Save context state before rotation
+    ctx.translate(character.x, character.y);
+    ctx.rotate(character.angle);
+    
+    // Draw Square (centered on origin)
+    ctx.fillStyle = character.color;
+    ctx.fillRect(-character.size / 2, -character.size / 2, character.size, character.size);
+    
+    // Draw "Eyes" to indicate direction
+    ctx.fillStyle = 'white';
+    ctx.fillRect(-10, -15, 6, 6);
+    ctx.fillRect(4, -15, 6, 6);
+    
+    ctx.restore(); // Restore context to normal
+}
+
+/**
+ * Game Loop
+ */
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+// Start Game
+loop();
+
+</script>
+</body>
+</html>
