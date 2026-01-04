@@ -264,6 +264,10 @@
   let ghostTargets = [];
   let missionLevel = 1;
 
+  // Cheat code tracker
+  let cheatClicks = 0;
+  let cheatTimer = null;
+
   // Färger och items
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
   let unlocked = { 
@@ -1359,39 +1363,93 @@
     }
   });
 
-  // --- Factory Reset Function ---
-  function factoryReset() {
-    const t = translations[currentLang];
-    if (!confirm(t.resetAllConfirm)) return;
-    if (!confirm(t.resetAllConfirm2)) return;
-    
-    // Reset all progress
-    money = 0;
-    unlocked = { 
-      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
-      garland: false, glitter: false,
-      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
-    };
-    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
-    activeThrowType = 'ball';
-    activeBackground = 'bg_day'; 
-    ornaments = [];
-    bullets = [];
-    ghostTargets = [];
-    missionLevel = 1;
-    
-    checkButtons();
-    updateShopUI();
-    updateLanguage();
-  }
+  // --- UI interactions ---
+  document.getElementById('resetBtn').onclick = () => { 
+    ornaments = []; 
+    bullets = []; 
+    ghostTargets = []; 
+  };
+  
+  document.getElementById('shopBtn').onclick = () => toggleShop(true);
+  
+  menuBtn.onclick = ()=>{ 
+    gameState = 'MENU'; 
+    menuOverlay.style.display = 'flex'; 
+    bullets = []; 
+  };
+  
+  factoryResetBtn.onclick = factoryReset;
+  
+  startCreative.onclick = ()=>{ 
+    gameState='CREATIVE'; 
+    menuOverlay.style.display='none'; 
+    ornaments = []; 
+    bullets = []; 
+    ghostTargets = []; 
+    toggleShop(false); 
+  };
+  
+  startMission.onclick = ()=>{ 
+    gameState='MISSION';   resize();
+    menuOverlay.style.display='none'; ateLanguage();
+    ornaments = []; n loop(){ update(); draw(); requestAnimationFrame(loop); }
+    bullets = []; );
+    missionLevel = 1; 
 
-  // Start
-  resize();
-  updateLanguage();
-  function loop(){ update(); draw(); requestAnimationFrame(loop); }
-  loop();
 
-})();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</html></body></script>})();  loop();  function loop(){ update(); draw(); requestAnimationFrame(loop); }  updateLanguage();  resize();  // Start  }    updateLanguage();    updateShopUI();    checkButtons();        missionLevel = 1;    ghostTargets = [];    bullets = [];    ornaments = [];    activeBackground = 'bg_day';     activeThrowType = 'ball';    activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];    };      bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false       garland: false, glitter: false,      standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,    unlocked = {     money = 0;    // Reset all progress        if (!confirm(t.resetAllConfirm2)) return;    if (!confirm(t.resetAllConfirm)) return;    const t = translations[currentLang];  function factoryReset() {  // --- Factory Reset Function ---  };    shopItemsDiv.classList.add('hidden');     shopBackgroundsDiv.classList.remove('hidden');     tabItems.classList.remove('active');     tabBackgrounds.classList.add('active');   tabBackgrounds.onclick = ()=>{     };    shopBackgroundsDiv.classList.add('hidden');     shopItemsDiv.classList.remove('hidden');     tabBackgrounds.classList.remove('active');     tabItems.classList.add('active');   tabItems.onclick = ()=>{     };    toggleShop(false);     spawnTargets(missionLevel); })();
 </script>
 </body>
 </html>
