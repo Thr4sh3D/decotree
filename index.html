@@ -495,19 +495,48 @@
   }
   soundBtn.onclick = (e)=>{ e.stopPropagation(); initAudio(); };
 
+  // --- SAVE/LOAD SYSTEM ---
+  function saveGame() {
+    const gameData = {
+      money: money,
+      unlocked: unlocked,
+      activeThrowType: activeThrowType,
+      activeBackground: activeBackground
+    };
+    localStorage.setItem('decoTreeSave', JSON.stringify(gameData));
+  }
+
+  function loadGame() {
+    const saved = localStorage.getItem('decoTreeSave');
+    if (saved) {
+      try {
+        const gameData = JSON.parse(saved);
+        money = gameData.money || 0;
+        unlocked = gameData.unlocked || { 
+          standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+          garland: false, glitter: false,
+          bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
+        };
+        activeThrowType = gameData.activeThrowType || 'ball';
+        activeBackground = gameData.activeBackground || 'bg_day';
+      } catch (e) {
+        console.error('Failed to load save data:', e);
+      }
+    }
+  }
+
   // --- 4. GAMEPLAY: Cheat Code ---
   scoreBox.addEventListener('click', (e) => {
-    // Only works if interacting with the money/score text area
     cheatClicks++;
     if (cheatTimer) clearTimeout(cheatTimer);
-    cheatTimer = setTimeout(() => { cheatClicks = 0; }, 400); // 400ms timeout
+    cheatTimer = setTimeout(() => { cheatClicks = 0; }, 400);
     
     if (cheatClicks >= 7) {
         money += 1000;
+        saveGame();
         updateAllUI();
         playSound('buy');
         cheatClicks = 0;
-        // Visual feedback
         moneyText.style.color = '#ffd700';
         setTimeout(() => moneyText.style.color = '#28a745', 200);
     }
@@ -571,7 +600,7 @@
   startCreative.onclick = (e) => { e.stopPropagation(); window.startCreativeGame(); };
   startMission.onclick = (e) => { e.stopPropagation(); window.startMissionGame(); };
 
-  // --- CRITICAL FIX: buyPack ---
+  // --- CRITICAL FIX: buyPack with SAVE ---
   window.buyPack = function(key, cost) {
     if (money >= cost) {
       if (!unlocked[key]) {
@@ -583,9 +612,9 @@
       if (key.startsWith('bg_')) {
         activeBackground = key;
       } else {
-        // "standard" maps to "ball" internally
         activeThrowType = (key === 'standard') ? 'ball' : key;
       }
+      saveGame();
       updateAllUI();
     }
   };
@@ -617,6 +646,7 @@
     missionLevel = 1;
     pausedState = null;
     
+    saveGame();
     updateAllUI();
     updateLanguage();
   };
@@ -661,49 +691,74 @@
     const cx=W/2; 
     const bottomY=H-110; 
     const treeH=Math.min(H*0.65, W*0.85); 
-    const treeW=treeH*0.95; // Wider visual tree
+    const treeW=treeH*0.95;
     tree.tiers=[]; 
     
-    // Physics Tiers (Slightly smaller than visual for better feel)
-    // 2. PHYSICS: Raise bottom collision edge (y2, y3) by 15px
+    // TIER 1: BOTTOM (Widest)
+    // Visual geometry: Full width, extends to bottomY
+    const tier1VisualX = treeW * 0.45;
+    const tier1VisualY2 = bottomY;
+    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up)
+    const tier1CollisionX = treeW * 0.45 * 0.85; // 15% narrower
+    const tier1CollisionY2 = bottomY - 25;       // Raised 25px
     
-    // Bottom tier
     tree.tiers.push({ 
-      x1:cx, 
-      y1:bottomY - treeH * 0.42,
-      x2:cx - treeW * 0.40, // Collision slightly narrower than visual
-      y2:bottomY - 20,      // Raised bottom edge
-      x3:cx + treeW * 0.40, 
-      y3:bottomY - 20,      // Raised bottom edge
-      color:'#087023',
-      visualWidth: 0.45     // Store visual width for drawing
+      // Collision (physics) - TIGHTER, more permissive
+      x1: cx, y1: bottomY - treeH * 0.42,
+      x2: cx - tier1CollisionX, y2: tier1CollisionY2,
+      x3: cx + tier1CollisionX, y3: tier1CollisionY2,
+      // Visual (drawing) - FULL WIDTH
+      visualX2: cx - tier1VisualX,
+      visualX3: cx + tier1VisualX,
+      visualY2: tier1VisualY2,
+      color: '#087023',
+      darkColor: '#0a5a1f'
     }); 
     
-    // Middle tier
-    const y2_bot = bottomY - treeH * 0.25; 
+    // TIER 2: MIDDLE
+    const y2_bot = bottomY - treeH * 0.25;
+    // Visual geometry
+    const tier2VisualX = treeW * 0.38;
+    const tier2VisualY2 = y2_bot;
+    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up)
+    const tier2CollisionX = treeW * 0.38 * 0.85; // 15% narrower
+    const tier2CollisionY2 = y2_bot - 25;        // Raised 25px
+    
     tree.tiers.push({ 
-      x1:cx, 
-      y1:y2_bot - treeH * 0.42,
-      x2:cx - treeW * 0.32, 
-      y2:y2_bot - 5, 
-      x3:cx + treeW * 0.32, 
-      y3:y2_bot - 5, 
-      color:'#0a8a2f',
-      visualWidth: 0.35
+      // Collision (physics) - TIGHTER
+      x1: cx, y1: y2_bot - treeH * 0.42,
+      x2: cx - tier2CollisionX, y2: tier2CollisionY2,
+      x3: cx + tier2CollisionX, y3: tier2CollisionY2,
+      // Visual (drawing) - FULL WIDTH
+      visualX2: cx - tier2VisualX,
+      visualX3: cx + tier2VisualX,
+      visualY2: tier2VisualY2,
+      color: '#0a8a2f',
+      darkColor: '#067a23'
     }); 
     
-    // Top tier
-    const y1_bot = y2_bot - treeH * 0.25; 
+    // TIER 3: TOP (Narrowest)
+    const y1_bot = y2_bot - treeH * 0.25;
+    // Visual geometry
+    const tier3VisualX = treeW * 0.24;
+    const tier3VisualTop = y1_bot - treeH * 0.28;
+    const tier3VisualY2 = y1_bot;
+    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up)
+    const tier3CollisionX = treeW * 0.24 * 0.85; // 15% narrower
+    const tier3CollisionY2 = y1_bot - 25;        // Raised 25px
+    
     tree.tiers.push({ 
-      x1:cx, 
-      y1:y1_bot - treeH * 0.28 + 20, // 2. PHYSICS: Lower top collision tip
-      x2:cx - treeW * 0.18, 
-      y2:y1_bot - 3, 
-      x3:cx + treeW * 0.18, 
-      y3:y1_bot - 3, 
-      color:'#0fb24b',
-      visualWidth: 0.22,
-      visualTop: y1_bot - treeH * 0.28 // Store real top for drawing
+      // Collision (physics) - TIGHTER
+      x1: cx, y1: tier3VisualTop,
+      x2: cx - tier3CollisionX, y2: tier3CollisionY2,
+      x3: cx + tier3CollisionX, y3: tier3CollisionY2,
+      // Visual (drawing) - FULL WIDTH
+      visualY1: tier3VisualTop,
+      visualX2: cx - tier3VisualX,
+      visualX3: cx + tier3VisualX,
+      visualY2: tier3VisualY2,
+      color: '#0fb24b',
+      darkColor: '#0a9535'
     }); 
     
     tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 }; 
@@ -885,6 +940,7 @@
             ghostTargets.splice(idx, 1);
             playSound('stick');
             money += 5;
+            saveGame();
             checkButtons();
             updateShopUI();
             if (ghostTargets.length === 0) {
@@ -1013,41 +1069,80 @@
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     snowflakes.forEach(s => { ctx.fillRect(s.x - s.r/2, s.y - s.r/2, s.r, s.r); });
 
-    // Draw Tree
+    // Draw Tree Trunk
     ctx.fillStyle = '#6b3b1b';
     ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
     
+    // Draw Each Tree Tier with Fluffy Curves
     tree.tiers.forEach(t => {
-      const g = ctx.createLinearGradient(0, t.y1, 0, t.y2);
-      g.addColorStop(0, t.color);
-      const lighterColor = t.color === '#087023' ? '#0a9930' : t.color === '#0a8a2f' ? '#0fb24b' : '#20d060';
-      g.addColorStop(1, lighterColor);
+      // Get visual coordinates
+      const topY = t.visualY1 !== undefined ? t.visualY1 : t.y1;
+      const bottomY = t.visualY2 !== undefined ? t.visualY2 : t.y2;
+      const leftX = t.visualX2 !== undefined ? t.visualX2 : t.x2;
+      const rightX = t.visualX3 !== undefined ? t.visualX3 : t.x3;
       
-      ctx.fillStyle = g;
+      // 1. Draw Shadow (subtle, beneath tier)
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.beginPath();
-      
-      // 1. VISUALS: Use visual coordinates (wider)
-      const visualX2 = t.x1 - (Math.abs(t.x2 - t.x1) * (t.visualWidth ? (t.visualWidth/0.40) : 1));
-      const visualX3 = t.x1 + (Math.abs(t.x3 - t.x1) * (t.visualWidth ? (t.visualWidth/0.40) : 1));
-      // Use visualTop if available, otherwise t.y1
-      const topY = t.visualTop || t.y1;
-      
-      // Calculate control points for fluffy look
-      const leftMidX = (t.x1 + visualX2) / 2;
-      const leftMidY = (topY + t.y2) / 2;
-      const leftControlX = leftMidX - 40;
-      
-      const rightMidX = (t.x1 + visualX3) / 2;
-      const rightMidY = (topY + t.y3) / 2;
-      const rightControlX = rightMidX + 40;
-      
-      ctx.moveTo(t.x1, topY);
-      ctx.quadraticCurveTo(leftControlX, leftMidY+10, visualX2, t.y2);
-      ctx.lineTo(visualX3, t.y3);
-      ctx.quadraticCurveTo(rightControlX, rightMidY+10, t.x1, topY);
+      ctx.moveTo(t.x1, bottomY + 8);
+      // Left curved edge with shadow offset
+      const shadowLeftCtrlX = (t.x1 + leftX) / 2 - 25;
+      const shadowLeftCtrlY = (topY + bottomY) / 2 + 15;
+      ctx.quadraticCurveTo(shadowLeftCtrlX, shadowLeftCtrlY, leftX, bottomY + 8);
+      // Right side
+      ctx.lineTo(rightX, bottomY + 8);
+      // Right curved edge with shadow offset
+      const shadowRightCtrlX = (t.x1 + rightX) / 2 + 25;
+      const shadowRightCtrlY = (topY + bottomY) / 2 + 15;
+      ctx.quadraticCurveTo(shadowRightCtrlX, shadowRightCtrlY, t.x1, bottomY + 8);
       ctx.fill();
+      ctx.restore();
+      
+      // 2. Draw Main Tier with Vertical Gradient
+      const gradient = ctx.createLinearGradient(0, topY, 0, bottomY);
+      gradient.addColorStop(0, t.color);      // Darker at top
+      gradient.addColorStop(1, t.darkColor);  // Lighter at bottom for volume
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(t.x1, topY);
+      
+      // Left curved edge (fluffy branch)
+      const leftMidX = (t.x1 + leftX) / 2;
+      const leftMidY = (topY + bottomY) / 2;
+      const leftCtrlX = leftMidX - 30;  // Pull outward for fluffy look
+      const leftCtrlY = leftMidY + 12;  // Slight downward curve
+      ctx.quadraticCurveTo(leftCtrlX, leftCtrlY, leftX, bottomY);
+      
+      // Bottom edge
+      ctx.lineTo(rightX, bottomY);
+      
+      // Right curved edge (fluffy branch)
+      const rightMidX = (t.x1 + rightX) / 2;
+      const rightMidY = (topY + bottomY) / 2;
+      const rightCtrlX = rightMidX + 30; // Pull outward for fluffy look
+      const rightCtrlY = rightMidY + 12; // Slight downward curve
+      ctx.quadraticCurveTo(rightCtrlX, rightCtrlY, t.x1, topY);
+      
+      ctx.fill();
+      
+      // 3. Add Highlight on left side for 3D effect
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(t.x1, topY + 10);
+      // Subtle highlight curve on left side
+      const hlCtrlX = leftCtrlX - 15;
+      const hlCtrlY = leftMidY;
+      ctx.quadraticCurveTo(hlCtrlX, hlCtrlY, leftX - 15, bottomY - 10);
+      ctx.stroke();
+      ctx.restore();
     });
 
+    // Ghost targets (mission)
     if (gameState === 'MISSION'){
       ctx.save();
       ghostTargets.forEach(t => {
@@ -1061,20 +1156,25 @@
       ctx.restore();
     }
 
+    // Star on top of tree
     if (tree.tiers.length){
       const top = tree.tiers[2];
+      const starY = top.visualY1 !== undefined ? top.visualY1 : top.y1;
       ctx.save();
       ctx.fillStyle = '#ffd700';
       ctx.shadowBlur = 40;
       ctx.shadowColor = 'orange';
-      drawStar(ctx, top.x1, top.visualTop || top.y1, 5, 30, 15);
+      drawStar(ctx, top.x1, starY - 40, 5, 30, 15);
       ctx.fill();
       ctx.shadowBlur = 0;
       ctx.restore();
     }
 
+    // Ornaments & bullets
     ornaments.forEach(o => drawOrnament(o));
     bullets.forEach(b => drawOrnament(b));
+    
+    // Santa
     drawSanta(santaX, player.y);
   }
 
@@ -1118,122 +1218,358 @@
       ctx.fillStyle='#fff'; ctx.fillRect(o.x - w/2, o.y - h, w, h);
       ctx.fillStyle='#ffd54d'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - 5, w*0.4, h*0.35, 0,0,Math.PI*2); ctx.fill();
     } else if (type === 'garland'){
-      // 1. VISUALS: Thick fluffy garland
+      // ENHANCED GARLAND: Fluffy pine garland with berries
       ctx.save();
       const r = o.r;
-      // Shadow
-      ctx.beginPath();
-      ctx.moveTo(o.x - r*3, o.y);
-      ctx.quadraticCurveTo(o.x, o.y + r*3.5, o.x + r*3, o.y);
+      
+      // Define garland curve path
+      const startX = o.x - r * 2;
+      const startY = o.y;
+      const endX = o.x + r * 2;
+      const endY = o.y;
+      const controlX = o.x;
+      const controlY = o.y + r * 2.5;
+      
+      // === Shadow layer (depth) ===
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
       ctx.lineWidth = 14;
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.lineCap = "round";
-      ctx.stroke();
-
-      // Fluffy Gradient Rope
-      const grad = ctx.createLinearGradient(o.x - r*3, o.y, o.x + r*3, o.y);
-      grad.addColorStop(0, "#1e5c26");
-      grad.addColorStop(0.5, "#4caf50");
-      grad.addColorStop(1, "#1e5c26");
-      
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
-      ctx.moveTo(o.x - r*3, o.y);
-      ctx.quadraticCurveTo(o.x, o.y + r*3, o.x + r*3, o.y);
+      ctx.moveTo(startX + 2, startY + 4);
+      ctx.quadraticCurveTo(controlX + 2, controlY + 4, endX + 2, endY + 4);
+      ctx.stroke();
+      
+      // === Main garland rope with gradient ===
+      const garlandGrad = ctx.createLinearGradient(startX, startY, endX, endY);
+      garlandGrad.addColorStop(0, '#1a4d2e');      // Dark forest green
+      garlandGrad.addColorStop(0.25, '#2d7a4f');   // Medium green
+      garlandGrad.addColorStop(0.5, '#4caf50');    // Bright green
+      garlandGrad.addColorStop(0.75, '#2d7a4f');   // Medium green
+      garlandGrad.addColorStop(1, '#1a4d2e');      // Dark forest green
+      
+      ctx.strokeStyle = garlandGrad;
       ctx.lineWidth = 12;
-      ctx.strokeStyle = grad;
-      ctx.lineCap = "round";
-      ctx.stroke();
-      
-      // Bits of red decoration
-      ctx.fillStyle = "#d32f2f";
-      for(let i=1; i<4; i++) {
-        let t = i/4;
-        let lx = (1-t)*(1-t)*(o.x-r*3) + 2*(1-t)*t*o.x + t*t*(o.x+r*3);
-        let ly = (1-t)*(1-t)*o.y + 2*(1-t)*t*(o.y+r*3) + t*t*o.y;
-        ctx.beginPath(); ctx.arc(lx, ly, 3, 0, Math.PI*2); ctx.fill();
-      }
-      ctx.restore();
-    } else if (type === 'glitter'){
-      // 1. VISUALS: Metallic sparks
-      ctx.save();
-      const r = o.r;
-      // Main curve
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
-      ctx.moveTo(o.x - r*2.5, o.y);
-      ctx.quadraticCurveTo(o.x, o.y + r*2.5, o.x + r*2.5, o.y);
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#C0C0C0"; // Silver
+      ctx.moveTo(startX, startY);
+      ctx.quadraticCurveTo(controlX, controlY, endX, endY);
       ctx.stroke();
       
-      // Sparks
-      const sparks = 15;
-      ctx.strokeStyle = "#ffd700"; // Gold sparks
-      ctx.lineWidth = 1;
-      for(let i=0; i<=sparks; i++) {
-         let t = i/sparks;
-         let lx = (1-t)*(1-t)*(o.x-r*2.5) + 2*(1-t)*t*o.x + t*t*(o.x+r*2.5);
-         let ly = (1-t)*(1-t)*o.y + 2*(1-t)*t*(o.y+r*2.5) + t*t*o.y;
-         
-         // Random radiating lines
-         let ang = Math.random() * Math.PI * 2;
-         let len = Math.random() * 8 + 2;
-         ctx.beginPath();
-         ctx.moveTo(lx, ly);
-         ctx.lineTo(lx + Math.cos(ang)*len, ly + Math.sin(ang)*len);
-         ctx.stroke();
+      // === Highlight stripe on top ===
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(startX - 3, startY - 2);
+      
+      // Define tinsel curve path
+      const startX = o.x - r * 2.5;
+      const startY = o.y;
+      const endX = o.x + r * 2.5;
+      const endY = o.y;
+      const cp1X = o.x - r * 1.2;
+      const cp1Y = o.y + r * 2.5;
+      const cp2X = o.x + r * 1.2;
+      const cp2Y = o.y + r * 2.5;
+      
+      // === Shadow tinsel (depth) ===
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(startX + 2, startY + 2);
+      ctx.bezierCurveTo(cp1X + 2, cp1Y + 2, cp2X + 2, cp2Y + 2, endX + 2, endY + 2);
+      ctx.stroke();
+      
+      // === Main base strand with metallic gradient ===
+      const tinselGrad = ctx.createLinearGradient(startX, startY, endX, endY);
+      tinselGrad.addColorStop(0, '#8b7355');       // Bronze
+      tinselGrad.addColorStop(0.25, '#d4af37');    // Gold
+      tinselGrad.addColorStop(0.5, '#e8d5c4');     // Metallic silver
+      tinselGrad.addColorStop(0.75, '#d4af37');    // Gold
+      tinselGrad.addColorStop(1, '#8b7355');       // Bronze
+      
+      ctx.strokeStyle = tinselGrad;
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.bezierCurveTo(cp1X, cp1Y, cp2X, cp2Y, endX, endY);
+      ctx.stroke();
+      
+      // === Sparkling tinsel strands (random radiating lines) ===
+      const sparkCount = 25;
+      for (let i = 0; i < sparkCount; i++) {
+        const t = Math.random(); // Random position along curve
+        
+        // Cubic Bezier interpolation for position
+        const px = Math.pow(1-t, 3) * startX + 
+                   3 * Math.pow(1-t, 2) * t * cp1X + 
+                   3 * (1-t) * Math.pow(t, 2) * cp2X + 
+                   Math.pow(t, 3) * endX;
+        const py = Math.pow(1-t, 3) * startY + 
+                   3 * Math.pow(1-t, 2) * t * cp1Y + 
+                   3 * (1-t) * Math.pow(t, 2) * cp2Y + 
+                   Math.pow(t, 3) * endY;
+        
+        // Random spark properties
+        const sparkLen = r * (0.5 + Math.random() * 1.5);
+        const sparkAngle = Math.random() * Math.PI * 2;
+        const sparkEndX = px + Math.cos(sparkAngle) * sparkLen;
+        const sparkEndY = py + Math.sin(sparkAngle) * sparkLen;
+        
+        // Alternate between silver and gold sparks
+        ctx.strokeStyle = i % 2 === 0 ? 
+          'rgba(255,255,255,0.8)' :  // Silver
+          'rgba(255,215,0,0.7)';      // Gold
+        
+        ctx.lineWidth = 0.8 + Math.random() * 0.6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(sparkEndX, sparkEndY);
+        ctx.stroke();
       }
+      
+      // === Bright highlights along main strand ===
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      const highlightCount = 8;
+      for (let i = 0; i < highlightCount; i++) {
+        const t = i / (highlightCount - 1);
+        const hx = Math.pow(1-t, 3) * startX + 
+                   3 * Math.pow(1-t, 2) * t * cp1X + 
+                   3 * (1-t) * Math.pow(t, 2) * cp2X + 
+                   Math.pow(t, 3) * endX;
+        const hy = Math.pow(1-t, 3) * startY + 
+                   3 * Math.pow(1-t, 2) * t * cp1Y + 
+                   3 * (1-t) * Math.pow(t, 2) * cp2Y + 
+                   Math.pow(t, 3) * endY;
+        
+        ctx.beginPath();
+        ctx.arc(hx, hy, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
       ctx.restore();
     }
   }
 
-  // 1. VISUALS: Detailed Cartoon Santa
+  // 1. VISUALS: High-Quality Procedural Santa
   function drawSanta(x, y) {
     ctx.save();
     
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.beginPath(); ctx.ellipse(x, y, 30, 8, 0, 0, Math.PI*2); ctx.fill();
+    // === SHADOW ===
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 5, 32, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Body (Red round)
+    // === BOOTS (Black rounded feet) ===
+    ctx.fillStyle = '#1a1a1a';
+    // Left boot
+    ctx.beginPath();
+    ctx.ellipse(x - 16, y + 8, 10, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Right boot
+    ctx.beginPath();
+    ctx.ellipse(x + 16, y + 8, 10, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === BODY (Red rounded rectangle) ===
     ctx.fillStyle = '#d32f2f';
-    ctx.beginPath(); ctx.arc(x, y-25, 25, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - 28, y - 15);
+    ctx.quadraticCurveTo(x - 30, y - 5, x - 28, y + 5);
+    ctx.lineTo(x - 28, y + 15);
+    ctx.quadraticCurveTo(x, y + 25, x + 28, y + 15);
+    ctx.lineTo(x + 28, y + 5);
+    ctx.quadraticCurveTo(x + 30, y - 5, x + 28, y - 15);
+    ctx.quadraticCurveTo(x, y - 22, x - 28, y - 15);
+    ctx.fill();
 
-    // Belt
-    ctx.fillStyle = '#111';
-    ctx.fillRect(x-25, y-25, 50, 8);
-    // Buckle
-    ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
-    ctx.strokeRect(x-6, y-26, 12, 10);
+    // === BODY SHADOW (subtle darker red) ===
+    ctx.fillStyle = 'rgba(139, 35, 35, 0.2)';
+    ctx.beginPath();
+    ctx.ellipse(x + 8, y, 15, 20, 0.3, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Head (Peach)
-    ctx.fillStyle = '#ffcc99';
-    ctx.beginPath(); ctx.arc(x, y-50, 14, 0, Math.PI*2); ctx.fill();
-
-    // Eyes
+    // === BELT (Black stripe across middle) ===
     ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(x-5, y-52, 2, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x+5, y-52, 2, 0, Math.PI*2); ctx.fill();
+    ctx.fillRect(x - 30, y - 2, 60, 11);
 
-    // Beard (Fluffy White)
-    ctx.fillStyle = '#fff';
+    // === BELT BUCKLE (Gold square) ===
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(x - 10, y - 1, 20, 10);
+    // Buckle inner shadow
+    ctx.fillStyle = '#ffed4e';
+    ctx.fillRect(x - 8, y + 1, 16, 6);
+    // Buckle dark edge
+    ctx.strokeStyle = '#b8860b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 10, y - 1, 20, 10);
+
+    // === ARMS (Red rounded) ===
+    ctx.fillStyle = '#c62828';
+    // Left arm
     ctx.beginPath();
-    ctx.moveTo(x-14, y-48);
-    ctx.quadraticCurveTo(x-20, y-30, x-10, y-20);
-    ctx.quadraticCurveTo(x, y-10, x+10, y-20);
-    ctx.quadraticCurveTo(x+20, y-30, x+14, y-48);
+    ctx.ellipse(x - 32, y - 8, 8, 22, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Right arm
+    ctx.beginPath();
+    ctx.ellipse(x + 32, y - 8, 8, 22, 0.3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Hat (Red with Pom-pom)
+    // === MITTENS (Peach/skin tone hands) ===
+    ctx.fillStyle = '#ffcc99';
+    // Left mitten
+    ctx.beginPath();
+    ctx.arc(x - 38, y + 8, 7, 0, Math.PI * 2);
+    ctx.fill();
+    // Right mitten
+    ctx.beginPath();
+    ctx.arc(x + 38, y + 8, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === HEAD (Peach circle) ===
+    ctx.fillStyle = '#ffcc99';
+    ctx.beginPath();
+    ctx.arc(x, y - 38, 17, 0, Math.PI * 2);
+    ctx.fill();
+    // Head shading
+    ctx.fillStyle = 'rgba(220, 150, 100, 0.2)';
+    ctx.beginPath();
+    ctx.arc(x + 6, y - 38, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === FLUFFY BEARD (Large, multi-layered white) ===
+    ctx.fillStyle = '#ffffff';
+    
+    // Bottom layer (main beard body)
+    ctx.beginPath();
+    ctx.moveTo(x - 18, y - 25);
+    // Left side fluffy curve
+    ctx.quadraticCurveTo(x - 22, y - 15, x - 18, y - 8);
+    // Bottom fluffy edge
+    ctx.quadraticCurveTo(x - 10, y + 2, x, y + 5);
+    ctx.quadraticCurveTo(x + 10, y + 2, x + 18, y - 8);
+    // Right side fluffy curve
+
+    ctx.quadraticCurveTo(x + 22, y - 15, x + 18, y - 25);
+    // Top edge
+    ctx.quadraticCurveTo(x, y - 28, x - 18, y - 25);
+    ctx.fill();
+
+    // Left beard puff (extra fluff)
+    ctx.beginPath();
+    ctx.arc(x - 20, y - 18, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Right beard puff (extra fluff)
+    ctx.beginPath();
+    ctx.arc(x + 20, y - 18, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Center beard puff (pointy bottom)
+    ctx.beginPath();
+    ctx.arc(x, y + 3, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Beard shine/highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath();
+    ctx.arc(x - 12, y - 20, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 12, y - 20, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === EYES ===
+    ctx.fillStyle = '#000';
+    // Left eye
+    ctx.beginPath();
+    ctx.arc(x - 7, y - 42, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Right eye
+    ctx.beginPath();
+    ctx.arc(x + 7, y - 42, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eye shine
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(x - 6, y - 43, 1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 8, y - 43, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === NOSE (Red round) ===
+    ctx.fillStyle = '#ff6b6b';
+    ctx.beginPath();
+    ctx.arc(x, y - 37, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Nose shine
+    ctx.fillStyle = '#ff9999';
+    ctx.beginPath();
+    ctx.arc(x - 1, y - 38, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === HAT (Red cone with white trim) ===
+    // Hat body
     ctx.fillStyle = '#d32f2f';
     ctx.beginPath();
-    ctx.moveTo(x-16, y-56);
-    ctx.quadraticCurveTo(x, y-85, x+16, y-56);
+    ctx.moveTo(x - 18, y - 52);
+    ctx.quadraticCurveTo(x - 12, y - 75, x, y - 80);
+    ctx.quadraticCurveTo(x + 12, y - 75, x + 18, y - 52);
+    ctx.closePath();
     ctx.fill();
-    // Hat trim
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.roundRect(x-18, y-58, 36, 8, 4); ctx.fill();
-    // Pom-pom
-    ctx.beginPath(); ctx.arc(x, y-85, 6, 0, Math.PI*2); ctx.fill();
+
+    // Hat shading (darker on right)
+    ctx.fillStyle = 'rgba(139, 35, 35, 0.4)';
+    ctx.beginPath();
+    ctx.moveTo(x, y - 80);
+    ctx.quadraticCurveTo(x + 15, y - 70, x + 18, y - 52);
+    ctx.lineTo(x, y - 52);
+    ctx.closePath();
+    ctx.fill();
+
+    // === HAT BRIM (White fur trim) ===
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(x - 20, y - 52);
+    ctx.quadraticCurveTo(x, y - 48, x + 20, y - 52);
+    ctx.quadraticCurveTo(x, y - 50, x - 20, y - 52);
+    ctx.fill();
+
+    // Hat brim shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 51, 21, 3, 0, 0, Math.PI);
+    ctx.fill();
+
+    // === POM-POM (Fluffy ball on top) ===
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x, y - 82, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pom-pom shine
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.beginPath();
+    ctx.arc(x - 3, y - 85, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pom-pom fluff texture (small circles)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2;
+      const px = x + Math.cos(angle) * 6;
+      const py = y - 82 + Math.sin(angle) * 6;
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.restore();
   }
