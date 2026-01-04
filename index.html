@@ -970,23 +970,48 @@
       ctx.fillRect(s.x - s.r/2, s.y - s.r/2, s.r, s.r);
     });
 
-    // Gran
+    // Gran - UPGRADED: Fluffy branches with gradients
     ctx.fillStyle = '#6b3b1b';
     ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
     
     tree.tiers.forEach(t => {
-      ctx.fillStyle = t.color;
+      // Create vertical gradient for volume
+      const g = ctx.createLinearGradient(0, t.y1, 0, t.y2);
+      g.addColorStop(0, t.color);
+      const lighterColor = t.color === '#087023' ? '#0a9930' : 
+                           t.color === '#0a8a2f' ? '#0fb24b' : '#20d060';
+      g.addColorStop(1, lighterColor);
+      
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.moveTo(t.x1,t.y1);
-      ctx.lineTo(t.x2,t.y2);
-      ctx.lineTo(t.x3,t.y3);
+      ctx.moveTo(t.x1, t.y1);
+      
+      // Left side with curve (fluffy)
+      const leftMidX = (t.x1 + t.x2) / 2;
+      const leftMidY = (t.y1 + t.y2) / 2;
+      const leftControlX = leftMidX - (t.x2 - t.x1) * 0.08;
+      const leftControlY = leftMidY + Math.abs(t.y2 - t.y1) * 0.15;
+      ctx.quadraticCurveTo(leftControlX, leftControlY, t.x2, t.y2);
+      
+      // Bottom (base of tier)
+      ctx.lineTo(t.x3, t.y3);
+      
+      // Right side with curve (fluffy)
+      const rightMidX = (t.x1 + t.x3) / 2;
+      const rightMidY = (t.y1 + t.y3) / 2;
+      const rightControlX = rightMidX + (t.x3 - t.x1) * 0.08;
+      const rightControlY = rightMidY + Math.abs(t.y3 - t.y1) * 0.15;
+      ctx.quadraticCurveTo(rightControlX, rightControlY, t.x1, t.y1);
+      
       ctx.fill();
       
+      // Shadow with curves
       ctx.fillStyle='rgba(0,0,0,0.15)';
       ctx.beginPath();
-      ctx.moveTo(t.x1,t.y1+8);
-      ctx.lineTo(t.x2,t.y2+8);
-      ctx.lineTo(t.x3,t.y3+8);
+      ctx.moveTo(t.x1, t.y1 + 8);
+      ctx.quadraticCurveTo(leftControlX, leftControlY + 8, t.x2, t.y2 + 8);
+      ctx.lineTo(t.x3, t.y3 + 8);
+      ctx.quadraticCurveTo(rightControlX, rightControlY + 8, t.x1, t.y1 + 8);
       ctx.fill();
     });
 
@@ -1005,14 +1030,14 @@
       ctx.restore();
     }
 
-    // Star top - NEW: 5-pointed star with glow
+    // Star top - UPGRADED: Bigger & Brighter
     if (tree.tiers.length){
       const top = tree.tiers[2];
       ctx.save();
       ctx.fillStyle = '#ffd700';
-      ctx.shadowBlur = 25;
-      ctx.shadowColor = 'gold';
-      drawStar(ctx, top.x1, top.y1, 5, 15, 7);
+      ctx.shadowBlur = 40;
+      ctx.shadowColor = 'orange';
+      drawStar(ctx, top.x1, top.y1, 5, 30, 15);
       ctx.fill();
       ctx.shadowBlur = 0;
       ctx.restore();
@@ -1194,7 +1219,77 @@
     }
   }
 
-  function drawSanta(x,y){ ctx.fillStyle='#d32f2f'; ctx.beginPath(); ctx.arc(x,y,22,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#ffccb0'; ctx.beginPath(); ctx.arc(x,y-22,16,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#d32f2f'; ctx.beginPath(); ctx.moveTo(x-16,y-28); ctx.lineTo(x+16,y-28); ctx.lineTo(x,y-55); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y-55,6,0,Math.PI*2); ctx.fill(); }
+  function drawSanta(x, y) {
+    ctx.save();
+    
+    // Body (red coat with rounded rectangular shape)
+    ctx.fillStyle = '#d32f2f';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 24, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Black belt
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 24, y - 3, 48, 8);
+    
+    // Gold buckle
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(x - 6, y - 4, 12, 10);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 4, y - 2, 8, 6);
+    
+    // Head (peach face)
+    ctx.fillStyle = '#ffccb0';
+    ctx.beginPath();
+    ctx.arc(x, y - 22, 16, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Eyes
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(x - 5, y - 24, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 5, y - 24, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Fluffy white beard (multiple overlapping circles)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(x, y - 14, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - 8, y - 16, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 8, y - 16, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - 4, y - 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + 4, y - 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Hat (droopy red cap)
+    ctx.fillStyle = '#d32f2f';
+    ctx.beginPath();
+    ctx.moveTo(x - 16, y - 28);
+    ctx.quadraticCurveTo(x - 8, y - 50, x + 4, y - 56);
+    ctx.lineTo(x + 16, y - 28);
+    ctx.fill();
+    
+    // White hat trim
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x - 16, y - 30, 32, 4);
+    
+    // White pom-pom at tip
+    ctx.beginPath();
+    ctx.arc(x + 4, y - 56, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  }
 
   // --- Input (keep mobile double-shot fix) ---
   function move(x){ player.x = Math.max(30, Math.min(W-30, x)); }
