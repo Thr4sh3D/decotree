@@ -125,8 +125,8 @@
   <div class="menu-card">
     <h1>DecoTree</h1>
     <p>Välj spelläge</p>
-    <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Creative Mode</button>
-    <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag (Tjäna pengar)</button>
+    <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Fritt Skapande</button>
+    <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag</button>
   </div>
 </div>
 
@@ -223,8 +223,7 @@
   let bullets = [];
   let snowflakes = [];
 
-  // new
-  let gameState = 'MENU'; // 'MENU'|'CREATIVE'|'MISSION'
+  let gameState = 'MENU';
   let ghostTargets = [];
   let missionLevel = 1;
 
@@ -279,15 +278,42 @@
   soundBtn.onclick = (e)=>{ e.stopPropagation(); isMuted=!isMuted; soundBtn.innerText = isMuted ? '🔇' : '🔊'; if (!isMuted) initAudio(); };
   soundBtn.ontouchstart = (e)=>{ e.stopPropagation(); };
 
-  // --- Init / Resize ---
-  function resize(){ W=window.innerWidth; H=window.innerHeight; canvas.width=W; canvas.height=H; player.x=W/2; player.y=H-60; setupTree(); if(snowflakes.length===0){ for(let i=0;i<50;i++) snowflakes.push(createSnowflake()); } generateStars(); }
+  // --- Init / Resize (OPTIMIZED: 30 snowflakes) ---
+  function resize(){
+    W=window.innerWidth;
+    H=window.innerHeight;
+    canvas.width=W;
+    canvas.height=H;
+    player.x=W/2;
+    player.y=H-60;
+    setupTree();
+    if(snowflakes.length===0){
+      for(let i=0;i<30;i++) snowflakes.push(createSnowflake()); // REDUCED from 50 to 30
+    }
+    generateStars();
+  }
   window.addEventListener('resize', resize);
 
   // --- Tree / Snow (unchanged logic) ---
   function setupTree(){ const cx=W/2; const bottomY=H-110; const treeH=Math.min(H*0.65, W*0.85); const treeW=treeH*0.85; tree.tiers=[]; tree.tiers.push({ x1:cx, y1:bottomY - treeH * 0.45, x2:cx - treeW/2, y2:bottomY, x3:cx + treeW/2, y3:bottomY, color:'#087023' }); const y2_bot = bottomY - treeH * 0.25; tree.tiers.push({ x1:cx, y1:y2_bot - treeH * 0.45, x2:cx - treeW * 0.35, y2:y2_bot, x3:cx + treeW * 0.35, y3:y2_bot, color:'#0a8a2f' }); const y1_bot = y2_bot - treeH * 0.25; tree.tiers.push({ x1:cx, y1:y1_bot - treeH * 0.45, x2:cx - treeW * 0.2, y2:y1_bot, x3:cx + treeW * 0.2, y3:y1_bot, color:'#0fb24b' }); tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 }; }
 
-  function createSnowflake(){ return { x: Math.random() * W, y: Math.random() * H, r: Math.random() * 3 + 1, speed: Math.random() * 1 + 0.5, wobble: Math.random() * Math.PI * 2 }; }
-  function updateSnow(){ snowflakes.forEach(s=>{ s.y += s.speed; s.x += Math.sin(s.wobble)*0.5; s.wobble += 0.05; if(s.y>H){ s.y=-10; s.x=Math.random()*W; } }); }
+  function createSnowflake(){
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 3 + 2, // slightly larger for fillRect visibility
+      speed: Math.random() * 1 + 0.5,
+      wobble: Math.random() * Math.PI * 2
+    };
+  }
+  function updateSnow(){
+    snowflakes.forEach(s=>{
+      s.y += s.speed;
+      s.x += Math.sin(s.wobble)*0.5;
+      s.wobble += 0.05;
+      if(s.y>H){ s.y=-10; s.x=Math.random()*W; }
+    });
+  }
 
   // --- Targets (Mission) ---
   function spawnTargets(level){
@@ -335,50 +361,117 @@
     ctx.globalAlpha = 1; ctx.restore();
   }
 
-  // --- Shooting / Collision / Update ---
+  // --- CRITICAL FIX: Shooting ---
+  function isInside(px, py, t) {
+    const area = 0.5 * (-t.y2 * t.x3 + t.y1 * (-t.x2 + t.x3) + t.x1 * (t.y2 - t.y3) + t.x2 * t.y3);
+    const s = 1 / (2 * area) * (t.y1 * t.x3 - t.x1 * t.y3 + (t.y3 - t.y1) * px + (t.x1 - t.x3) * py);
+    const trig = 1 / (2 * area) * (t.x1 * t.y2 - t.y1 * t.x2 + (t.y1 - t.y2) * px + (t.x2 - t.x1) * py);
+    return s > 0 && trig > 0 && (1 - s - trig) > 0;
+  }
+
   function shoot(targetY){
+    // FIX: Ensure we always create a NEW object
     const color = (activeThrowType === 'ball') ? activePalette[Math.floor(Math.random()*activePalette.length)]
                   : (activeThrowType === 'candy') ? '#e63946'
                   : (activeThrowType === 'light') ? '#fff'
                   : (activeThrowType === 'candle') ? '#ffffff'
                   : '#fff';
-    bullets.push({ x: player.x, y: player.y - 45, targetY: targetY, speed: 15, r: Math.random()*5 + 8, color: color, type: activeThrowType });
+    
+    const newBullet = {
+      x: player.x,
+      y: player.y - 45,
+      targetY: targetY,
+      speed: 15,
+      r: Math.random()*5 + 8,
+      color: color,
+      type: activeThrowType
+    };
+    
+    bullets.push(newBullet); // CRITICAL: Push new object every time
     playSound('shoot');
   }
 
   function update(){
+    if (gameState === 'MENU') return; // Skip updates on menu
+    
     updateSnow();
-    for (let i=bullets.length-1;i>=0;i--){
+    
+    // OPTIMIZED: Process bullets with proper cleanup
+    for (let i=bullets.length-1; i>=0; i--){
       const b = bullets[i];
       b.y -= b.speed;
+      
+      // Check if off-screen (cleanup)
+      if (b.y < -50){
+        bullets.splice(i,1);
+        continue;
+      }
+      
+      // Check if reached target Y
       if (b.y <= b.targetY){
         let hit = false;
-        for (const t of tree.tiers){ if (isInside(b.x,b.y,t)){ hit = true; break; } }
+        
+        // Check tree collision
+        for (const t of tree.tiers){
+          if (isInside(b.x, b.y, t)){
+            hit = true;
+            break;
+          }
+        }
+        
         if (hit){
-          // If mission and target present at location -> convert target to ornament and reward
+          // MISSION MODE: Check for ghost target hit
           if (gameState === 'MISSION'){
             const idx = findTargetAt(b.x, b.y);
             if (idx !== -1){
-              const t = ghostTargets.splice(idx,1)[0];
-              ornaments.push({ x: t.x, y: t.y, r: b.r, color: b.color, type: b.type });
+              // Hit a target!
+              const target = ghostTargets[idx];
+              ornaments.push({
+                x: target.x,
+                y: target.y,
+                r: b.r,
+                color: b.color,
+                type: b.type
+              });
+              
+              ghostTargets.splice(idx, 1); // Remove target
+              
               playSound('stick');
               money += 5;
               playSound('money');
-              checkButtons(); updateShopUI();
-              // level up if cleared
-              if (ghostTargets.length === 0){ missionLevel++; spawnTargets(missionLevel); }
-              bullets.splice(i,1);
+              
+              checkButtons();
+              updateShopUI();
+              
+              // Level up if all targets cleared
+              if (ghostTargets.length === 0){
+                missionLevel++;
+                spawnTargets(missionLevel);
+              }
+              
+              bullets.splice(i, 1);
               continue;
             }
           }
-          // Normal placement (creative or mission non-target)
-          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+          
+          // Normal placement (creative or mission miss)
+          ornaments.push({
+            x: b.x,
+            y: b.y,
+            r: b.r,
+            color: b.color,
+            type: b.type
+          });
           playSound('stick');
-          // creative gives no money, mission non-target gives no money per spec
+          
+          // No money in creative, no money for mission misses
         }
-        bullets.splice(i,1);
+        
+        // Remove bullet after processing
+        bullets.splice(i, 1);
       }
     }
+    
     scoreText.innerText = '🎄 Kulor: ' + ornaments.length;
     moneyText.innerText = '💰 ' + money + ' kr';
   }
@@ -444,40 +537,64 @@
     }
   };
 
-  // --- Drawing ---
+  // --- Drawing (OPTIMIZED: Snow uses fillRect) ---
   function draw(){
-    // background gradient
     drawBackground();
 
-    // Snö
+    // OPTIMIZED: Snow rendered as squares for performance
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    snowflakes.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); });
-
-    // Gran
-    ctx.fillStyle = '#6b3b1b'; ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
-    tree.tiers.forEach(t => { ctx.fillStyle = t.color; ctx.beginPath(); ctx.moveTo(t.x1,t.y1); ctx.lineTo(t.x2,t.y2); ctx.lineTo(t.x3,t.y3); ctx.fill();
-      ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.moveTo(t.x1,t.y1+8); ctx.lineTo(t.x2,t.y2+8); ctx.lineTo(t.x3,t.y3+8); ctx.fill();
+    snowflakes.forEach(s => {
+      ctx.fillRect(s.x - s.r/2, s.y - s.r/2, s.r, s.r);
     });
 
-    // ghost targets (mission)
+    // Gran
+    ctx.fillStyle = '#6b3b1b';
+    ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
+    
+    tree.tiers.forEach(t => {
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.moveTo(t.x1,t.y1);
+      ctx.lineTo(t.x2,t.y2);
+      ctx.lineTo(t.x3,t.y3);
+      ctx.fill();
+      
+      ctx.fillStyle='rgba(0,0,0,0.15)';
+      ctx.beginPath();
+      ctx.moveTo(t.x1,t.y1+8);
+      ctx.lineTo(t.x2,t.y2+8);
+      ctx.lineTo(t.x3,t.y3+8);
+      ctx.fill();
+    });
+
+    // Ghost targets (mission)
     if (gameState === 'MISSION'){
       ctx.save();
       ghostTargets.forEach(t => {
-        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 3; ctx.setLineDash([6,6]);
-        ctx.arc(t.x, t.y, t.r, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6,6]);
+        ctx.arc(t.x, t.y, t.r, 0, Math.PI*2);
+        ctx.stroke();
       });
-      ctx.setLineDash([]); ctx.restore();
+      ctx.setLineDash([]);
+      ctx.restore();
     }
 
-    // star top ornament (tree top)
+    // Star top
     if (tree.tiers.length){
       const top = tree.tiers[2];
-      ctx.fillStyle = '#ffd700'; ctx.shadowBlur = 25; ctx.shadowColor = 'gold';
-      ctx.beginPath(); ctx.arc(top.x1, top.y1, 15, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowBlur = 25;
+      ctx.shadowColor = 'gold';
+      ctx.beginPath();
+      ctx.arc(top.x1, top.y1, 15, 0, Math.PI*2);
+      ctx.fill();
       ctx.shadowBlur = 0;
     }
 
-    // ornaments & bullets
+    // Ornaments & bullets
     ornaments.forEach(o=>drawOrnament(o));
     bullets.forEach(b=>drawOrnament(b));
 
@@ -513,41 +630,89 @@
 
   // --- Input (keep mobile double-shot fix) ---
   function move(x){ player.x = Math.max(30, Math.min(W-30, x)); }
-  window.addEventListener('mousemove', e => move(e.clientX));
-  window.addEventListener('mousedown', e => { if (e.target.tagName !== 'BUTTON') shoot(e.clientY); });
+  
+  window.addEventListener('mousemove', e => {
+    if (gameState !== 'MENU') move(e.clientX);
+  });
+  
+  window.addEventListener('mousedown', e => {
+    if (gameState !== 'MENU' && e.target.tagName !== 'BUTTON'){
+      shoot(e.clientY);
+    }
+  });
 
-  window.addEventListener('touchmove', e => { move(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  window.addEventListener('touchmove', e => {
+    if (gameState !== 'MENU'){
+      move(e.touches[0].clientX);
+      e.preventDefault();
+    }
+  }, {passive:false});
+  
   window.addEventListener('touchstart', e => {
-    if (e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target) && !menuOverlay.contains(e.target)){
-      move(e.touches[0].clientX); shoot(e.touches[0].clientY);
-      e.preventDefault(); // mobile double-shot fix: MUST be directly after shoot
+    if (gameState !== 'MENU' && e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target) && !menuOverlay.contains(e.target)){
+      move(e.touches[0].clientX);
+      shoot(e.touches[0].clientY);
+      e.preventDefault(); // mobile double-shot fix
     }
   }, {passive:false});
 
   // --- UI interactions ---
-  document.getElementById('resetBtn').onclick = () => { ornaments=[]; bullets=[]; money=0; checkButtons(); updateShopUI(); };
+  document.getElementById('resetBtn').onclick = () => {
+    ornaments=[];
+    bullets=[];
+    if (gameState === 'CREATIVE') money=0; // Only reset money in creative
+    checkButtons();
+    updateShopUI();
+  };
+  
   document.getElementById('shopBtn').onclick = () => toggleShop(true);
-  menuBtn.onclick = ()=>{ // back to menu
-    gameState = 'MENU'; menuOverlay.style.display = 'flex';
+  
+  menuBtn.onclick = ()=>{
+    gameState = 'MENU';
+    menuOverlay.style.display = 'flex';
+    bullets = []; // Clear bullets when returning to menu
   };
 
   startCreative.onclick = ()=>{
-    gameState='CREATIVE'; menuOverlay.style.display='none';
-    // in creative no earnings, keep unlocked items accessible
-    toggleShop(false); // close shop if open
+    gameState='CREATIVE';
+    menuOverlay.style.display='none';
+    ornaments = [];
+    bullets = [];
+    ghostTargets = [];
+    toggleShop(false);
   };
+  
   startMission.onclick = ()=>{
-    gameState='MISSION'; menuOverlay.style.display='none';
-    missionLevel = 1; spawnTargets(missionLevel);
+    gameState='MISSION';
+    menuOverlay.style.display='none';
+    ornaments = [];
+    bullets = [];
+    missionLevel = 1;
+    spawnTargets(missionLevel);
     toggleShop(false);
   };
 
-  tabItems.onclick = ()=>{ tabItems.classList.add('active'); tabBackgrounds.classList.remove('active'); shopItemsDiv.classList.remove('hidden'); shopBackgroundsDiv.classList.add('hidden'); };
-  tabBackgrounds.onclick = ()=>{ tabBackgrounds.classList.add('active'); tabItems.classList.remove('active'); shopBackgroundsDiv.classList.remove('hidden'); shopItemsDiv.classList.add('hidden'); };
+  tabItems.onclick = ()=>{
+    tabItems.classList.add('active');
+    tabBackgrounds.classList.remove('active');
+    shopItemsDiv.classList.remove('hidden');
+    shopBackgroundsDiv.classList.add('hidden');
+  };
+  
+  tabBackgrounds.onclick = ()=>{
+    tabBackgrounds.classList.add('active');
+    tabItems.classList.remove('active');
+    shopBackgroundsDiv.classList.remove('hidden');
+    shopItemsDiv.classList.add('hidden');
+  };
 
   // --- Start loop ---
   resize();
-  function loop(){ update(); draw(); requestAnimationFrame(loop); }
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
   loop();
 
 })();
