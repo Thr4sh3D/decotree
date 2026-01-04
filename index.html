@@ -15,6 +15,7 @@
     font-size:16px; font-weight:bold; color:#0b3a4a;
     box-shadow:0 2px 8px rgba(0,0,0,0.1);
     user-select:none; z-index:1001; pointer-events: none;
+    line-height:1.2; text-align:left;
   }
 
   #resetBtn {
@@ -27,13 +28,64 @@
     cursor: pointer; z-index: 1002;
   }
   #resetBtn:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b0e0e; }
+
+  #shopBtn {
+    position: fixed; right: 12px; top: 60px;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, #4da6ff 0%, #2176d2 60%);
+    border: none; color: #fff; font-weight: 700; font-size: 14px;
+    border-radius: 20px; box-shadow:0 4px 0 #154b7a; cursor:pointer; z-index:1002;
+  }
+
+  /* Shop modal */
+  .modal-overlay {
+    position: fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.4); z-index:1003;
+  }
+  .modal {
+    background:white; padding:20px; border-radius:12px; width:320px; max-width:90%;
+    box-shadow:0 8px 30px rgba(0,0,0,0.3); color:#05333b;
+  }
+  .modal h2 { margin:0 0 12px 0; font-size:18px; }
+  .shop-item { display:flex; justify-content:space-between; align-items:center; margin:8px 0; }
+  .shop-item button { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:700; }
+  .buy { background: linear-gradient(180deg,#ffd166,#f39c12); color:#3a2b00; box-shadow:0 3px 0 rgba(0,0,0,0.15); }
+  .owned { background:#e0e0e0; color:#777; cursor:default; box-shadow:none; }
+  .close-btn { margin-top:12px; padding:8px 12px; border-radius:8px; border:none; background:#ddd; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
-<div class="info" id="info">Antal julgranskulor: 0</div>
+<div class="info" id="info">Antal julgranskulor: 0<br>Pengar: 0 kr</div>
 <button id="resetBtn" ontouchstart="event.stopPropagation()">Rensa Granen</button>
+<button id="shopBtn" ontouchstart="event.stopPropagation()">Shop</button>
+
+<!-- Shop modal -->
+<div id="shopModal" class="modal-overlay" ontouchstart="event.stopPropagation()">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>Butik</h2>
+    <div class="shop-item">
+      <div>
+        <strong>Standard</strong><br><small>Gratis — Standardfärger</small>
+      </div>
+      <div><button class="owned" id="buyStandard" disabled>Ägd</button></div>
+    </div>
+    <div class="shop-item">
+      <div>
+        <strong>Lyx</strong><br><small>100 kr — Lägg till Guld & Silver</small>
+      </div>
+      <div><button class="buy" id="buyLyx">Köp 100 kr</button></div>
+    </div>
+    <div class="shop-item">
+      <div>
+        <strong>Diamant</strong><br><small>500 kr — Skimrande Blå/Lila</small>
+      </div>
+      <div><button class="buy" id="buyDiamant">Köp 500 kr</button></div>
+    </div>
+    <button class="close-btn" id="closeShop">Stäng</button>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -41,6 +93,11 @@
   const ctx = canvas.getContext('2d');
   const info = document.getElementById('info');
   const resetBtn = document.getElementById('resetBtn');
+  const shopBtn = document.getElementById('shopBtn');
+  const shopModal = document.getElementById('shopModal');
+  const buyLyxBtn = document.getElementById('buyLyx');
+  const buyDiamBtn = document.getElementById('buyDiamant');
+  const closeShop = document.getElementById('closeShop');
 
   // Variabler
   let W, H;
@@ -49,6 +106,13 @@
   let ornaments = [];
   let bullets = [];
   const palette = ['#e63946','#ffb703','#fb8500','#8338ec','#3a86ff','#7bd389','#ff6bcb'];
+
+  // Ekonomi & shop-state
+  let money = 0;
+  const shopState = { standard:true, lyx:false, diamant:false };
+
+  // Snö
+  let snowflakes = [];
 
   // Initiera och anpassa storlek
   function resize() {
@@ -122,6 +186,19 @@
   }
 
   function update() {
+    // Snow spawn
+    if (Math.random() < 0.25 && snowflakes.length < 200) {
+      snowflakes.push({ x: Math.random() * W, y: -10, r: Math.random() * 2 + 1, speed: Math.random() * 1.2 + 0.4, drift: (Math.random()-0.5)*0.6 });
+    }
+
+    // Update snow
+    for (let i = snowflakes.length-1; i>=0; i--) {
+      const s = snowflakes[i];
+      s.y += s.speed;
+      s.x += s.drift;
+      if (s.y > H + 10) snowflakes.splice(i,1);
+    }
+
     for (let i = bullets.length - 1; i >= 0; i--) {
       let b = bullets[i];
       // Flytta kulan uppåt mot målet
@@ -140,7 +217,8 @@
 
         if (hit) {
            ornaments.push({x: b.x, y: b.y, r: b.r, color: b.color});
-           info.textContent = 'Antal julgranskulor: ' + ornaments.length;
+           money += 10; // tjäna pengar för varje fastnad kula
+           updateInfo();
         } 
         
         // Oavsett om vi träffade eller missade så tar skottet slut här
@@ -151,21 +229,15 @@
 
   function draw() {
     // Rensa
+    ctx.clearRect(0,0,W,H);
     ctx.fillStyle = '#eaf6ff';
     ctx.fillRect(0,0,W,H);
 
-    // Stubbe
-    ctx.fillStyle = '#5D4037';
-    ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
+    // Rita snö (bakgrund)
+    drawSnow();
 
-    // Gran
-    tree.tiers.forEach(t => {
-      ctx.fillStyle = t.color;
-      ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.lineTo(t.x3, t.y3); ctx.fill();
-      // Skugga
-      ctx.fillStyle = 'rgba(0,0,0,0.1)';
-      ctx.beginPath(); ctx.moveTo(t.x1, t.y1+5); ctx.lineTo(t.x2, t.y2+5); ctx.lineTo(t.x3, t.y3+5); ctx.fill();
-    });
+    // Stubbe och gran med lagerad stil
+    drawTree();
 
     // Stjärna
     if(tree.tiers.length){
@@ -176,7 +248,7 @@
         ctx.shadowBlur = 0;
     }
 
-    // Kulor
+    // Kulor (shiny)
     ornaments.forEach(o => {
       let g = ctx.createRadialGradient(o.x-2, o.y-2, 1, o.x, o.y, o.r);
       g.addColorStop(0, 'white'); g.addColorStop(1, o.color);
@@ -194,15 +266,116 @@
     drawSanta(player.x, player.y);
   }
 
-  function drawSanta(x, y) {
-    ctx.fillStyle = '#d32f2f'; // Kropp
-    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ffccb0'; // Huvud
-    ctx.beginPath(); ctx.arc(x, y-20, 15, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#d32f2f'; // Mössa
-    ctx.beginPath(); ctx.moveTo(x-15, y-25); ctx.lineTo(x+15, y-25); ctx.lineTo(x, y-50); ctx.fill();
-    ctx.fillStyle = 'white'; // Tofs
-    ctx.beginPath(); ctx.arc(x, y-50, 5, 0, Math.PI*2); ctx.fill();
+  // Ny: ritfunktion för trädet med lager och skuggor
+  function drawTree() {
+    // Trunk
+    ctx.fillStyle = '#5D4037';
+    ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
+
+    // Rita tre lager med skugga under varje
+    tree.tiers.forEach((t, idx) => {
+      // Skugga
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.beginPath();
+      ctx.moveTo(t.x1, t.y1 + 8);
+      ctx.lineTo(t.x2, t.y2 + 8);
+      ctx.lineTo(t.x3, t.y3 + 8);
+      ctx.fill();
+      ctx.restore();
+
+      // Huvudfyllnad med lätt gradient för 'Disney' känsla
+      const g = ctx.createLinearGradient(t.x1, t.y1, t.x2, t.y2);
+      g.addColorStop(0, shadeColor(t.color, 0.08));
+      g.addColorStop(1, shadeColor(t.color, -0.08));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(t.x1, t.y1);
+      // lite mjukare kanter genom små kurvor
+      ctx.lineTo(t.x2, t.y2);
+      ctx.quadraticCurveTo((t.x2 + t.x3)/2, t.y2 - 10, t.x3, t.y3);
+      ctx.lineTo(t.x3, t.y3);
+      ctx.lineTo(t.x1, t.y1);
+      ctx.fill();
+    });
+  }
+
+  // Hjälp: enkel färgskuggare
+  function shadeColor(hex, percent) {
+    // hex -> shade by percent (-0.1..0.1)
+    const c = hex.replace('#','');
+    const num = parseInt(c,16);
+    let r = (num >> 16) + Math.round(255 * percent);
+    let g = ((num >> 8) & 0x00FF) + Math.round(255 * percent);
+    let b = (num & 0x0000FF) + Math.round(255 * percent);
+    r = Math.min(255, Math.max(0, r));
+    g = Math.min(255, Math.max(0, g));
+    b = Math.min(255, Math.max(0, b));
+    return '#' + ( (1<<24) + (r<<16) + (g<<8) + b ).toString(16).slice(1);
+  }
+
+  // Ny tomte med kurvor och path
+  function drawSanta(cx, cy) {
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Body (splashy rounded coat)
+    ctx.fillStyle = '#d32f2f';
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    ctx.bezierCurveTo(30, -5, 34, 25, 0, 35);
+    ctx.bezierCurveTo(-34, 25, -30, -5, 0, -10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Head
+    ctx.fillStyle = '#ffccb0';
+    ctx.beginPath();
+    ctx.arc(0, -28, 14, 0, Math.PI*2);
+    ctx.fill();
+
+    // Hat (curvy)
+    ctx.fillStyle = '#d32f2f';
+    ctx.beginPath();
+    ctx.moveTo(-14, -36);
+    ctx.quadraticCurveTo(0, -62, 22, -46);
+    ctx.quadraticCurveTo(10, -50, -14, -36);
+    ctx.closePath();
+    ctx.fill();
+
+    // White trim
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.ellipse(0, -18, 20, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Pompom
+    ctx.beginPath();
+    ctx.arc(22, -46, 6, 0, Math.PI*2);
+    ctx.fill();
+
+    // Eyes and smile
+    ctx.fillStyle = '#361f16';
+    ctx.beginPath(); ctx.arc(-4, -30, 1.6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(6, -30, 1.6, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#a0462b';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(1, -24, 6, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Snow drawing
+  function drawSnow() {
+    ctx.save();
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.9;
+    snowflakes.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.restore();
   }
 
   // INPUT
@@ -211,7 +384,7 @@
   // Dator
   window.addEventListener('mousemove', e => move(e.clientX));
   window.addEventListener('mousedown', e => {
-     if(e.target.id !== 'resetBtn') shoot(e.clientY);
+     if(e.target.id !== 'resetBtn' && e.target.id !== 'shopBtn') shoot(e.clientY);
   });
 
   // Mobil
@@ -220,16 +393,57 @@
      e.preventDefault();
   }, {passive: false});
   window.addEventListener('touchstart', e => {
-     if(e.target.id !== 'resetBtn') {
+     if(e.target.id !== 'resetBtn' && e.target.id !== 'shopBtn') {
         move(e.touches[0].clientX);
         shoot(e.touches[0].clientY); // Skjut mot fingrets höjd
      }
   });
 
-  resetBtn.onclick = () => { ornaments = []; info.textContent = 'Antal julgranskulor: 0'; };
+  resetBtn.onclick = () => { ornaments = []; updateInfo(); };
+
+  // Info uppdatering
+  function updateInfo() {
+    info.innerHTML = 'Antal julgranskulor: ' + ornaments.length + '<br>Pengar: ' + money + ' kr';
+  }
+
+  // Shop UI
+  shopBtn.onclick = () => { shopModal.style.display = 'flex'; };
+  closeShop.onclick = () => { shopModal.style.display = 'none'; };
+  shopModal.addEventListener('click', (e) => { if (e.target === shopModal) shopModal.style.display = 'none'; });
+
+  buyLyxBtn.onclick = () => {
+    if (shopState.lyx) return;
+    if (money < 100) { alert('Inte tillräckligt med pengar!'); return; }
+    money -= 100;
+    shopState.lyx = true;
+    // Guld & Silver
+    palette.push('#ffd700', '#c0c0c0');
+    buyLyxBtn.classList.remove('buy'); buyLyxBtn.classList.add('owned'); buyLyxBtn.textContent = 'Ägd';
+    buyLyxBtn.disabled = true;
+    updateInfo();
+  };
+
+  buyDiamBtn.onclick = () => {
+    if (shopState.diamant) return;
+    if (money < 500) { alert('Inte tillräckligt med pengar!'); return; }
+    money -= 500;
+    shopState.diamant = true;
+    palette.push('#00c8ff', '#8a2be2');
+    buyDiamBtn.classList.remove('buy'); buyDiamBtn.classList.add('owned'); buyDiamBtn.textContent = 'Ägd';
+    buyDiamBtn.disabled = true;
+    updateInfo();
+  };
+
+  // Init shop buttons state if already owned (start none owned)
+  function initShopButtons() {
+    // standard is owned by default (disabled)
+    document.getElementById('buyStandard').disabled = true;
+  }
+  initShopButtons();
 
   // Loop
   resize();
+  updateInfo();
   function loop() { update(); draw(); requestAnimationFrame(loop); }
   loop();
 
