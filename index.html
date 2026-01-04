@@ -329,6 +329,7 @@
   let gameState = 'MENU';
   let ghostTargets = [];
   let missionLevel = 1;
+  let pausedState = null; // ADDED: Track paused game state
 
   // Cheat code tracker
   let cheatClicks = 0;
@@ -703,19 +704,36 @@
   // --- Menu Button Event Listeners ---
   function toggleMenu(show) {
     menuOverlay.style.display = show ? 'flex' : 'none';
+    
+    // ADDED: Save game state when opening menu
+    if (show && gameState !== 'MENU') {
+      pausedState = gameState;
+    }
+    
+    // ADDED: Show/hide resume button based on saved state
+    const btnResume = document.getElementById('btnResume');
+    if (btnResume) {
+      btnResume.style.display = (pausedState === 'CREATIVE' || pausedState === 'MISSION') ? 'block' : 'none';
+    }
   }
 
   function startGame(mode) {
     gameState = mode;
     toggleMenu(false);
+    pausedState = null; // Clear paused state when starting new game
     if (mode === 'MISSION') {
       missionLevel = 1;
       spawnTargets(missionLevel);
     }
   }
 
+  // --- RESTORED: Resume Game Function ---
   window.resumeGame = function() {
-    toggleMenu(false);
+    if (pausedState) {
+      gameState = pausedState;
+      pausedState = null;
+      toggleMenu(false);
+    }
   };
 
   window.startCreativeGame = function() {
@@ -944,8 +962,52 @@
     return s > 0 && trig > 0 && (1 - s - trig) > 0;
   }
 
-  function shoot(targetY){
-    const color = (activeThrowType === 'ball') ? activePalette[Math.floor(Math.random()*activePalette.length)]
+  // --- RESTORED: Click/Tap to Shoot ---
+  window.addEventListener('mousedown', (e) => {
+    // Skip if interacting with UI
+    if (e.target.tagName === 'BUTTON' || e.target.closest('#shopModal') || e.target.closest('.shop-content') || e.target.closest('.quick-btn')) return;
+    
+    if (gameState === 'MENU') return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    fireAtTarget(clickX, clickY);
+  });
+
+  window.addEventListener('touchstart', (e) => {
+    // Skip if interacting with UI
+    if (e.target.tagName === 'BUTTON' || e.target.closest('#shopModal') || e.target.closest('.shop-content') || e.target.closest('.quick-btn')) return;
+    
+    if (gameState === 'MENU') return;
+    
+    if (e.touches.length === 0) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const touchX = e.touches[0].clientX - rect.left;
+    const touchY = e.touches[0].clientY - rect.top;
+    
+    fireAtTarget(touchX, touchY);
+  }, { passive: true });
+
+  // --- RESTORED: Fire Bullet with Angle Calculation ---
+  function fireAtTarget(targetX, targetY) {
+    const santaY = player.y;
+    
+    // Calculate angle from Santa to target
+    const dx = targetX - santaX;
+    const dy = targetY - santaY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance === 0) return; // Prevent division by zero
+    
+    // Normalize direction
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    
+    // Create bullet with direction
+    const color = (activeThrowType === 'ball') ? activePalette[Math.floor(Math.random() * activePalette.length)]
                   : (activeThrowType === 'candy') ? '#e63946'
                   : (activeThrowType === 'light') ? '#fff'
                   : (activeThrowType === 'candle') ? '#ffffff'
@@ -954,9 +1016,17 @@
                   : '#fff';
     
     bullets.push({
-      x: player.x, y: player.y - 45, targetY: targetY, speed: 15,
-      r: Math.random()*5 + 8, color: color, type: activeThrowType
+      x: santaX,
+      y: santaY - 45,
+      vx: dirX * 12, // velocity X
+      vy: dirY * 12, // velocity Y
+      speed: 12,
+      r: Math.random() * 5 + 8,
+      color: color,
+      type: activeThrowType,
+      life: 120 // frames before despawn
     });
+    
     playSound('shoot');
   }
 
@@ -964,31 +1034,50 @@
     if (gameState === 'MENU') return;
     updateSnow();
     
-    for (let i=bullets.length-1; i>=0; i--){
+    // --- RESTORED: Update bullets with velocity ---
+    for (let i = bullets.length - 1; i >= 0; i--) {
       const b = bullets[i];
-      b.y -= b.speed;
-      if (b.y < -50){ bullets.splice(i,1); continue; }
+      b.x += b.vx;
+      b.y += b.vy;
+      b.life--;
       
-      if (b.y <= b.targetY){
-        let hit = false;
-        for (const t of tree.tiers){ if (isInside(b.x, b.y, t)){ hit = true; break; } }
-        
-        if (hit){
-          if (gameState === 'MISSION'){
-            const idx = findTargetAt(b.x, b.y);
-            if (idx !== -1){
-              const target = ghostTargets[idx];
-              ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
-              ghostTargets.splice(idx, 1);
-              playSound('stick'); money += 5; playSound('money');
-              checkButtons(); updateShopUI();
-              if (ghostTargets.length === 0){ missionLevel++; spawnTargets(missionLevel); }
-              bullets.splice(i, 1); continue;
-            }
-          }
-          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
-          playSound('stick');
+      // Remove if off-screen or expired
+      if (b.y < -50 || b.y > H || b.x < -50 || b.x > W || b.life <= 0) {
+        bullets.splice(i, 1);
+        continue;
+      }
+      
+      // Check collision with tree
+      let hit = false;
+      for (const t of tree.tiers) {
+        if (isInside(b.x, b.y, t)) {
+          hit = true;
+          break;
         }
+      }
+      
+      if (hit) {
+        if (gameState === 'MISSION') {
+          const idx = findTargetAt(b.x, b.y);
+          if (idx !== -1) {
+            const target = ghostTargets[idx];
+            ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
+            ghostTargets.splice(idx, 1);
+            playSound('stick');
+            money += 5;
+            playSound('money');
+            checkButtons();
+            updateShopUI();
+            if (ghostTargets.length === 0) {
+              missionLevel++;
+              spawnTargets(missionLevel);
+            }
+            bullets.splice(i, 1);
+            continue;
+          }
+        }
+        ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+        playSound('stick');
         bullets.splice(i, 1);
       }
     }
@@ -1069,6 +1158,7 @@
     e.stopPropagation();
     if (gameState !== 'MENU') {
       gameState = 'MENU';
+      pausedState = null; // Clear paused state
       ornaments = [];
       bullets = [];
       toggleMenu(true);
@@ -1197,15 +1287,15 @@
       ctx.fillStyle = '#ffd700';
       ctx.shadowBlur = 40;
       ctx.shadowColor = 'orange';
-      drawStar(ctx, top.x1, top.y1, 5, 30, 15);
+           drawStar(ctx, top.x1, top.y1, 5, 30, 15);
       ctx.fill();
       ctx.shadowBlur = 0;
       ctx.restore();
     }
 
     // Ornaments & bullets
-    ornaments.forEach(o=>drawOrnament(o));
-    bullets.forEach(b=>drawOrnament(b));
+    ornaments.forEach(o => drawOrnament(o));
+    bullets.forEach(b => drawOrnament(b));
 
     // RESTORED: Use dynamic santaX position
     drawSanta(santaX, player.y);
