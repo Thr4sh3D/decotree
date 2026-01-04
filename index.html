@@ -6,26 +6,44 @@
 <title>Christmas Tree Decorating — Mini Game</title>
 <style>
   html,body { height:100%; margin:0; }
-  body { background:#eaf6ff; /* very light blue - snowy day */ display:flex; align-items:stretch; }
+  body { background:#eaf6ff; /* very light blue - snowy day */ display:flex; align-items:stretch; font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
   canvas { display:block; width:100%; height:100%; touch-action: none; }
   .info {
     position: fixed; left:12px; top:12px;
     background: rgba(255,255,255,0.88); padding:8px 10px; border-radius:8px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     font-size:14px; color:#0b3a4a;
     box-shadow:0 2px 8px rgba(0,0,0,0.08);
     user-select:none;
   }
+  /* Glossy red holiday button top-right */
+  #resetBtn {
+    position: fixed;
+    right: 12px;
+    top: 12px;
+    padding: 8px 14px;
+    background: linear-gradient(180deg, #ff5a5a 0%, #d91f2a 60%, #b21016 100%);
+    border: 1px solid rgba(0,0,0,0.15);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 18px;
+    box-shadow: 0 4px 10px rgba(183, 28, 28, 0.25), inset 0 -2px 0 rgba(0,0,0,0.08);
+    cursor: pointer;
+    user-select: none;
+  }
+  #resetBtn:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <div class="info" id="info">Ornaments on tree: 0</div>
+<button id="resetBtn" aria-label="Rensa Granen">Rensa Granen</button>
 <script>
 (() => {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false });
   const info = document.getElementById('info');
+  const resetBtn = document.getElementById('resetBtn');
 
   let DPR = Math.max(1, window.devicePixelRatio || 1);
 
@@ -152,32 +170,32 @@
     ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
   }
 
+  // Replace drawPlayer with a 'Santa-like' character
   function drawPlayer() {
-    // Draw a simple "Disney-style" character centered at player.x
-    const baseY = player.y + player.h; // feet baseline (unused but helps layout)
-    const headR = Math.max(10, player.h * 1.4);
-    const headX = player.x;
-    const headY = player.y - headR - 4;
+    const cxp = player.x;
+    const baseline = player.y + player.h; // feet baseline (unused but for reference)
+    const headR = Math.max(10, player.h * 1.6);
+    const headX = cxp;
+    const headY = player.y - headR - 6;
 
-    // body/dress: use a rounded triangular shape under the head
+    // body (simple rounded triangle/dress)
     ctx.save();
-    ctx.translate(headX, headY + headR * 0.6);
+    ctx.translate(headX, headY + headR * 0.8);
 
-    // dress
-    const bodyWidth = player.w * 0.9;
-    const bodyHeight = player.h * 3.6;
+    const bodyW = player.w * 0.9;
+    const bodyH = player.h * 3.6;
     ctx.beginPath();
-    ctx.moveTo(-bodyWidth * 0.5, 0);
-    ctx.quadraticCurveTo(-bodyWidth * 0.35, bodyHeight * 0.45, 0, bodyHeight);
-    ctx.quadraticCurveTo(bodyWidth * 0.35, bodyHeight * 0.45, bodyWidth * 0.5, 0);
+    ctx.moveTo(-bodyW*0.45, 0);
+    ctx.quadraticCurveTo(-bodyW*0.25, bodyH*0.5, 0, bodyH);
+    ctx.quadraticCurveTo(bodyW*0.25, bodyH*0.5, bodyW*0.45, 0);
     ctx.closePath();
-    ctx.fillStyle = '#c6285a';
+    ctx.fillStyle = '#d92a2a';
     ctx.fill();
 
-    // small belt
+    // white trim at bottom
     ctx.beginPath();
-    ctx.fillStyle = '#3b3b3b';
-    ctx.rect(-bodyWidth*0.5, bodyHeight*0.45, bodyWidth, Math.max(6, player.h*0.45));
+    ctx.fillStyle = '#fff';
+    ctx.ellipse(0, bodyH - Math.max(6, player.h*0.3), bodyW*0.45, Math.max(8, player.h*0.45), 0, 0, Math.PI);
     ctx.fill();
 
     ctx.restore();
@@ -188,26 +206,32 @@
     ctx.arc(headX, headY, headR, 0, Math.PI * 2);
     ctx.fill();
 
-    // simple facial features (eyes)
+    // eyes
     ctx.beginPath();
     ctx.fillStyle = '#222';
-    ctx.arc(headX - headR*0.33, headY - headR*0.08, Math.max(1.8, headR*0.12), 0, Math.PI*2);
-    ctx.arc(headX + headR*0.33, headY - headR*0.08, Math.max(1.8, headR*0.12), 0, Math.PI*2);
+    ctx.arc(headX - headR*0.28, headY - headR*0.08, Math.max(1.6, headR*0.12), 0, Math.PI*2);
+    ctx.arc(headX + headR*0.28, headY - headR*0.08, Math.max(1.6, headR*0.12), 0, Math.PI*2);
     ctx.fill();
 
-    // Santa hat
+    // mouth (smile)
     ctx.beginPath();
-    const hatHeight = headR * 1.0;
-    ctx.moveTo(headX - headR * 0.9, headY - headR * 0.6);
-    ctx.quadraticCurveTo(headX, headY - headR - hatHeight*0.6, headX + headR*1.1, headY - headR*0.2);
-    ctx.lineTo(headX + headR*0.9, headY - headR*0.2);
-    ctx.lineTo(headX + headR*0.5, headY - headR*0.15);
-    ctx.quadraticCurveTo(headX, headY - headR*0.8, headX - headR*0.6, headY - headR*0.5);
+    ctx.strokeStyle = '#7a2a2a';
+    ctx.lineWidth = Math.max(1, headR*0.08);
+    ctx.beginPath();
+    ctx.arc(headX, headY + headR*0.12, headR*0.32, 0.15*Math.PI, 0.85*Math.PI);
+    ctx.stroke();
+
+    // hat - red cone/triangle
+    ctx.beginPath();
+    ctx.moveTo(headX - headR*0.9, headY - headR*0.6);
+    ctx.quadraticCurveTo(headX, headY - headR - headR*0.5, headX + headR*1.1, headY - headR*0.2);
+    ctx.lineTo(headX + headR*0.85, headY - headR*0.2);
+    ctx.quadraticCurveTo(headX + headR*0.35, headY - headR*0.6, headX - headR*0.6, headY - headR*0.5);
     ctx.closePath();
     ctx.fillStyle = '#d92a2a';
     ctx.fill();
 
-    // hat brim
+    // hat brim (white)
     ctx.beginPath();
     ctx.fillStyle = '#fff';
     ctx.ellipse(headX, headY - headR*0.15, headR*1.02, headR*0.36, 0, 0, Math.PI*2);
@@ -222,8 +246,8 @@
 
   function drawOrnaments() {
     for (const o of ornaments) {
-      // create radial gradient for 3D effect
-      const lx = o.x - o.r*0.35; // light source offset
+      // radial gradient for 3D effect
+      const lx = o.x - o.r*0.35;
       const ly = o.y - o.r*0.45;
       const g = ctx.createRadialGradient(lx, ly, Math.max(1, o.r*0.15), o.x, o.y, o.r);
       g.addColorStop(0, 'rgba(255,255,255,0.95)');
@@ -320,7 +344,7 @@
       o.x += o.vx * (delta / 16.67);
       o.y += o.vy * (delta / 16.67);
 
-      // check collision against all tiers (crucial fix)
+      // check collision against all tiers
       let stuckNow = false;
       for (const t of tree.tiers) {
         if (pointInTriangle({x:o.x, y:o.y}, t.v1, t.v2, t.v3)) {
@@ -399,6 +423,12 @@
     if (e.key === ' ' || e.key === 'Enter') {
       throwOrnament(player.x, player.y - H*0.25);
     }
+  });
+
+  // Reset button clears ornaments (keeps inputs unchanged)
+  resetBtn.addEventListener('click', () => {
+    ornaments.length = 0;
+    info.textContent = 'Ornaments on tree: 0';
   });
 
   // Game loop
