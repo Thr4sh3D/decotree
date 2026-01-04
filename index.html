@@ -28,6 +28,7 @@
   /* Knappar */
   .btn-group {
     display: flex; flex-direction: column; gap: 10px; pointer-events: auto;
+    align-items: flex-end;
   }
   
   button {
@@ -41,14 +42,12 @@
   #resetBtn { background: linear-gradient(to bottom, #ff5f5f, #d32f2f); }
   #shopBtn { background: linear-gradient(to bottom, #4facfe, #00f2fe); color: #005cbf; }
 
-  /* Sound button (fixed top-left) */
+  /* Sound button (now inside btn-group) */
   #soundBtn {
-    position: fixed; top: 14px; left: 14px; z-index: 120;
-    background: rgba(255,255,255,0.95); color:#0b3a4a; border-radius: 18px;
-    padding: 8px 10px; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-    pointer-events: auto; border: none; cursor: pointer;
+    background: linear-gradient(to bottom, #ffd700, #e8b400); color:#0b3a4a;
+    padding: 8px 12px; font-size: 14px; border-radius: 18px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15); color: #003049;
   }
-  #soundBtn:active { transform: translateY(2px); }
 
   /* BUTIK (Modal) */
   #shopModal {
@@ -57,7 +56,7 @@
     justify-content: center; align-items: center;
   }
   .shop-content {
-    background: white; padding: 20px; border-radius: 25px; width: 300px;
+    background: white; padding: 20px; border-radius: 25px; width: 320px;
     text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
@@ -78,9 +77,6 @@
 </head>
 <body>
 
-<!-- Sound mute/unmute -->
-<button id="soundBtn" ontouchstart="event.stopPropagation()">🔊</button>
-
 <div class="ui-bar">
   <div class="score-box">
     <span id="scoreText">🎄 Kulor: 0</span>
@@ -89,13 +85,15 @@
   <div class="btn-group">
     <button id="resetBtn" ontouchstart="event.stopPropagation()">Rensa</button>
     <button id="shopBtn" ontouchstart="event.stopPropagation()">🏪 Affär</button>
+    <!-- Sound button moved into btn-group -->
+    <button id="soundBtn" ontouchstart="event.stopPropagation()">🔊</button>
   </div>
 </div>
 
 <div id="shopModal">
   <div class="shop-content">
     <h2 style="margin-top:0; color:#333">Jul-Butiken</h2>
-    <p>Köp nya färger till dina kulor!</p>
+    <p>Köp nya färger & ornament till dina kulor!</p>
     
     <div class="shop-item">
       <div><b>Guld & Silver</b><br><span style="font-size:12px">Glittrande metallic</span></div>
@@ -105,6 +103,23 @@
     <div class="shop-item">
       <div><b>Diamant</b><br><span style="font-size:12px">Blå/Lila kristaller</span></div>
       <button class="buy-btn" id="buyDiamond" onclick="buyPack('diamond', 500)">500 kr</button>
+    </div>
+
+    <hr style="border:none; height:1px; background:#eee; margin:10px 0;">
+
+    <div class="shop-item">
+      <div><b>Polkagris</b><br><span style="font-size:12px">Randig polkagris</span></div>
+      <button class="buy-btn" id="buyCandy" onclick="buyPack('candy', 50)">50 kr</button>
+    </div>
+
+    <div class="shop-item">
+      <div><b>Ljusslinga</b><br><span style="font-size:12px">Glittrande ljus</span></div>
+      <button class="buy-btn" id="buyLight" onclick="buyPack('light', 150)">150 kr</button>
+    </div>
+
+    <div class="shop-item">
+      <div><b>Ljus</b><br><span style="font-size:12px">Vitt ljus med låga</span></div>
+      <button class="buy-btn" id="buyCandle" onclick="buyPack('candle', 300)">300 kr</button>
     </div>
 
     <button class="close-btn" onclick="toggleShop(false)">Stäng</button>
@@ -136,8 +151,11 @@
   // Färger (Börjar med standard)
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
   
-  // Köpta paket
-  let unlocked = { gold: false, diamond: false };
+  // Köpta paket / objekt
+  let unlocked = { gold: false, diamond: false, candy: false, light: false, candle: false };
+
+  // Active throwing type
+  let activeThrowType = 'ball'; // 'ball'|'candy'|'light'|'candle'
 
   // --- Ljud (Web Audio API, synth) ---
   let audioCtx = null;
@@ -159,7 +177,6 @@
     for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
     noiseBuffer = buffer;
 
-    // säkerställ resume på första användargest (i fall AudioContext satte sig i suspended)
     function resumeOnce() {
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       document.removeEventListener('pointerdown', resumeOnce);
@@ -176,7 +193,6 @@
     const now = audioCtx.currentTime;
 
     if (type === 'shoot') {
-      // whoosh: filtered noise sweep
       const src = audioCtx.createBufferSource();
       src.buffer = noiseBuffer;
       const filter = audioCtx.createBiquadFilter();
@@ -192,7 +208,6 @@
     }
 
     if (type === 'stick') {
-      // pop/ding: kort hög sinus
       const o = audioCtx.createOscillator();
       o.type = 'sine';
       o.frequency.setValueAtTime(1500, now);
@@ -206,7 +221,6 @@
     }
 
     if (type === 'money') {
-      // ka-ching: tre snabba blippar
       const freqs = [1200, 1600, 2000];
       freqs.forEach((f, i) => {
         const t = now + i * 0.06;
@@ -223,7 +237,6 @@
     }
 
     if (type === 'buy') {
-      // magisk ackord
       const chord = [440, 660, 880];
       chord.forEach((f, i) => {
         const o = audioCtx.createOscillator();
@@ -244,12 +257,10 @@
     e.stopPropagation();
     isMuted = !isMuted;
     soundBtn.innerText = isMuted ? '🔇' : '🔊';
-    // init audio on first explicit interaction
     if (!isMuted) initAudio();
   };
-  soundBtn.ontouchstart = (e) => { e.stopPropagation(); }; // avoid closing shop on touch
+  soundBtn.ontouchstart = (e) => { e.stopPropagation(); };
 
-  // ensure audio init/unlock attempt on first gesture (non-blocking)
   document.addEventListener('pointerdown', () => { try { initAudio(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }, { once: true });
   document.addEventListener('touchstart', () => { try { initAudio(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }, { once: true });
 
@@ -260,7 +271,6 @@
     canvas.width = W; canvas.height = H;
     player.x = W / 2; player.y = H - 60;
     setupTree();
-    // Skapa snöflingor
     if(snowflakes.length === 0) {
       for(let i=0; i<50; i++) snowflakes.push(createSnowflake());
     }
@@ -275,20 +285,17 @@
     const treeW = treeH * 0.85;
     tree.tiers = [];
 
-    // Botten
     tree.tiers.push({
       x1: cx, y1: bottomY - treeH * 0.45, 
       x2: cx - treeW/2, y2: bottomY, x3: cx + treeW/2, y3: bottomY,
       color: '#087023'
     });
-    // Mitten
     const y2_bot = bottomY - treeH * 0.25;
     tree.tiers.push({
       x1: cx, y1: y2_bot - treeH * 0.45,
       x2: cx - treeW * 0.35, y2: y2_bot, x3: cx + treeW * 0.35, y3: y2_bot,
       color: '#0a8a2f'
     });
-    // Toppen
     const y1_bot = y2_bot - treeH * 0.25;
     tree.tiers.push({
       x1: cx, y1: y1_bot - treeH * 0.45, 
@@ -325,11 +332,14 @@
   }
 
   function shoot(targetY) {
-    // Välj färg från aktiva paletten
-    const color = activePalette[Math.floor(Math.random() * activePalette.length)];
+    const color = (activeThrowType === 'ball') ? activePalette[Math.floor(Math.random() * activePalette.length)]
+                  : (activeThrowType === 'candy') ? '#e63946'
+                  : (activeThrowType === 'light') ? '#fff'
+                  : (activeThrowType === 'candle') ? '#ffffff'
+                  : '#fff';
     bullets.push({ 
         x: player.x, y: player.y - 45, targetY: targetY, 
-        speed: 15, r: Math.random() * 5 + 8, color: color 
+        speed: 15, r: Math.random() * 5 + 8, color: color, type: activeThrowType 
     });
     playSound('shoot');
   }
@@ -346,15 +356,14 @@
            if (isInside(b.x, b.y, t)) { hit = true; break; }
         }
         if (hit) {
-           ornaments.push({x: b.x, y: b.y, r: b.r, color: b.color});
+           ornaments.push({x: b.x, y: b.y, r: b.r, color: b.color, type: b.type});
            playSound('stick'); // ornament fästes
-           addMoney(10); // Tjäna pengar!
+           addMoney(1); // Tjäna pengar! (ändrat till 1 kr)
         }
         bullets.splice(i, 1);
       }
     }
     
-    // Uppdatera texter
     scoreText.innerText = '🎄 Kulor: ' + ornaments.length;
     moneyText.innerText = '💰 ' + money + ' kr';
   }
@@ -364,44 +373,90 @@
     money += amount;
     if (amount > 0) playSound('money');
     checkButtons();
+    updateShopUI();
   }
   
-  // Gör funktionerna tillgängliga globalt för knapparna
   window.toggleShop = (show) => {
     shopModal.style.display = show ? 'flex' : 'none';
     checkButtons();
+    updateShopUI();
   };
   
   window.buyPack = (type, cost) => {
+    // If already unlocked: equip it (for ornament types)
+    if (unlocked[type]) {
+      // equip ornament types on click; palette items remain non-equipable
+      if (['candy','light','candle'].includes(type)) {
+        activeThrowType = type;
+      }
+      updateShopUI();
+      return;
+    }
     if(money >= cost) {
       money -= cost;
       if(type === 'gold') {
         unlocked.gold = true;
-        // Lägg till guldiga färger
         activePalette.push('#ffd700', '#c0c0c0', '#DAA520', '#E5E4E2');
         document.getElementById('buyGold').innerText = "Köpt!";
+        document.getElementById('buyGold').disabled = true;
       }
-      if(type === 'diamond') {
+      else if(type === 'diamond') {
         unlocked.diamond = true;
-        // Lägg till diamant-färger
         activePalette.push('#b9f2ff', '#9b5de5', '#00bbf9', '#fee440');
         document.getElementById('buyDiamond').innerText = "Köpt!";
+        document.getElementById('buyDiamond').disabled = true;
+      }
+      else if(type === 'candy') {
+        unlocked.candy = true;
+        activeThrowType = 'candy';
+      }
+      else if(type === 'light') {
+        unlocked.light = true;
+        activeThrowType = 'light';
+      }
+      else if(type === 'candle') {
+        unlocked.candle = true;
+        activeThrowType = 'candle';
       }
       playSound('buy');
-      addMoney(0); // Uppdatera text
+      checkButtons();
+      updateShopUI();
     }
   };
 
   function checkButtons() {
-    // Stäng av köp-knappar om man inte har råd eller redan köpt
     const goldBtn = document.getElementById('buyGold');
     const diamondBtn = document.getElementById('buyDiamond');
-    
-    if(unlocked.gold) goldBtn.disabled = true;
-    else goldBtn.disabled = (money < 100);
+    const candyBtn = document.getElementById('buyCandy');
+    const lightBtn = document.getElementById('buyLight');
+    const candleBtn = document.getElementById('buyCandle');
 
-    if(unlocked.diamond) diamondBtn.disabled = true;
-    else diamondBtn.disabled = (money < 500);
+    if(unlocked.gold) { goldBtn.disabled = true; } else goldBtn.disabled = (money < 100);
+    if(unlocked.diamond) { diamondBtn.disabled = true; } else diamondBtn.disabled = (money < 500);
+
+    // Ornament items: if unlocked keep enabled (so player can equip), else disable if no money
+    candyBtn.disabled = unlocked.candy ? false : (money < 50);
+    lightBtn.disabled = unlocked.light ? false : (money < 150);
+    candleBtn.disabled = unlocked.candle ? false : (money < 300);
+  }
+
+  function updateShopUI() {
+    const mapping = [
+      {id:'buyCandy', type:'candy', price:50, label:'Polkagris'},
+      {id:'buyLight', type:'light', price:150, label:'Ljusslinga'},
+      {id:'buyCandle', type:'candle', price:300, label:'Ljus'}
+    ];
+    mapping.forEach(it => {
+      const btn = document.getElementById(it.id);
+      if (!btn) return;
+      if (unlocked[it.type]) {
+        btn.innerText = (activeThrowType === it.type) ? 'Aktiv' : 'Ägd';
+        btn.style.background = (activeThrowType === it.type) ? '#ffd54d' : '#28a745';
+      } else {
+        btn.innerText = it.price + ' kr';
+        btn.style.background = '#28a745';
+      }
+    });
   }
 
   // --- RITA ALLT ---
@@ -419,12 +474,10 @@
     tree.tiers.forEach(t => {
       ctx.fillStyle = t.color;
       ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.lineTo(t.x3, t.y3); ctx.fill();
-      // Skugga under
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.beginPath(); ctx.moveTo(t.x1, t.y1+8); ctx.lineTo(t.x2, t.y2+8); ctx.lineTo(t.x3, t.y3+8); ctx.fill();
     });
 
-    // Stjärna
     if(tree.tiers.length){
         const top = tree.tiers[2];
         ctx.fillStyle = '#ffd700'; ctx.shadowBlur = 25; ctx.shadowColor = 'gold';
@@ -432,22 +485,71 @@
         ctx.shadowBlur = 0;
     }
 
-    // Kulor & Skott
-    [...ornaments, ...bullets].forEach(o => {
-      const g = ctx.createRadialGradient(o.x-o.r*0.3, o.y-o.r*0.3, 1, o.x, o.y, o.r);
-      g.addColorStop(0, '#fff'); g.addColorStop(0.3, o.color); g.addColorStop(1, '#222');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
-    });
+    // Rita ornament och skott (skott syns i bullets)
+    ornaments.forEach(o => drawOrnament(o));
+    bullets.forEach(b => drawOrnament(b));
 
     drawSanta(player.x, player.y);
   }
 
+  function drawOrnament(o) {
+    const type = o.type || 'ball';
+    if (type === 'ball') {
+      const g = ctx.createRadialGradient(o.x-o.r*0.3, o.y-o.r*0.3, 1, o.x, o.y, o.r);
+      g.addColorStop(0, '#fff'); g.addColorStop(0.3, o.color); g.addColorStop(1, '#222');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
+      // small shine
+      ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(o.x - o.r*0.4, o.y - o.r*0.4, o.r*0.25, 0, Math.PI*2); ctx.fill();
+    }
+    else if (type === 'candy') {
+      // draw candy as small circle with stripes
+      const r = o.r;
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.rotate((o.x+o.y)%6 / 6);
+      // white base
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, 0, r*1.1, r*0.9, 0, 0, Math.PI*2); ctx.fill();
+      // red stripes
+      ctx.strokeStyle = '#e63946'; ctx.lineWidth = Math.max(2, r*0.4);
+      for (let i=-2; i<=2; i++) {
+        ctx.beginPath(); ctx.ellipse(i * r*0.18, 0, r*0.5, r*0.45, 0, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    else if (type === 'light') {
+      // bulb with glow
+      ctx.save();
+      ctx.beginPath();
+      ctx.shadowColor = 'rgba(255, 230, 120, 0.8)';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = o.color || '#fff';
+      ctx.ellipse(o.x, o.y, o.r*0.9, o.r*1.2, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // screw base
+      ctx.fillStyle = '#666'; ctx.fillRect(o.x - o.r*0.5, o.y + o.r*1.05, o.r, o.r*0.3);
+      ctx.restore();
+    }
+    else if (type === 'candle') {
+      // candle body
+      const w = o.r * 0.8;
+      const h = o.r * 2.0;
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.rect(o.x - w/2, o.y - h, w, h); ctx.fill();
+      // flame
+      ctx.beginPath();
+      ctx.fillStyle = '#ffd54d';
+      ctx.ellipse(o.x, o.y - h - (o.r*0.3), w*0.4, h*0.35, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ff8f00';
+      ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.25), w*0.25, h*0.2, 0, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
   function drawSanta(x, y) {
-    // Samma fina tomte som innan
-    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI*2); ctx.fill(); // Kropp
-    ctx.fillStyle = '#ffccb0'; ctx.beginPath(); ctx.arc(x, y-22, 16, 0, Math.PI*2); ctx.fill(); // Huvud
-    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.moveTo(x-16, y-28); ctx.lineTo(x+16, y-28); ctx.lineTo(x, y-55); ctx.fill(); // Mössa
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y-55, 6, 0, Math.PI*2); ctx.fill(); // Tofs
+    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffccb0'; ctx.beginPath(); ctx.arc(x, y-22, 16, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.moveTo(x-16, y-28); ctx.lineTo(x+16, y-28); ctx.lineTo(x, y-55); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y-55, 6, 0, Math.PI*2); ctx.fill();
   }
 
   // --- INPUT ---
@@ -465,11 +567,12 @@
   window.addEventListener('touchstart', e => {
      if(e.target.tagName !== 'BUTTON' && !shopModal.contains(e.target)) {
         move(e.touches[0].clientX); shoot(e.touches[0].clientY);
+        e.preventDefault(); // <- BUG FIX: stoppa ghost mousedown (måste vara direkt efter shoot)
      }
   }, {passive: false});
 
   // Koppla knappar
-  document.getElementById('resetBtn').onclick = () => { ornaments=[]; money=0; addMoney(0); };
+  document.getElementById('resetBtn').onclick = () => { ornaments=[]; bullets=[]; money=0; addMoney(0); activeThrowType='ball'; updateShopUI(); };
   document.getElementById('shopBtn').onclick = () => toggleShop(true);
 
   // Start
