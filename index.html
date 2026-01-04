@@ -202,6 +202,16 @@
         <div><b id="itemCandleName">Ljus</b><br><span id="itemCandleDesc" style="font-size:12px">Vitt ljus med låga</span></div>
         <button class="buy-btn" id="buyCandle" onclick="buyPack('candle', 300)">300 kr</button>
       </div>
+
+      <div class="shop-item">
+        <div><b id="itemGarlandName">Girlang</b><br><span id="itemGarlandDesc" style="font-size:12px">Hängande girlang</span></div>
+        <button class="buy-btn" id="buyGarland" onclick="buyPack('garland', 200)">200 kr</button>
+      </div>
+
+      <div class="shop-item">
+        <div><b id="itemGlitterName">Glitterslinga</b><br><span id="itemGlitterDesc" style="font-size:12px">Glittrande slinga</span></div>
+        <button class="buy-btn" id="buyGlitter" onclick="buyPack('glitter', 350)">350 kr</button>
+      </div>
     </div>
 
     <div id="shopBackgrounds" class="hidden">
@@ -267,6 +277,7 @@
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
   let unlocked = { 
     standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+    garland: false, glitter: false,
     bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
   };
 
@@ -299,6 +310,8 @@
       itemCandy: 'Polkagris', itemCandyDesc: 'Randig polkagris',
       itemLight: 'Ljusslinga', itemLightDesc: 'Glittrande ljus',
       itemCandle: 'Ljus', itemCandleDesc: 'Vitt ljus med låga',
+      itemGarland: 'Girlang', itemGarlandDesc: 'Hängande girlang',
+      itemGlitter: 'Glitterslinga', itemGlitterDesc: 'Glittrande slinga',
       bgDay: 'Dag', bgDayDesc: 'Standard (Gratis)',
       bgNight: 'Natt', bgNightDesc: 'Mörk himmel med stjärnor',
       bgAurora: 'Norrsken', bgAuroraDesc: 'Lila/Grönt',
@@ -321,6 +334,8 @@
       itemCandy: 'Candy Cane', itemCandyDesc: 'Striped candy',
       itemLight: 'Lights', itemLightDesc: 'Glowing bulbs',
       itemCandle: 'Candle', itemCandleDesc: 'White candle with flame',
+      itemGarland: 'Garland', itemGarlandDesc: 'Hanging garland',
+      itemGlitter: 'Glitter String', itemGlitterDesc: 'Sparkling string',
       bgDay: 'Day', bgDayDesc: 'Default (Free)',
       bgNight: 'Night', bgNightDesc: 'Dark sky with stars',
       bgAurora: 'Aurora', bgAuroraDesc: 'Purple/Green',
@@ -343,6 +358,8 @@
       itemCandy: 'Bastón de Caramelo', itemCandyDesc: 'Caramelo rayado',
       itemLight: 'Luces', itemLightDesc: 'Bombillas brillantes',
       itemCandle: 'Vela', itemCandleDesc: 'Vela blanca con llama',
+      itemGarland: 'Guirnalda', itemGarlandDesc: 'Guirnalda colgante',
+      itemGlitter: 'Cuerda Brillante', itemGlitterDesc: 'Cuerda brillante',
       bgDay: 'Día', bgDayDesc: 'Predeterminado (Gratis)',
       bgNight: 'Noche', bgNightDesc: 'Cielo oscuro con estrellas',
       bgAurora: 'Aurora', bgAuroraDesc: 'Morado/Verde',
@@ -365,6 +382,8 @@
       itemCandy: 'Canne de Bonbon', itemCandyDesc: 'Bonbon rayé',
       itemLight: 'Lumières', itemLightDesc: 'Ampoules brillantes',
       itemCandle: 'Bougie', itemCandleDesc: 'Bougie blanche avec flamme',
+      itemGarland: 'Guirlande', itemGarlandDesc: 'Guirlande suspendue',
+      itemGlitter: 'Guirlande Scintillante', itemGlitterDesc: 'Guirlande scintillante',
       bgDay: 'Jour', bgDayDesc: 'Par défaut (Gratuit)',
       bgNight: 'Nuit', bgNightDesc: 'Ciel sombre avec étoiles',
       bgAurora: 'Aurore', bgAuroraDesc: 'Violet/Vert',
@@ -387,6 +406,8 @@
       itemCandy: 'Zuckerstange', itemCandyDesc: 'Gestreifte Süßigkeit',
       itemLight: 'Lichter', itemLightDesc: 'Leuchtende Glühbirnen',
       itemCandle: 'Kerze', itemCandleDesc: 'Weiße Kerze mit Flamme',
+      itemGarland: 'Girlande', itemGarlandDesc: 'Hängende Girlande',
+      itemGlitter: 'Glitzerkette', itemGlitterDesc: 'Glitzernde Kette',
       bgDay: 'Tag', bgDayDesc: 'Standard (Kostenlos)',
       bgNight: 'Nacht', bgNightDesc: 'Dunkler Himmel mit Sternen',
       bgAurora: 'Aurora', bgAuroraDesc: 'Lila/Grün',
@@ -409,6 +430,8 @@
       itemCandy: 'Bengala de Doce', itemCandyDesc: 'Doce listrado',
       itemLight: 'Luzes', itemLightDesc: 'Lâmpadas brilhantes',
       itemCandle: 'Vela', itemCandleDesc: 'Vela branca com chama',
+      itemGarland: 'Guirlanda', itemGarlandDesc: 'Guirlanda pendurada',
+      itemGlitter: 'Cordão Brilhante', itemGlitterDesc: 'Cordão brilhante',
       bgDay: 'Dia', bgDayDesc: 'Padrão (Grátis)',
       bgNight: 'Noite', bgNightDesc: 'Céu escuro com estrelas',
       bgAurora: 'Aurora', bgAuroraDesc: 'Roxo/Verde',
@@ -431,6 +454,8 @@
       itemCandy: 'Bastoncino di Zucchero', itemCandyDesc: 'Caramella a strisce',
       itemLight: 'Luci', itemLightDesc: 'Lampadine luminose',
       itemCandle: 'Candela', itemCandleDesc: 'Candela bianca con fiamma',
+      itemGarland: 'Ghirlanda', itemGarlandDesc: 'Ghirlanda appesa',
+      itemGlitter: 'Filo Luccicante', itemGlitterDesc: 'Filo luccicante',
       bgDay: 'Giorno', bgDayDesc: 'Predefinito (Gratuito)',
       bgNight: 'Notte', bgNightDesc: 'Cielo scuro con stelle',
       bgAurora: 'Aurora', bgAuroraDesc: 'Viola/Verde',
@@ -453,6 +478,8 @@
       itemCandy: 'Конфетная трость', itemCandyDesc: 'Полосатая конфета',
       itemLight: 'Огни', itemLightDesc: 'Светящиеся лампочки',
       itemCandle: 'Свеча', itemCandleDesc: 'Белая свеча с пламенем',
+      itemGarland: 'Гирлянда', itemGarlandDesc: 'Висячая гирлянда',
+      itemGlitter: 'Блестящая Нить', itemGlitterDesc: 'Блестящая нить',
       bgDay: 'День', bgDayDesc: 'По умолчанию (Бесплатно)',
       bgNight: 'Ночь', bgNightDesc: 'Темное небо со звездами',
       bgAurora: 'Аврора', bgAuroraDesc: 'Фиолетовый/Зеленый',
@@ -475,6 +502,8 @@
       itemCandy: '拐杖糖', itemCandyDesc: '条纹糖果',
       itemLight: '灯光', itemLightDesc: '发光灯泡',
       itemCandle: '蜡烛', itemCandleDesc: '白色蜡烛带火焰',
+      itemGarland: '花环', itemGarlandDesc: '悬挂花环',
+      itemGlitter: '闪光串', itemGlitterDesc: '闪光串',
       bgDay: '白天', bgDayDesc: '默认（免费）',
       bgNight: '夜晚', bgNightDesc: '带星星的黑暗天空',
       bgAurora: '极光', bgAuroraDesc: '紫/绿',
@@ -497,6 +526,8 @@
       itemCandy: 'キャンディケイン', itemCandyDesc: 'ストライプキャンディ',
       itemLight: 'ライト', itemLightDesc: '光る電球',
       itemCandle: 'キャンドル', itemCandleDesc: '白いキャンドルと炎',
+      itemGarland: 'ガーランド', itemGarlandDesc: '吊り下げガーランド',
+      itemGlitter: 'キラキラストリング', itemGlitterDesc: 'キラキラストリング',
       bgDay: '昼', bgDayDesc: 'デフォルト（無料）',
       bgNight: '夜', bgNightDesc: '星空',
       bgAurora: 'オーロラ', bgAuroraDesc: '紫/緑',
@@ -536,6 +567,11 @@
     document.getElementById('itemLightDesc').innerText = t.itemLightDesc;
     document.getElementById('itemCandleName').innerText = t.itemCandle;
     document.getElementById('itemCandleDesc').innerText = t.itemCandleDesc;
+    
+    document.getElementById('itemGarlandName').innerText = t.itemGarland;
+    document.getElementById('itemGarlandDesc').innerText = t.itemGarlandDesc;
+    document.getElementById('itemGlitterName').innerText = t.itemGlitter;
+    document.getElementById('itemGlitterDesc').innerText = t.itemGlitterDesc;
     
     document.getElementById('bgDayName').innerText = t.bgDay;
     document.getElementById('bgDayDesc').innerText = t.bgDayDesc;
@@ -702,6 +738,8 @@
                   : (activeThrowType === 'candy') ? '#e63946'
                   : (activeThrowType === 'light') ? '#fff'
                   : (activeThrowType === 'candle') ? '#ffffff'
+                  : (activeThrowType === 'garland') ? '#d32f2f'
+                  : (activeThrowType === 'glitter') ? '#ffd700'
                   : '#fff';
     
     bullets.push({
@@ -753,7 +791,8 @@
   function checkButtons(){
     const itemMap = [
       ['buyStandard','standard',0],['buyGold','gold',100],['buyDiamond','diamond',500],
-      ['buyCandy','candy',50],['buyLight','light',150],['buyCandle','candle',300]
+      ['buyCandy','candy',50],['buyLight','light',150],['buyCandle','candle',300],
+      ['buyGarland','garland',200],['buyGlitter','glitter',350]
     ];
     const bgMap = [
       ['buyBg_day','bg_day',0],['buyBg_night','bg_night',100],
@@ -783,7 +822,9 @@
       {id:'buyStandard', type:'standard', activeType:'ball', price:0},
       {id:'buyCandy', type:'candy', activeType:'candy', price:50},
       {id:'buyLight', type:'light', activeType:'light', price:150},
-      {id:'buyCandle', type:'candle', activeType:'candle', price:300}
+      {id:'buyCandle', type:'candle', activeType:'candle', price:300},
+      {id:'buyGarland', type:'garland', activeType:'garland', price:200},
+      {id:'buyGlitter', type:'glitter', activeType:'glitter', price:350}
     ];
     
     itemMap.forEach(it=>{
@@ -900,8 +941,8 @@
       return;
     }
     
-    // Special ornaments (candy/light/candle)
-    if(['candy','light','candle'].includes(type)){
+    // Special ornaments (candy/light/candle/garland/glitter)
+    if(['candy','light','candle','garland','glitter'].includes(type)){
       if(unlocked[type]){
         // Already owned -> equip
         activeThrowType = type;
@@ -965,16 +1006,17 @@
       ctx.restore();
     }
 
-    // Star top
+    // Star top - NEW: 5-pointed star with glow
     if (tree.tiers.length){
       const top = tree.tiers[2];
+      ctx.save();
       ctx.fillStyle = '#ffd700';
       ctx.shadowBlur = 25;
       ctx.shadowColor = 'gold';
-      ctx.beginPath();
-      ctx.arc(top.x1, top.y1, 15, 0, Math.PI*2);
+      drawStar(ctx, top.x1, top.y1, 5, 15, 7);
       ctx.fill();
       ctx.shadowBlur = 0;
+      ctx.restore();
     }
 
     // Ornaments & bullets
@@ -982,6 +1024,32 @@
     bullets.forEach(b=>drawOrnament(b));
 
     drawSanta(player.x, player.y);
+  }
+
+  // Helper function to draw a star
+  function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
   }
 
   function drawOrnament(o){
@@ -1054,6 +1122,76 @@
       ctx.fillStyle='#fff'; ctx.beginPath(); ctx.rect(o.x - w/2, o.y - h, w, h); ctx.fill();
       ctx.fillStyle='#ffd54d'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.3), w*0.4, h*0.35, 0,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='#ff8f00'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - (o.r*0.25), w*0.25, h*0.2, 0,0,Math.PI*2); ctx.fill();
+    } else if (type === 'garland'){
+      // Hanging garland - thick draped red/green curve
+      const r = o.r;
+      ctx.save();
+      ctx.strokeStyle = '#d32f2f';
+      ctx.lineWidth = r * 0.5;
+      ctx.lineCap = 'round';
+      
+      // Draw drooping curve
+      ctx.beginPath();
+      ctx.moveTo(o.x - r * 2, o.y);
+      ctx.bezierCurveTo(
+        o.x - r, o.y + r * 2,
+        o.x + r, o.y + r * 2,
+        o.x + r * 2, o.y
+      );
+      ctx.stroke();
+      
+      // Add green accent
+      ctx.strokeStyle = '#0a8a2f';
+      ctx.lineWidth = r * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(o.x - r * 1.5, o.y + r * 0.3);
+      ctx.bezierCurveTo(
+        o.x - r * 0.5, o.y + r * 1.5,
+        o.x + r * 0.5, o.y + r * 1.5,
+        o.x + r * 1.5, o.y + r * 0.3
+      );
+      ctx.stroke();
+      
+      ctx.restore();
+    } else if (type === 'glitter'){
+      // Glitter string - thin gold curve with sparkles
+      const r = o.r;
+      ctx.save();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = r * 0.2;
+      ctx.lineCap = 'round';
+      
+      // Draw drooping curve
+      ctx.beginPath();
+      ctx.moveTo(o.x - r * 2.5, o.y);
+      ctx.bezierCurveTo(
+        o.x - r * 1.2, o.y + r * 2.5,
+        o.x + r * 1.2, o.y + r * 2.5,
+        o.x + r * 2.5, o.y
+      );
+      ctx.stroke();
+      
+      // Add sparkle dots along the curve
+      ctx.fillStyle = '#fff';
+      const sparkleCount = 8;
+      for (let i = 0; i < sparkleCount; i++) {
+        const t = i / (sparkleCount - 1);
+        // Bezier curve point calculation
+        const x = Math.pow(1-t, 3) * (o.x - r * 2.5) +
+                  3 * Math.pow(1-t, 2) * t * (o.x - r * 1.2) +
+                  3 * (1-t) * Math.pow(t, 2) * (o.x + r * 1.2) +
+                  Math.pow(t, 3) * (o.x + r * 2.5);
+        const y = Math.pow(1-t, 3) * o.y +
+                  3 * Math.pow(1-t, 2) * t * (o.y + r * 2.5) +
+                  3 * (1-t) * Math.pow(t, 2) * (o.y + r * 2.5) +
+                  Math.pow(t, 3) * o.y;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
     }
   }
 
@@ -1114,6 +1252,7 @@
     money = 0;
     unlocked = { 
       standard: true, gold: false, diamond: false, candy: false, light: false, candle: false,
+      garland: false, glitter: false,
       bg_day: true, bg_night: false, bg_aurora: false, bg_sunset: false 
     };
     activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
