@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="sv">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -14,6 +14,7 @@
     font-size:14px; color:#0b3a4a;
     box-shadow:0 2px 8px rgba(0,0,0,0.08);
     user-select:none;
+    z-index: 1001;
   }
   /* Glossy red holiday button top-right */
   #resetBtn {
@@ -30,14 +31,15 @@
     box-shadow: 0 4px 10px rgba(183, 28, 28, 0.25), inset 0 -2px 0 rgba(0,0,0,0.08);
     cursor: pointer;
     user-select: none;
+    z-index: 1000; /* ensure clickable on touch devices */
   }
   #resetBtn:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
-<div class="info" id="info">Ornaments on tree: 0</div>
-<button id="resetBtn" aria-label="Rensa Granen">Rensa Granen</button>
+<div class="info" id="info">Antal julgranskulor: 0</div>
+<button id="resetBtn" aria-label="Rensa Granen" ontouchstart="event.stopPropagation()">Rensa Granen</button>
 <script>
 (() => {
   const canvas = document.getElementById('game');
@@ -64,7 +66,7 @@
   // Game layout parameters (relative)
   let W=innerWidth, H=innerHeight;
   let cx, cy;
-  // tree now contains tiers array (3 triangles) and trunk rect
+  // tree: tiers array (3 triangles) and trunk rect
   let tree = { tiers: [], trunk: {}, width:0, height:0 };
   let player = { x:0, y:0, w:80, h:18, color:'#4d2' };
   const ornaments = [];
@@ -78,26 +80,24 @@
     tree.height = Math.min(H * 0.6, W * 0.6);
     tree.width = tree.height * 0.9;
 
-    // We'll compute three tiers so their edges overlap without gaps.
-    // Tier heights: relative distribution
-    const total = tree.height;
-    const h1 = total * 0.28; // top
-    const h2 = total * 0.36; // middle
-    const h3 = total * 0.36; // bottom
+    // tier heights
+    const h1 = tree.height * 0.28; // top
+    const h2 = tree.height * 0.36; // middle
+    const h3 = tree.height * 0.36; // bottom
 
-    // Start top apex
-    const topApexY = cy - total * 0.5;
+    // top apex
+    const topApexY = cy - tree.height * 0.5;
 
     // Top tier
     const top = {
-      v1: { x: cx, y: topApexY }, // apex
-      v2: { x: cx - tree.width * 0.28, y: topApexY + h1 }, // left base
-      v3: { x: cx + tree.width * 0.28, y: topApexY + h1 }, // right base
+      v1: { x: cx, y: topApexY },
+      v2: { x: cx - tree.width * 0.28, y: topApexY + h1 },
+      v3: { x: cx + tree.width * 0.28, y: topApexY + h1 },
       color: '#0fb24b'
     };
 
-    // Middle apex should be placed slightly above the top tier base so they overlap
-    const overlap = Math.min(h1, h2) * 0.35;
+    // Middle apex overlaps top base to avoid gaps
+    const overlap = Math.min(h1, h2) * 0.45;
     const midApexY = top.v2.y - overlap;
     const middle = {
       v1: { x: cx, y: midApexY },
@@ -106,8 +106,8 @@
       color: '#0a8a2f'
     };
 
-    // Bottom apex placed to overlap middle base
-    const overlap2 = Math.min(h2, h3) * 0.35;
+    // Bottom apex overlaps middle base
+    const overlap2 = Math.min(h2, h3) * 0.45;
     const botApexY = middle.v2.y - overlap2;
     const bottom = {
       v1: { x: cx, y: botApexY },
@@ -118,8 +118,8 @@
 
     tree.tiers = [top, middle, bottom];
 
-    // Trunk must sit exactly at the bottom base of the lowest triangle
-    const bottomBaseY = Math.max(bottom.v2.y, bottom.v3.y); // base line y coordinate
+    // Trunk positioned exactly at bottom base of lowest triangle
+    const bottomBaseY = Math.max(bottom.v2.y, bottom.v3.y);
     const trunkW = tree.width * 0.16;
     const trunkH = Math.max(24, tree.height * 0.12);
     tree.trunk = {
@@ -141,7 +141,7 @@
   }
 
   function drawTree() {
-    // subtle shadow under each tier
+    // shadows
     for (let i = 0; i < tree.tiers.length; i++) {
       const t = tree.tiers[i];
       ctx.beginPath();
@@ -153,7 +153,7 @@
       ctx.fill();
     }
 
-    // draw tiers bottom-to-top for proper overlap
+    // draw tiers bottom-to-top
     for (let i = tree.tiers.length - 1; i >= 0; i--) {
       const t = tree.tiers[i];
       ctx.beginPath();
@@ -164,7 +164,7 @@
       ctx.fillStyle = t.color;
       ctx.fill();
 
-      // subtle trim/highlight
+      // subtle trim
       ctx.beginPath();
       const inset = Math.min(tree.width, tree.height) * 0.03;
       ctx.moveTo(t.v1.x, t.v1.y + inset);
@@ -175,7 +175,7 @@
       ctx.fill();
     }
 
-    // draw trunk directly at bottom base (no floating)
+    // trunk attached directly to bottom base
     ctx.fillStyle = '#6b3b1b';
     ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
   }
@@ -186,22 +186,21 @@
     const outer = radius;
     const inner = radius * 0.48;
     let rot = Math.PI / 2 * 3;
-    let cx = x;
-    let cy = y;
+    const cxs = x;
+    const cys = y;
     ctx.save();
-    // soft glow
-    ctx.shadowColor = 'rgba(255,220,80,0.9)';
-    ctx.shadowBlur = Math.max(8, radius * 0.9);
+    ctx.shadowColor = 'rgba(255,220,80,0.95)';
+    ctx.shadowBlur = Math.max(12, radius * 1.2);
     ctx.beginPath();
-    ctx.moveTo(cx, cy - outer);
+    ctx.moveTo(cxs, cys - outer);
     for (let i = 0; i < spikes; i++) {
-      const ox = cx + Math.cos(rot) * outer;
-      const oy = cy + Math.sin(rot) * outer;
+      const ox = cxs + Math.cos(rot) * outer;
+      const oy = cys + Math.sin(rot) * outer;
       ctx.lineTo(ox, oy);
       rot += Math.PI / spikes;
 
-      const ix = cx + Math.cos(rot) * inner;
-      const iy = cy + Math.sin(rot) * inner;
+      const ix = cxs + Math.cos(rot) * inner;
+      const iy = cys + Math.sin(rot) * inner;
       ctx.lineTo(ix, iy);
       rot += Math.PI / spikes;
     }
@@ -213,19 +212,19 @@
     // small bright center
     ctx.beginPath();
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.arc(cx, cy, Math.max(2, radius * 0.14), 0, Math.PI*2);
+    ctx.arc(cxs, cys, Math.max(3, radius * 0.16), 0, Math.PI*2);
     ctx.fill();
   }
 
-  // Draw Santa-like player (unchanged from previous)
+  // Draw Santa-like player (kept as-is)
   function drawPlayer() {
     const cxp = player.x;
-    const baseline = player.y + player.h; // feet baseline (unused but for reference)
+    const baseline = player.y + player.h;
     const headR = Math.max(10, player.h * 1.6);
     const headX = cxp;
     const headY = player.y - headR - 6;
 
-    // body (simple rounded triangle/dress)
+    // body
     ctx.save();
     ctx.translate(headX, headY + headR * 0.8);
 
@@ -260,7 +259,7 @@
     ctx.arc(headX + headR*0.28, headY - headR*0.08, Math.max(1.6, headR*0.12), 0, Math.PI*2);
     ctx.fill();
 
-    // mouth (smile)
+    // mouth
     ctx.beginPath();
     ctx.strokeStyle = '#7a2a2a';
     ctx.lineWidth = Math.max(1, headR*0.08);
@@ -268,7 +267,7 @@
     ctx.arc(headX, headY + headR*0.12, headR*0.32, 0.15*Math.PI, 0.85*Math.PI);
     ctx.stroke();
 
-    // hat - red cone/triangle
+    // hat
     ctx.beginPath();
     ctx.moveTo(headX - headR*0.9, headY - headR*0.6);
     ctx.quadraticCurveTo(headX, headY - headR - headR*0.5, headX + headR*1.1, headY - headR*0.2);
@@ -278,7 +277,7 @@
     ctx.fillStyle = '#d92a2a';
     ctx.fill();
 
-    // hat brim (white)
+    // hat brim
     ctx.beginPath();
     ctx.fillStyle = '#fff';
     ctx.ellipse(headX, headY - headR*0.15, headR*1.02, headR*0.36, 0, 0, Math.PI*2);
@@ -293,7 +292,6 @@
 
   function drawOrnaments() {
     for (const o of ornaments) {
-      // radial gradient for 3D effect
       const lx = o.x - o.r*0.35;
       const ly = o.y - o.r*0.45;
       const g = ctx.createRadialGradient(lx, ly, Math.max(1, o.r*0.15), o.x, o.y, o.r);
@@ -307,13 +305,11 @@
       ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
       ctx.fill();
 
-      // small bright specular highlight
       ctx.beginPath();
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.arc(lx, ly, Math.max(1.5, o.r*0.28), 0, Math.PI*2);
       ctx.fill();
 
-      // hook
       ctx.beginPath();
       ctx.strokeStyle = 'rgba(40,40,40,0.85)';
       ctx.lineWidth = Math.max(1, o.r*0.12);
@@ -323,7 +319,7 @@
     }
   }
 
-  // small color helpers to lighten/darken hex colors (returns rgba string)
+  // color helpers
   function hexToRgb(hex) {
     const h = hex.replace('#','');
     const bigint = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
@@ -347,19 +343,19 @@
     return `rgba(${r},${g},${b},1)`;
   }
 
-  // barycentric / sign method to check if point is inside triangle
+  // robust point-in-triangle with epsilon for edge cases
   function pointInTriangle(pt, a, b, c) {
     const sign = (p1,p2,p3) => (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
     const d1 = sign(pt, a, b);
     const d2 = sign(pt, b, c);
     const d3 = sign(pt, c, a);
-    const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+    const eps = 1e-6;
+    const hasNeg = (d1 < -eps) || (d2 < -eps) || (d3 < -eps);
+    const hasPos = (d1 > eps) || (d2 > eps) || (d3 > eps);
     return !(hasNeg && hasPos);
   }
 
   function throwOrnament(targetX, targetY) {
-    // origin is center top of player visual
     const originX = player.x;
     const originY = player.y;
     const dx = targetX - originX;
@@ -373,7 +369,6 @@
     ornaments.push({ x: originX, y: originY, vx, vy, r, color, stuck:false });
   }
 
-  // Remove ornaments that fell off-screen far away, but keep stuck ones
   function pruneOrnaments() {
     for (let i = ornaments.length - 1; i >= 0; i--) {
       const o = ornaments[i];
@@ -384,15 +379,15 @@
     }
   }
 
-  // update physics and check collisions
+  // update loop with CRITICAL collision check across all three tiers
   function update(delta) {
     for (const o of ornaments) {
       if (o.stuck) continue;
       o.x += o.vx * (delta / 16.67);
       o.y += o.vy * (delta / 16.67);
 
-      // CRITICAL: check collision against ALL tiers
       let stuckNow = false;
+      // check all tiers
       for (const t of tree.tiers) {
         if (pointInTriangle({x:o.x, y:o.y}, t.v1, t.v2, t.v3)) {
           stuckNow = true;
@@ -402,7 +397,6 @@
       if (stuckNow) {
         o.stuck = true;
         o.vx = 0; o.vy = 0;
-        // nudge out a bit from tree center for nicer placement
         const treeCenter = { x: cx, y: cy + tree.height * 0.06 };
         const nx = o.x - treeCenter.x;
         const ny = o.y - treeCenter.y;
@@ -418,17 +412,18 @@
   function render() {
     clear();
     drawTree();
-    // draw star at apex of top triangle
+    // Star: make 3x larger than before for visibility
     if (tree.tiers && tree.tiers.length > 0) {
       const apex = tree.tiers[0].v1;
-      drawStar(apex.x, apex.y, Math.max(12, tree.width * 0.035));
+      const baseRadius = Math.max(12, tree.width * 0.035);
+      drawStar(apex.x, apex.y, baseRadius * 3, '#ffd700');
     }
     drawOrnaments();
     drawPlayer();
-    info.textContent = 'Ornaments on tree: ' + ornaments.filter(o => o.stuck).length;
+    info.textContent = 'Antal julgranskulor: ' + ornaments.filter(o => o.stuck).length;
   }
 
-  // Input handling: coordinates conversion helper
+  // coordinate helper
   function toCanvasCoords(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     const x = (clientX - rect.left) * (canvas.width / rect.width) / DPR;
@@ -436,7 +431,7 @@
     return { x, y };
   }
 
-  // Mouse controls (kept exactly as original)
+  // Input handling (unchanged behavior). Note: button has ontouchstart to stop propagation.
   let isPointerDown = false;
   window.addEventListener('mousemove', (e) => {
     const p = toCanvasCoords(e.clientX, e.clientY);
@@ -451,7 +446,6 @@
 
   window.addEventListener('mouseup', () => { isPointerDown = false; });
 
-  // Touch controls (kept exactly as original)
   window.addEventListener('touchstart', (ev) => {
     ev.preventDefault();
     const t = ev.changedTouches[0];
@@ -467,7 +461,6 @@
     player.x = Math.min(W - player.w/2, Math.max(player.w/2, p.x));
   }, { passive: false });
 
-  // Keyboard convenience (kept as original)
   window.addEventListener('keydown', (e) => {
     const step = Math.max(8, W * 0.03);
     if (e.key === 'ArrowLeft' || e.key === 'a') player.x -= step;
@@ -478,10 +471,10 @@
     }
   });
 
-  // Reset button clears ornaments (keeps inputs unchanged)
+  // Reset clears ornaments array
   resetBtn.addEventListener('click', () => {
     ornaments.length = 0;
-    info.textContent = 'Ornaments on tree: 0';
+    info.textContent = 'Antal julgranskulor: 0';
   });
 
   // Game loop
