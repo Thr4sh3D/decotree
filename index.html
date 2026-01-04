@@ -10,7 +10,7 @@
   canvas { display:block; width:100%; height:100%; touch-action: none; }
   .info {
     position: fixed; left:12px; top:12px;
-    background: rgba(255,255,255,0.8); padding:8px 10px; border-radius:8px;
+    background: rgba(255,255,255,0.88); padding:8px 10px; border-radius:8px;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     font-size:14px; color:#0b3a4a;
     box-shadow:0 2px 8px rgba(0,0,0,0.08);
@@ -46,7 +46,7 @@
   // Game layout parameters (relative)
   let W=innerWidth, H=innerHeight;
   let cx, cy;
-  let tree = { v1:{}, v2:{}, v3:{} , trunk:{} , width:0, height:0 };
+  let tree = { tiers: [], trunk:{}, width:0, height:0 };
   let player = { x:0, y:0, w:80, h:18, color:'#4d2' };
   const ornaments = [];
   const palette = ['#e63946','#ffb703','#fb8500','#8338ec','#3a86ff','#7bd389','#ff6bcb'];
@@ -58,9 +58,41 @@
     cy = H / 2.2; // tree is slightly above center
     tree.height = Math.min(H * 0.6, W * 0.6);
     tree.width = tree.height * 0.9;
-    tree.v1 = { x: cx, y: cy - tree.height * 0.5 }; // apex
-    tree.v2 = { x: cx - tree.width * 0.5, y: cy + tree.height * 0.5 }; // left base
-    tree.v3 = { x: cx + tree.width * 0.5, y: cy + tree.height * 0.5 }; // right base
+
+    // Create 3 overlapping tiers (top, middle, bottom)
+    const topApexY = cy - tree.height * 0.5;
+    const hTop = tree.height * 0.28;
+    const hMid = tree.height * 0.36;
+    const hBot = tree.height * 0.36;
+
+    // overlap factor so tiers overlap visibly
+    const overlap = 0.55;
+
+    const top = {
+      v1: { x: cx, y: topApexY },
+      v2: { x: cx - tree.width * 0.28, y: topApexY + hTop },
+      v3: { x: cx + tree.width * 0.28, y: topApexY + hTop },
+      color: '#0fb24b'
+    };
+
+    const midApexY = topApexY + hTop * overlap;
+    const middle = {
+      v1: { x: cx, y: midApexY },
+      v2: { x: cx - tree.width * 0.45, y: midApexY + hMid },
+      v3: { x: cx + tree.width * 0.45, y: midApexY + hMid },
+      color: '#0a8a2f'
+    };
+
+    const botApexY = midApexY + hMid * overlap;
+    const bottom = {
+      v1: { x: cx, y: botApexY },
+      v2: { x: cx - tree.width * 0.6, y: botApexY + hBot },
+      v3: { x: cx + tree.width * 0.6, y: botApexY + hBot },
+      color: '#087023'
+    };
+
+    tree.tiers = [top, middle, bottom];
+
     tree.trunk = {
       x: cx - tree.width * 0.08,
       y: cy + tree.height * 0.5,
@@ -80,61 +112,168 @@
   }
 
   function drawTree() {
-    // tree layers for a simple stylized look
-    ctx.beginPath();
-    ctx.moveTo(tree.v1.x, tree.v1.y);
-    ctx.lineTo(tree.v2.x, tree.v2.y);
-    ctx.lineTo(tree.v3.x, tree.v3.y);
-    ctx.closePath();
-    ctx.fillStyle = '#0a8a2f';
-    ctx.fill();
+    // draw a subtle shadow under tree tiers for depth
+    for (let i = 0; i < tree.tiers.length; i++) {
+      const t = tree.tiers[i];
+      // shadow layer slightly offset down
+      ctx.beginPath();
+      ctx.moveTo(t.v1.x, t.v1.y + 6);
+      ctx.lineTo(t.v2.x, t.v2.y + 6);
+      ctx.lineTo(t.v3.x, t.v3.y + 6);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fill();
+    }
 
-    // inner darker triangle to add depth
-    ctx.beginPath();
-    const inset = Math.min(tree.width, tree.height) * 0.06;
-    ctx.moveTo(tree.v1.x, tree.v1.y + inset);
-    ctx.lineTo(tree.v2.x + inset, tree.v2.y - inset);
-    ctx.lineTo(tree.v3.x - inset, tree.v3.y - inset);
-    ctx.closePath();
-    ctx.fillStyle = '#0a7a2a';
-    ctx.globalAlpha = 0.95;
-    ctx.fill();
-    ctx.globalAlpha = 1;
+    // draw tiers from bottom to top so top overlays nicely
+    for (let i = tree.tiers.length - 1; i >= 0; i--) {
+      const t = tree.tiers[i];
+      ctx.beginPath();
+      ctx.moveTo(t.v1.x, t.v1.y);
+      ctx.lineTo(t.v2.x, t.v2.y);
+      ctx.lineTo(t.v3.x, t.v3.y);
+      ctx.closePath();
+      ctx.fillStyle = t.color;
+      ctx.fill();
 
-    // trunk
+      // subtle inner highlight
+      ctx.beginPath();
+      const inset = Math.min(tree.width, tree.height) * 0.03;
+      ctx.moveTo(t.v1.x, t.v1.y + inset);
+      ctx.lineTo(t.v2.x + inset, t.v2.y - inset);
+      ctx.lineTo(t.v3.x - inset, t.v3.y - inset);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.fill();
+    }
+
+    // trunk on top of tiers
     ctx.fillStyle = '#6b3b1b';
     ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
   }
 
   function drawPlayer() {
+    // Draw a simple "Disney-style" character centered at player.x
+    const baseY = player.y + player.h; // feet baseline (unused but helps layout)
+    const headR = Math.max(10, player.h * 1.4);
+    const headX = player.x;
+    const headY = player.y - headR - 4;
+
+    // body/dress: use a rounded triangular shape under the head
+    ctx.save();
+    ctx.translate(headX, headY + headR * 0.6);
+
+    // dress
+    const bodyWidth = player.w * 0.9;
+    const bodyHeight = player.h * 3.6;
+    ctx.beginPath();
+    ctx.moveTo(-bodyWidth * 0.5, 0);
+    ctx.quadraticCurveTo(-bodyWidth * 0.35, bodyHeight * 0.45, 0, bodyHeight);
+    ctx.quadraticCurveTo(bodyWidth * 0.35, bodyHeight * 0.45, bodyWidth * 0.5, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#c6285a';
+    ctx.fill();
+
+    // small belt
+    ctx.beginPath();
     ctx.fillStyle = '#3b3b3b';
-    const px = player.x - player.w/2;
-    ctx.fillRect(px, player.y, player.w, player.h);
-    // add tiny highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(px + 6, player.y + 4, Math.max(10, player.w * 0.3), Math.max(4, player.h * 0.4));
+    ctx.rect(-bodyWidth*0.5, bodyHeight*0.45, bodyWidth, Math.max(6, player.h*0.45));
+    ctx.fill();
+
+    ctx.restore();
+
+    // head
+    ctx.beginPath();
+    ctx.fillStyle = '#ffd8b6';
+    ctx.arc(headX, headY, headR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // simple facial features (eyes)
+    ctx.beginPath();
+    ctx.fillStyle = '#222';
+    ctx.arc(headX - headR*0.33, headY - headR*0.08, Math.max(1.8, headR*0.12), 0, Math.PI*2);
+    ctx.arc(headX + headR*0.33, headY - headR*0.08, Math.max(1.8, headR*0.12), 0, Math.PI*2);
+    ctx.fill();
+
+    // Santa hat
+    ctx.beginPath();
+    const hatHeight = headR * 1.0;
+    ctx.moveTo(headX - headR * 0.9, headY - headR * 0.6);
+    ctx.quadraticCurveTo(headX, headY - headR - hatHeight*0.6, headX + headR*1.1, headY - headR*0.2);
+    ctx.lineTo(headX + headR*0.9, headY - headR*0.2);
+    ctx.lineTo(headX + headR*0.5, headY - headR*0.15);
+    ctx.quadraticCurveTo(headX, headY - headR*0.8, headX - headR*0.6, headY - headR*0.5);
+    ctx.closePath();
+    ctx.fillStyle = '#d92a2a';
+    ctx.fill();
+
+    // hat brim
+    ctx.beginPath();
+    ctx.fillStyle = '#fff';
+    ctx.ellipse(headX, headY - headR*0.15, headR*1.02, headR*0.36, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // pompom
+    ctx.beginPath();
+    ctx.fillStyle = '#fff';
+    ctx.arc(headX + headR*1.06, headY - headR*0.16, Math.max(4, headR*0.28), 0, Math.PI*2);
+    ctx.fill();
   }
 
   function drawOrnaments() {
     for (const o of ornaments) {
+      // create radial gradient for 3D effect
+      const lx = o.x - o.r*0.35; // light source offset
+      const ly = o.y - o.r*0.45;
+      const g = ctx.createRadialGradient(lx, ly, Math.max(1, o.r*0.15), o.x, o.y, o.r);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)');
+      g.addColorStop(0.15, lighten(o.color, 0.25));
+      g.addColorStop(0.6, o.color);
+      g.addColorStop(1, darken(o.color, 0.25));
+
       ctx.beginPath();
-      ctx.fillStyle = o.color;
+      ctx.fillStyle = g;
       ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
       ctx.fill();
 
-      // small cap/shine
+      // small bright specular highlight
       ctx.beginPath();
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.arc(o.x - o.r*0.35, o.y - o.r*0.35, Math.max(1, o.r*0.4), 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.arc(lx, ly, Math.max(1.5, o.r*0.28), 0, Math.PI*2);
       ctx.fill();
+
       // hook
       ctx.beginPath();
-      ctx.strokeStyle = '#222';
+      ctx.strokeStyle = 'rgba(40,40,40,0.85)';
       ctx.lineWidth = Math.max(1, o.r*0.12);
       ctx.moveTo(o.x, o.y - o.r - 1);
       ctx.lineTo(o.x, o.y - o.r - Math.max(4, o.r*0.6));
       ctx.stroke();
     }
+  }
+
+  // small color helpers to lighten/darken hex colors (returns rgba string)
+  function hexToRgb(hex) {
+    const h = hex.replace('#','');
+    const bigint = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return { r, g, b };
+  }
+  function lighten(hex, amt) {
+    const c = hexToRgb(hex);
+    const r = Math.min(255, Math.round(c.r + (255 - c.r) * amt));
+    const g = Math.min(255, Math.round(c.g + (255 - c.g) * amt));
+    const b = Math.min(255, Math.round(c.b + (255 - c.b) * amt));
+    return `rgba(${r},${g},${b},1)`;
+  }
+  function darken(hex, amt) {
+    const c = hexToRgb(hex);
+    const r = Math.max(0, Math.round(c.r * (1 - amt)));
+    const g = Math.max(0, Math.round(c.g * (1 - amt)));
+    const b = Math.max(0, Math.round(c.b * (1 - amt)));
+    return `rgba(${r},${g},${b},1)`;
   }
 
   // barycentric / sign method to check if point is inside triangle
@@ -149,13 +288,12 @@
   }
 
   function throwOrnament(targetX, targetY) {
-    // origin is center top of player rect
+    // origin is center top of player visual
     const originX = player.x;
     const originY = player.y;
     const dx = targetX - originX;
     const dy = targetY - originY;
     const len = Math.hypot(dx, dy) || 1;
-    // speed tuned for feel
     const speed = Math.max(5, Math.min(20, Math.hypot(W,H) / 80));
     const vx = (dx / len) * speed;
     const vy = (dy / len) * speed;
@@ -177,17 +315,22 @@
 
   // update physics and check collisions
   function update(delta) {
-    // delta not used heavily; kept for future-proofing
     for (const o of ornaments) {
       if (o.stuck) continue;
       o.x += o.vx * (delta / 16.67);
       o.y += o.vy * (delta / 16.67);
-      // simple check: if center is inside tree triangle, mark stuck
-      if (pointInTriangle({x:o.x, y:o.y}, tree.v1, tree.v2, tree.v3)) {
+
+      // check collision against all tiers (crucial fix)
+      let stuckNow = false;
+      for (const t of tree.tiers) {
+        if (pointInTriangle({x:o.x, y:o.y}, t.v1, t.v2, t.v3)) {
+          stuckNow = true;
+          break;
+        }
+      }
+      if (stuckNow) {
         o.stuck = true;
-        // zero velocity
         o.vx = 0; o.vy = 0;
-        // optionally nudge outward along vector from tree center to give "stuck on surface" look
         const treeCenter = { x: cx, y: cy + tree.height * 0.06 };
         const nx = o.x - treeCenter.x;
         const ny = o.y - treeCenter.y;
@@ -216,7 +359,7 @@
     return { x, y };
   }
 
-  // Mouse controls
+  // Mouse controls (kept exactly as original)
   let isPointerDown = false;
   window.addEventListener('mousemove', (e) => {
     const p = toCanvasCoords(e.clientX, e.clientY);
@@ -231,12 +374,11 @@
 
   window.addEventListener('mouseup', () => { isPointerDown = false; });
 
-  // Touch controls
+  // Touch controls (kept exactly as original)
   window.addEventListener('touchstart', (ev) => {
     ev.preventDefault();
     const t = ev.changedTouches[0];
     const p = toCanvasCoords(t.clientX, t.clientY);
-    // update player to touch x for better feel
     player.x = Math.min(W - player.w/2, Math.max(player.w/2, p.x));
     throwOrnament(p.x, p.y);
   }, { passive: false });
@@ -248,14 +390,13 @@
     player.x = Math.min(W - player.w/2, Math.max(player.w/2, p.x));
   }, { passive: false });
 
-  // Keyboard convenience: left/right arrows or A/D for accessibility
+  // Keyboard convenience (kept as original)
   window.addEventListener('keydown', (e) => {
     const step = Math.max(8, W * 0.03);
     if (e.key === 'ArrowLeft' || e.key === 'a') player.x -= step;
     if (e.key === 'ArrowRight' || e.key === 'd') player.x += step;
     player.x = Math.min(W - player.w/2, Math.max(player.w/2, player.x));
     if (e.key === ' ' || e.key === 'Enter') {
-      // throw straight up from player
       throwOrnament(player.x, player.y - H*0.25);
     }
   });
@@ -273,15 +414,9 @@
   // Init
   resizeCanvas();
   computeLayout();
-  // place player centered horizontally
   player.x = cx;
 
-  // Start loop
   requestAnimationFrame(loop);
-
-  // For quick testing: pre-seed a few ornaments on the tree
-  // (commented out by default)
-  // setTimeout(()=>{ throwOrnament(cx - 30, cy); throwOrnament(cx + 30, cy - 40); }, 1000);
 
 })();
 </script>
