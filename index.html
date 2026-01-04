@@ -65,8 +65,14 @@
     background: rgba(0,0,0,0.35); z-index:200; pointer-events:auto;
   }
   .menu-card {
-    background: white; padding: 30px; border-radius: 20px; text-align: center; width: 320px;
+    background: white; 
+    padding: 30px; 
+    border-radius: 20px; 
+    text-align: center; 
+    width: 320px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    position: relative; /* CRITICAL: Required for footer absolute positioning */
+    min-height: 380px; /* Ensure space for footer */
   }
   .menu-card h1 { margin:0 0 12px 0; font-size:22px; color:#0b3a4a; }
   .menu-btn { width:100%; padding:14px; margin-top:10px; border-radius:12px; font-size:16px; }
@@ -838,39 +844,39 @@
     const treeW=treeH*0.85; 
     tree.tiers=[]; 
     
-    // FIXED COLLISION: Narrower and shorter triangles to match visual curved branches
-    // Bottom tier - narrower by 15%
+    // FIXED COLLISION: Much tighter hitboxes - narrower width, adjusted heights
+    // Bottom tier - narrower by 30% (was 15%), bottom raised by 8px
     tree.tiers.push({ 
       x1:cx, 
-      y1:bottomY - treeH * 0.42,  // Slightly lower top point
-      x2:cx - treeW * 0.425,      // Narrower left (was 0.5)
-      y2:bottomY, 
-      x3:cx + treeW * 0.425,      // Narrower right (was 0.5)
-      y3:bottomY, 
+      y1:bottomY - treeH * 0.42,
+      x2:cx - treeW * 0.3,       // NARROWER: 0.425 * 0.85 = 0.36, use 0.3
+      y2:bottomY - 8,            // RAISED: bottom moved up 8px to match visual branches
+      x3:cx + treeW * 0.3,       // NARROWER: mirror of x2
+      y3:bottomY - 8,            // RAISED: match visual
       color:'#087023' 
     }); 
     
-    // Middle tier - narrower by 15%
+    // Middle tier - narrower by 25% (was 15%), proportional height adjustment
     const y2_bot = bottomY - treeH * 0.25; 
     tree.tiers.push({ 
       x1:cx, 
-      y1:y2_bot - treeH * 0.42,   // Slightly lower
-      x2:cx - treeW * 0.3,        // Narrower left (was 0.35)
-      y2:y2_bot, 
-      x3:cx + treeW * 0.3,        // Narrower right (was 0.35)
-      y3:y2_bot, 
+      y1:y2_bot - treeH * 0.42,
+      x2:cx - treeW * 0.225,     // NARROWER: 0.3 * 0.85 = 0.255, use 0.225
+      y2:y2_bot - 5,             // RAISED: bottom moved up 5px
+      x3:cx + treeW * 0.225,     // NARROWER: mirror of x2
+      y3:y2_bot - 5,             // RAISED: match visual
       color:'#0a8a2f' 
     }); 
     
-    // Top tier - MUCH narrower and MUCH lower to avoid star collision
+    // Top tier - narrower by 25%, top moved below star
     const y1_bot = y2_bot - treeH * 0.25; 
     tree.tiers.push({ 
       x1:cx, 
-      y1:y1_bot - treeH * 0.28,   // LOWERED from 0.35 - star is now safe above
-      x2:cx - treeW * 0.16,       // NARROWER left (was 0.2)
-      y2:y1_bot, 
-      x3:cx + treeW * 0.16,       // NARROWER right (was 0.2)
-      y3:y1_bot, 
+      y1:y1_bot - treeH * 0.25,  // LOWERED from 0.28: star is higher, bullets pass through
+      x2:cx - treeW * 0.135,     // NARROWER: 0.16 * 0.85 = 0.136, use 0.135
+      y2:y1_bot - 3,             // RAISED: bottom moved up 3px
+      x3:cx + treeW * 0.135,     // NARROWER: mirror of x2
+      y3:y1_bot - 3,             // RAISED: match visual
       color:'#0fb24b' 
     }); 
     
@@ -1262,7 +1268,7 @@
       ctx.quadraticCurveTo(leftControlX, leftControlY + 8, t.x2, t.y2 + 8);
       ctx.lineTo(t.x3, t.y3 + 8);
       ctx.quadraticCurveTo(rightControlX, rightControlY + 8, t.x1, t.y1 + 8);
-      ctx.fill();
+           ctx.fill();
     });
 
     // Ghost targets (mission)
@@ -1433,12 +1439,28 @@
       const berryCount = 8;
       for (let i = 0; i <= berryCount; i++) {
         const t = i / berryCount;
-        const bx = Math.pow(1-t, 3) * startX + 3 * Math.pow(1-t, 2) * t * controlX + 3 * (1-t) * Math.pow(t, 2) * controlX + Math.pow(t, 3) * endX;
-        const by = Math.pow(1-t, 3) * startY + 3 * Math.pow(1-t, 2) * t * controlY + 3 * (1-t) * Math.pow(t, 2) * controlY + Math.pow(t, 3) * endY;
+        ctx.save();
         
+        let bx, by, angle;
+        if (t < 0.5) {
+          const hookT = t * 2;
+          const hookAngle = Math.PI + hookT * Math.PI;
+          bx = Math.cos(hookAngle) * r * 2;
+          by = Math.sin(hookAngle) * r * 2;
+          angle = hookAngle + Math.PI / 2;
+        } else {
+          const straightT = (t - 0.5) * 2;
+          bx = r * 2;
+          by = Math.sin(straightT * Math.PI) * r * 2;
+          angle = straightT * Math.PI;
+        }
+        
+        ctx.translate(bx, by);
+        ctx.rotate(angle);
         ctx.beginPath();
-        ctx.arc(bx, by, r * 0.25, 0, Math.PI * 2);
+        ctx.arc(0, 0, r * 0.25, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
       }
       
       // Highlight on rope
