@@ -102,7 +102,10 @@
 
   /* Language selector */
   .lang-selector {
-    position: absolute; top: 10px; right: 10px;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3000;
   }
   .lang-selector select {
     padding: 6px 10px; border-radius: 8px; border: 1px solid #ddd;
@@ -132,26 +135,28 @@
 <!-- Main Menu overlay -->
 <div id="menuOverlay">
   <div class="menu-card">
-    <div class="lang-selector">
-      <select id="langSelect">
-        <option value="sv">🇸🇪 Svenska</option>
-        <option value="en">🇬🇧 English</option>
-        <option value="es">🇪🇸 Español</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="de">🇩🇪 Deutsch</option>
-        <option value="pt">🇵🇹 Português</option>
-        <option value="it">🇮🇹 Italiano</option>
-        <option value="ru">🇷🇺 Русский</option>
-        <option value="zh">🇨🇳 中文</option>
-        <option value="ja">🇯🇵 日本語</option>
-      </select>
-    </div>
     <h1 id="menuTitle">DecoTree</h1>
     <p id="menuSubtitle">Välj spelläge</p>
     <button id="startCreative" class="menu-btn" style="background:#4caf50;color:white">Fritt Skapande</button>
     <button id="startMission" class="menu-btn" style="background:#4facfe;color:#003049">Uppdrag</button>
     <button id="factoryResetBtn" class="menu-btn" style="background:#dc3545;color:white;font-size:13px;padding:10px;margin-top:20px">Nollställ Allt</button>
   </div>
+</div>
+
+<!-- Language selector (moved outside menu-card for better positioning) -->
+<div class="lang-selector">
+  <select id="langSelect">
+    <option value="sv">🇸🇪 Svenska</option>
+    <option value="en">🇬🇧 English</option>
+    <option value="es">🇪🇸 Español</option>
+    <option value="fr">🇫🇷 Français</option>
+    <option value="de">🇩🇪 Deutsch</option>
+    <option value="pt">🇵🇹 Português</option>
+    <option value="it">🇮🇹 Italiano</option>
+    <option value="ru">🇷🇺 Русский</option>
+    <option value="zh">🇨🇳 中文</option>
+    <option value="ja">🇯🇵 日本語</option>
+  </select>
 </div>
 
 <div id="shopModal">
