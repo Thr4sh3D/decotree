@@ -213,7 +213,7 @@
 
 <div id="shopModal">
   <div class="shop-content">
-    <button onclick="document.getElementById('shopModal').style.display='none'" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">✕</button>
+    <button onclick="window.toggleShop(false)" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">✕</button>
     <h2 id="shopTitle" style="margin-top:0; color:#333">Jul-Butiken</h2>
 
     <div class="shop-tabs">
@@ -345,6 +345,7 @@
   let activeThrowType = 'ball';
   let activeBackground = 'bg_day';
   let currentLang = 'sv';
+  let santaX = 0; // RESTORED: Dynamic Santa position
 
   const backgrounds = {
     bg_day: { id:'bg_day', price:0, colors:[{p:0,c:'#eaf6ff'},{p:1,c:'#ffffff'}] },
@@ -774,17 +775,38 @@
     updateLanguage();
   };
 
+  // --- RESTORED: Mouse/Touch Movement for Santa ---
+  window.addEventListener('mousemove', (e) => {
+    // Skip if interacting with shop modal
+    if (e.target.closest('#shopModal') || e.target.closest('.shop-content')) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    santaX = e.clientX - rect.left;
+  });
+
+  window.addEventListener('touchmove', (e) => {
+    // Skip if interacting with shop modal
+    if (e.target.closest('#shopModal') || e.target.closest('.shop-content')) return;
+    
+    e.preventDefault(); // Prevent default scroll behavior during gameplay
+    const rect = canvas.getBoundingClientRect();
+    if (e.touches.length > 0) {
+      santaX = e.touches[0].clientX - rect.left;
+    }
+  }, { passive: false });
+
   // --- Init / Resize (OPTIMIZED: 30 snowflakes) ---
   function resize(){
     W=window.innerWidth;
     H=window.innerHeight;
     canvas.width=W;
     canvas.height=H;
-    player.x=W/2;
-    player.y=H-60;
+    santaX = W/2; // Initialize santaX to center
+    player.x = W/2;
+    player.y = H-60;
     setupTree();
     if(snowflakes.length===0){
-      for(let i=0;i<30;i++) snowflakes.push(createSnowflake()); // REDUCED from 50 to 30
+      for(let i=0;i<30;i++) snowflakes.push(createSnowflake());
     }
     generateStars();
   }
@@ -1185,7 +1207,8 @@
     ornaments.forEach(o=>drawOrnament(o));
     bullets.forEach(b=>drawOrnament(b));
 
-    drawSanta(player.x, player.y);
+    // RESTORED: Use dynamic santaX position
+    drawSanta(santaX, player.y);
   }
 
   // Helper function to draw a star
