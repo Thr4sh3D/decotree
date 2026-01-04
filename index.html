@@ -64,7 +64,8 @@
   // Game layout parameters (relative)
   let W=innerWidth, H=innerHeight;
   let cx, cy;
-  let tree = { tiers: [], trunk:{}, width:0, height:0 };
+  // tree now contains tiers array (3 triangles) and trunk rect
+  let tree = { tiers: [], trunk: {}, width:0, height:0 };
   let player = { x:0, y:0, w:80, h:18, color:'#4d2' };
   const ornaments = [];
   const palette = ['#e63946','#ffb703','#fb8500','#8338ec','#3a86ff','#7bd389','#ff6bcb'];
@@ -73,49 +74,59 @@
     W = canvas.clientWidth;
     H = canvas.clientHeight;
     cx = W / 2;
-    cy = H / 2.2; // tree is slightly above center
+    cy = H / 2.2; // tree center reference
     tree.height = Math.min(H * 0.6, W * 0.6);
     tree.width = tree.height * 0.9;
 
-    // Create 3 overlapping tiers (top, middle, bottom)
-    const topApexY = cy - tree.height * 0.5;
-    const hTop = tree.height * 0.28;
-    const hMid = tree.height * 0.36;
-    const hBot = tree.height * 0.36;
+    // We'll compute three tiers so their edges overlap without gaps.
+    // Tier heights: relative distribution
+    const total = tree.height;
+    const h1 = total * 0.28; // top
+    const h2 = total * 0.36; // middle
+    const h3 = total * 0.36; // bottom
 
-    // overlap factor so tiers overlap visibly
-    const overlap = 0.55;
+    // Start top apex
+    const topApexY = cy - total * 0.5;
 
+    // Top tier
     const top = {
-      v1: { x: cx, y: topApexY },
-      v2: { x: cx - tree.width * 0.28, y: topApexY + hTop },
-      v3: { x: cx + tree.width * 0.28, y: topApexY + hTop },
+      v1: { x: cx, y: topApexY }, // apex
+      v2: { x: cx - tree.width * 0.28, y: topApexY + h1 }, // left base
+      v3: { x: cx + tree.width * 0.28, y: topApexY + h1 }, // right base
       color: '#0fb24b'
     };
 
-    const midApexY = topApexY + hTop * overlap;
+    // Middle apex should be placed slightly above the top tier base so they overlap
+    const overlap = Math.min(h1, h2) * 0.35;
+    const midApexY = top.v2.y - overlap;
     const middle = {
       v1: { x: cx, y: midApexY },
-      v2: { x: cx - tree.width * 0.45, y: midApexY + hMid },
-      v3: { x: cx + tree.width * 0.45, y: midApexY + hMid },
+      v2: { x: cx - tree.width * 0.45, y: midApexY + h2 },
+      v3: { x: cx + tree.width * 0.45, y: midApexY + h2 },
       color: '#0a8a2f'
     };
 
-    const botApexY = midApexY + hMid * overlap;
+    // Bottom apex placed to overlap middle base
+    const overlap2 = Math.min(h2, h3) * 0.35;
+    const botApexY = middle.v2.y - overlap2;
     const bottom = {
       v1: { x: cx, y: botApexY },
-      v2: { x: cx - tree.width * 0.6, y: botApexY + hBot },
-      v3: { x: cx + tree.width * 0.6, y: botApexY + hBot },
+      v2: { x: cx - tree.width * 0.6, y: botApexY + h3 },
+      v3: { x: cx + tree.width * 0.6, y: botApexY + h3 },
       color: '#087023'
     };
 
     tree.tiers = [top, middle, bottom];
 
+    // Trunk must sit exactly at the bottom base of the lowest triangle
+    const bottomBaseY = Math.max(bottom.v2.y, bottom.v3.y); // base line y coordinate
+    const trunkW = tree.width * 0.16;
+    const trunkH = Math.max(24, tree.height * 0.12);
     tree.trunk = {
-      x: cx - tree.width * 0.08,
-      y: cy + tree.height * 0.5,
-      w: tree.width * 0.16,
-      h: Math.max(24, tree.height * 0.12)
+      x: cx - trunkW * 0.5,
+      y: bottomBaseY,
+      w: trunkW,
+      h: trunkH
     };
 
     player.w = Math.max(48, W * 0.12);
@@ -130,10 +141,9 @@
   }
 
   function drawTree() {
-    // draw a subtle shadow under tree tiers for depth
+    // subtle shadow under each tier
     for (let i = 0; i < tree.tiers.length; i++) {
       const t = tree.tiers[i];
-      // shadow layer slightly offset down
       ctx.beginPath();
       ctx.moveTo(t.v1.x, t.v1.y + 6);
       ctx.lineTo(t.v2.x, t.v2.y + 6);
@@ -143,7 +153,7 @@
       ctx.fill();
     }
 
-    // draw tiers from bottom to top so top overlays nicely
+    // draw tiers bottom-to-top for proper overlap
     for (let i = tree.tiers.length - 1; i >= 0; i--) {
       const t = tree.tiers[i];
       ctx.beginPath();
@@ -154,7 +164,7 @@
       ctx.fillStyle = t.color;
       ctx.fill();
 
-      // subtle inner highlight
+      // subtle trim/highlight
       ctx.beginPath();
       const inset = Math.min(tree.width, tree.height) * 0.03;
       ctx.moveTo(t.v1.x, t.v1.y + inset);
@@ -165,12 +175,49 @@
       ctx.fill();
     }
 
-    // trunk on top of tiers
+    // draw trunk directly at bottom base (no floating)
     ctx.fillStyle = '#6b3b1b';
     ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
   }
 
-  // Replace drawPlayer with a 'Santa-like' character
+  // Draw a 5-point star centered at (x,y)
+  function drawStar(x, y, radius = 18, color = '#ffd700') {
+    const spikes = 5;
+    const outer = radius;
+    const inner = radius * 0.48;
+    let rot = Math.PI / 2 * 3;
+    let cx = x;
+    let cy = y;
+    ctx.save();
+    // soft glow
+    ctx.shadowColor = 'rgba(255,220,80,0.9)';
+    ctx.shadowBlur = Math.max(8, radius * 0.9);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outer);
+    for (let i = 0; i < spikes; i++) {
+      const ox = cx + Math.cos(rot) * outer;
+      const oy = cy + Math.sin(rot) * outer;
+      ctx.lineTo(ox, oy);
+      rot += Math.PI / spikes;
+
+      const ix = cx + Math.cos(rot) * inner;
+      const iy = cy + Math.sin(rot) * inner;
+      ctx.lineTo(ix, iy);
+      rot += Math.PI / spikes;
+    }
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+
+    // small bright center
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.arc(cx, cy, Math.max(2, radius * 0.14), 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Draw Santa-like player (unchanged from previous)
   function drawPlayer() {
     const cxp = player.x;
     const baseline = player.y + player.h; // feet baseline (unused but for reference)
@@ -344,7 +391,7 @@
       o.x += o.vx * (delta / 16.67);
       o.y += o.vy * (delta / 16.67);
 
-      // check collision against all tiers
+      // CRITICAL: check collision against ALL tiers
       let stuckNow = false;
       for (const t of tree.tiers) {
         if (pointInTriangle({x:o.x, y:o.y}, t.v1, t.v2, t.v3)) {
@@ -355,6 +402,7 @@
       if (stuckNow) {
         o.stuck = true;
         o.vx = 0; o.vy = 0;
+        // nudge out a bit from tree center for nicer placement
         const treeCenter = { x: cx, y: cy + tree.height * 0.06 };
         const nx = o.x - treeCenter.x;
         const ny = o.y - treeCenter.y;
@@ -370,6 +418,11 @@
   function render() {
     clear();
     drawTree();
+    // draw star at apex of top triangle
+    if (tree.tiers && tree.tiers.length > 0) {
+      const apex = tree.tiers[0].v1;
+      drawStar(apex.x, apex.y, Math.max(12, tree.width * 0.035));
+    }
     drawOrnaments();
     drawPlayer();
     info.textContent = 'Ornaments on tree: ' + ornaments.filter(o => o.stuck).length;
