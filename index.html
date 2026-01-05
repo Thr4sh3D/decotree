@@ -424,6 +424,17 @@
     });
   }
 
+  // Close shop when clicking outside the shop content
+  if (shopModal) {
+    shopModal.addEventListener('click', (e) => {
+      // Only close if the actual overlay background was clicked,
+      // not when clicking inside the shop card.
+      if (e.target === shopModal) {
+        window.toggleShop(false);
+      }
+    });
+  }
+
   // Unlocked state for all ornament keys + backgrounds
   let unlocked = { 
     red: true,        // default owned
@@ -500,6 +511,21 @@
     { key: 'silvertinsel', name: 'Silverglitter 💫',price: 250, type: 'ornament', owned: false, equipped: false, img: '💫' },
     { key: 'redtinsel',    name: 'Rött Glitter 🎗️',price: 250, type: 'ornament', owned: false, equipped: false, img: '🎗️' }
   ];
+
+  // Tracks the order in which ornaments are equipped so that when
+  // more than 5 are chosen, the oldest equipped one can be replaced
+  // by the newest selection.
+  let equipSequence = 0;
+
+  // Initialize sequence for any ornaments that start as equipped
+  shopItems.forEach(item => {
+    if (item.type === 'ornament' && item.equipped) {
+      equipSequence++;
+      item.equipSeq = equipSequence;
+    } else if (item.type === 'ornament') {
+      item.equipSeq = 0;
+    }
+  });
 
   let stars = [];
 
@@ -897,6 +923,18 @@
             }
           });
         }
+
+        // Rebuild equip sequence so we can know which ornament is
+        // "oldest" equipped when enforcing the max-5 rule.
+        equipSequence = 0;
+        shopItems.forEach(item => {
+          if (item.type === 'ornament' && item.equipped && unlocked[item.key]) {
+            equipSequence++;
+            item.equipSeq = equipSequence;
+          } else if (item.type === 'ornament') {
+            item.equipSeq = 0;
+          }
+        });
       } catch (e) {
         console.error('Failed to load save data:', e);
       }
@@ -1193,7 +1231,7 @@
             updateAllUI();
           };
         } else {
-          const equippedCount = shopItems.filter(i => i.type === 'ornament' && i.equipped).length;
+          const equippedCount = shopItems.filter(i => i.type === 'ornament' && i.equipped && unlocked[i.key]).length;
           if (item.equipped) {
             btn.disabled = false;
             btn.innerText = t.remove || 'Ta bort';
@@ -1208,11 +1246,19 @@
             btn.innerText = t.equip;
             btn.onclick = (e) => {
               e.stopPropagation();
-              const currentEquipped = shopItems.filter(i => i.type === 'ornament' && i.equipped).length;
-              if (currentEquipped >= 5) {
-                alert('Max 5!');
-                return;
+              const equippedOrnaments = shopItems.filter(i => i.type === 'ornament' && i.equipped && unlocked[i.key]);
+              if (equippedOrnaments.length >= 5) {
+                // Find the oldest equipped ornament (lowest equipSeq)
+                let oldest = equippedOrnaments[0];
+                for (const o of equippedOrnaments) {
+                  const oldestSeq = oldest.equipSeq || 0;
+                  const seq = o.equipSeq || 0;
+                  if (seq < oldestSeq) oldest = o;
+                }
+                oldest.equipped = false;
               }
+              equipSequence++;
+              item.equipSeq = equipSequence;
               item.equipped = true;
               saveGame();
               updateAllUI();
