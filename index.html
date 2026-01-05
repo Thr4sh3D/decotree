@@ -311,9 +311,11 @@
   const ctx = canvas.getContext('2d');
 
   // Visual layout constants
-  // Wider, slightly squat tree & Santa so nothing looks too skinny
+  // Slightly wider, a bit squatter tree so it can fill
+  // more width on landscape phones without eating all
+  // of the vertical space on tall portrait screens.
   const TREE_BASE_WIDTH = 900;   // visual design width (wider)
-  const TREE_BASE_HEIGHT = 900;  // visual design height
+  const TREE_BASE_HEIGHT = 780;  // visual design height (a bit shorter)
   const TREE_BOTTOM_MARGIN = 40;
   const SANTA_WIDTH = 276;       // Santa ~15% wider
   const SANTA_HEIGHT = 180;
@@ -401,8 +403,12 @@
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
 
   // Simple breakpoint-based check for mobile layout
+  // Use the shortest side so phones in landscape still
+  // count as "mobile" (small) and don’t get huge Santa
+  // and a tiny tree.
   function isMobileLayout() {
-    return window.innerWidth <= 768;
+    const shortSide = Math.min(window.innerWidth, window.innerHeight);
+    return shortSide <= 768;
   }
 
   // --- SHOP TABS LOGIC ----------------------------------------------------
