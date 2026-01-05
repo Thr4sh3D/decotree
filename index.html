@@ -308,6 +308,8 @@
   // Image assets
   const santaImg = new Image();
   santaImg.src = 'santa.png';
+  santaImg.onload = () => console.log('Santa image loaded successfully!');
+  santaImg.onerror = () => console.error('Error loading santa.png. Check filename!');
   const bgImg = new Image();
   bgImg.src = 'bg.png';
   const starImg = new Image();
@@ -1374,10 +1376,11 @@
     ctx.closePath();
   }
 
-  // 1. VISUALS: Santa using image asset (simplified, always visible)
+  // 1. VISUALS: Santa using image asset with safe fallback
   function drawSanta(x, y) {
     const w = 80;
     const h = 80;
+    let drawX = x;
     let drawY = y;
 
     // Small recoil: move Santa slightly down right after a shot
@@ -1385,8 +1388,17 @@
       drawY += 5;
     }
 
-    // Draw the sprite centered at (x, drawY)
-    ctx.drawImage(santaImg, x - w / 2, drawY - h / 2, w, h);
+    // If image is not loaded yet, draw a simple red circle as placeholder
+    if (!santaImg.complete || santaImg.naturalWidth === 0) {
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.arc(drawX, drawY, 20, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
+    // Draw the sprite centered at (drawX, drawY)
+    ctx.drawImage(santaImg, drawX - w / 2, drawY - h / 2, w, h);
   }
 
   // Game Loop
