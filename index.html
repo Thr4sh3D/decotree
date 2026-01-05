@@ -123,7 +123,7 @@
     flex-direction: column;
     gap: 10px;
     z-index: 100;
-    pointer-events: auto;
+    pointer-events: none; /* was: auto; allow clicks to pass through gaps */
   }
 
   .quick-btn {
@@ -140,22 +140,7 @@
     transition: all 0.2s;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     user-select: none;
-  }
-
-  .quick-btn:hover {
-    transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.95);
-  }
-
-  .quick-btn.active {
-    border-color: gold;
-    background: #fff;
-    box-shadow: 0 0 10px gold, 0 2px 8px rgba(0, 0, 0, 0.3);
-    transform: scale(1.1);
-  }
-
-  .quick-btn:active {
-    transform: scale(0.95);
+    pointer-events: auto; /* keep buttons clickable */
   }
 
   /* small helpers */
@@ -545,7 +530,7 @@
       reset: 'Очистить', shop: 'Магазин', menu: 'Меню',
       shopTitle: 'Рождественский Магазин', shopItemsDesc: 'Купите новые цвета и украшения!',
       items: 'Предметы', backgrounds: 'Фоны', close: 'Закрыть',
-      buy: 'Купить', equip: 'Надеть', equipped: 'Надято', free: 'Бесплатно',
+      buy: 'Купить', equip: 'Надеть', equipped: 'Надето', free: 'Бесплатно',
       shopBgDesc: 'Купите фоны',
       itemStandard: 'Стандартный Шар', itemStandardDesc: 'Красный рождественский шар (Бесплатно)',
       itemGold: 'Золото и Серебро', itemGoldDesc: 'Блестящий металлик',
@@ -1179,14 +1164,16 @@
 
   function checkButtons() {
     const buttons = {
-      buyGold: { unlockKey: 'gold', cost: 100 },
-      buyDiamond: { unlockKey: 'diamond', cost: 500 },
-      buyCandy: { unlockKey: 'candy', cost: 50 },
-      buyLight: { unlockKey: 'light', cost: 150 },
-      buyCandle: { unlockKey: 'candle', cost: 300 },
-      buyGarland: { unlockKey: 'garland', cost: 200 },
-      buyGlitter: { unlockKey: 'glitter', cost: 350 },
-      buyBg_night: { unlockKey: 'bg_night', cost: 100 },
+      buyGold:      { unlockKey: 'gold',      cost: 100 },
+      buyDiamond:   { unlockKey: 'diamond',   cost: 500 },
+      buyCandy:     { unlockKey: 'candy',     cost: 50  },
+      buyLight:     { unlockKey: 'light',     cost: 150 },
+      buyCandle:    { unlockKey: 'candle',    cost: 300 },
+      buyGarland:   { unlockKey: 'garland',   cost: 200 },
+      buyGlitter:   { unlockKey: 'glitter',   cost: 350 },
+      // backgrounds (include default/day so it can be re-equipped)
+      buyBg_day:    { unlockKey: 'bg_day',    cost: 0   },
+      buyBg_night:  { unlockKey: 'bg_night',  cost: 100 },
       buyBg_aurora: { unlockKey: 'bg_aurora', cost: 300 },
       buyBg_sunset: { unlockKey: 'bg_sunset', cost: 500 }
     };
@@ -1194,16 +1181,39 @@
     for (const [btnId, { unlockKey, cost }] of Object.entries(buttons)) {
       const btn = document.getElementById(btnId);
       if (!btn) continue;
-      
-      if (unlocked[unlockKey]) {
-        btn.disabled = true;
-        btn.innerText = translations[currentLang].equipped;
-      } else if (money >= cost) {
-        btn.disabled = false;
-        btn.innerText = cost + ' 🪙';
+
+      const isBackground = unlockKey.startsWith('bg_');
+
+      if (isBackground) {
+        // Background buttons: allow switching between owned backgrounds
+        if (!unlocked[unlockKey]) {
+          // Not owned yet: price logic as usual
+          if (money >= cost) {
+            btn.disabled = false;
+          } else {
+            btn.disabled = true;
+          }
+          btn.innerText = cost + ' 🪙';
+        } else {
+          // Owned: show "Vald" for active, "Välj" for others
+          const isActive = (activeBackground === unlockKey);
+          btn.disabled = isActive;
+          btn.innerText = isActive
+            ? translations[currentLang].equipped  // e.g. "Vald"
+            : translations[currentLang].equip;    // e.g. "Välj"
+        }
       } else {
-        btn.disabled = true;
-        btn.innerText = cost + ' 🪙';
+        // Ornament packs: keep old behaviour (once bought, always "Equipped")
+        if (unlocked[unlockKey]) {
+          btn.disabled = true;
+          btn.innerText = translations[currentLang].equipped;
+        } else if (money >= cost) {
+          btn.disabled = false;
+          btn.innerText = cost + ' 🪙';
+        } else {
+          btn.disabled = true;
+          btn.innerText = cost + ' 🪙';
+        }
       }
     }
   }
@@ -1481,9 +1491,10 @@
       const garlandEndX = o.x + r * 2.2;
       const garlandEndY = o.y - r * 0.5;
       const garlandCp1X = o.x - r * 1.2;
-      const garlandCp1Y = o.y + r * 2.8;
+      // Increased droop for a loopier garland
+      const garlandCp1Y = o.y + r * 3.6; 
       const garlandCp2X = o.x + r * 1.2;
-      const garlandCp2Y = o.y + r * 2.8;
+      const garlandCp2Y = o.y + r * 3.6;
       
       // === Shadow rope (depth) ===
       ctx.strokeStyle = 'rgba(0,0,0,0.4)';
@@ -1571,9 +1582,10 @@
       const glitterEndX = o.x + r * 2.3;
       const glitterEndY = o.y + r * 0.3;
       const glitterCp1X = o.x - r * 0.8;
-      const glitterCp1Y = o.y - r * 1.8;
+      // Deeper S-curve for more slack
+      const glitterCp1Y = o.y - r * 2.4;
       const glitterCp2X = o.x + r * 0.8;
-      const glitterCp2Y = o.y + r * 1.8;
+      const glitterCp2Y = o.y + r * 2.4;
       
       // === Shadow tinsel (depth) ===
       ctx.strokeStyle = 'rgba(0,0,0,0.25)';
