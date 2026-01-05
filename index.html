@@ -1432,9 +1432,10 @@
       const treeHeight = 600;
       const treeX = canvas.width / 2 - treeWidth / 2;
       const treeY = 100;
-      ctx.drawImage(treeImg, treeX, treeY, treeWidth, treeHeight);
+      // NEW: larger tree, lower on screen
+      ctx.drawImage(treeImg, canvas.width / 2 - 250, canvas.height - 750, 500, 700);
     } else {
-      // ...optional old procedural tree fallback...
+      // ...existing code...
     }
 
     // Ghost targets (mission)
@@ -1462,7 +1463,8 @@
 
       ctx.save();
       if (starImg.complete && starImg.naturalWidth > 0) {
-        ctx.drawImage(starImg, starX - size / 2, starY - size / 2, size, size);
+        // NEW: larger star aligned with new tree top
+        ctx.drawImage(starImg, canvas.width / 2 - 35, canvas.height - 750 - 35, 70, 70);
       } else {
         // Optional vector-star fallback
         // drawStar(ctx, starX, starY, 5, 30, 15);
@@ -1477,66 +1479,7 @@
     drawSanta(santaX, player.y);
   }
 
-  function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
-    let rot = Math.PI / 2 * 3;
-    let x = cx;
-    let y = cy;
-    const step = Math.PI / spikes;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - outerRadius);
-    for (let i = 0; i < spikes; i++) {
-      x = cx + Math.cos(rot) * outerRadius; y = cy + Math.sin(rot) * outerRadius; ctx.lineTo(x, y); rot += step;
-      x = cx + Math.cos(rot) * innerRadius; y = cy + Math.sin(rot) * innerRadius; ctx.lineTo(x, y); rot += step;
-    }
-    ctx.lineTo(cx, cy - outerRadius);
-    ctx.closePath();
-  }
-
-  // drawOrnament: image-based for all types, with size variants
-  function drawOrnament(o) {
-    const x = o.x;
-    const y = o.y;
-    const type = o.type;
-
-    let img = null;
-    let mode = 'circle'; // 'standard' | 'tall' | 'wide' | 'circle'
-
-    if (type === 'red')         { img = redImg;        mode = 'standard'; }
-    else if (type === 'blue')  { img = blueImg;       mode = 'standard'; }
-    else if (type === 'green') { img = greenImg;      mode = 'standard'; }
-    else if (type === 'gold')  { img = goldImg;       mode = 'standard'; }
-    else if (type === 'silver'){ img = silverImg;     mode = 'standard'; }
-    else if (type === 'purple'){ img = purpleImg;     mode = 'standard'; }
-    else if (type === 'bulb')  { img = bulbImg;       mode = 'standard'; }
-    else if (type === 'gingerbread') { img = gingerImg; mode = 'standard'; }
-    else if (type === 'gift')  { img = giftImg;       mode = 'standard'; }
-    else if (type === 'candycane') { img = candyImg;  mode = 'tall'; }
-    else if (type === 'candle')    { img = candleImg; mode = 'tall'; }
-    else if (type === 'goldtinsel'){ img = goldTinselImg;  mode = 'wide'; }
-    else if (type === 'silvertinsel'){ img = silverTinselImg; mode = 'wide'; }
-    else if (type === 'redtinsel'){ img = redTinselImg; mode = 'wide'; }
-
-    if (img && img.complete && img.naturalWidth > 0) {
-      if (mode === 'standard') {
-        const w = 30, h = 30;
-        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
-      } else if (mode === 'tall') {
-        const w = 25, h = 40;
-        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
-      } else if (mode === 'wide') {
-        const w = 40, h = 20;
-        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
-      }
-      return;
-    }
-
-    // Fallback: simple colored circle
-    const r = o.r || 10;
-    ctx.fillStyle = o.color || ornamentFallbackColors[type] || '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // ...existing code...
 
   function drawSanta(x, y) {
     const w = 80;
@@ -1544,12 +1487,10 @@
     let drawX = x;
     let drawY = y;
 
-    // Small recoil: move Santa slightly down right after a shot
     if (recoilTimer > 0) {
       drawY += 5;
     }
 
-    // If image is not loaded yet, draw a simple red circle as placeholder
     if (!santaImg.complete || santaImg.naturalWidth === 0) {
       ctx.fillStyle = 'red';
       ctx.beginPath();
@@ -1558,8 +1499,8 @@
       return;
     }
 
-    // Draw the sprite centered at (drawX, drawY)
-    ctx.drawImage(santaImg, drawX - w / 2, drawY - h / 2, w, h);
+    // NEW: larger Santa, centered on drawX/drawY
+    ctx.drawImage(santaImg, drawX - 60, drawY - 60, 120, 120);
   }
 
   // Game Loop
