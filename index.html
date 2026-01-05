@@ -311,11 +311,12 @@
   const ctx = canvas.getContext('2d');
 
   // Visual layout constants
-  const TREE_BASE_WIDTH = 600;
-  const TREE_BASE_HEIGHT = 900;
+  // Slightly wider, squat tree & Santa so nothing looks too skinny
+  const TREE_BASE_WIDTH = 750;   // visual design width
+  const TREE_BASE_HEIGHT = 900;  // visual design height
   const TREE_BOTTOM_MARGIN = 40;
-  const SANTA_WIDTH = 150;
-  const SANTA_HEIGHT = 150;
+  const SANTA_WIDTH = 200;       // make Santa a bit wider than tall
+  const SANTA_HEIGHT = 180;
   const STAR_SIZE = 80;
 
   // Image assets
@@ -1247,9 +1248,14 @@
 
   // --- TREE GEOMETRY & COLLISION -----------------------------------------
   function getTreeRect() {
-    // Large tree with fixed dimensions, bottom-centered on the canvas
-    const width = TREE_BASE_WIDTH;
-    const height = TREE_BASE_HEIGHT;
+    // Large tree, keeps TREE_BASE_WIDTH x TREE_BASE_HEIGHT aspect,
+    // fills as much as possible while staying fully visible and bottom-centered.
+    const aspect = TREE_BASE_HEIGHT / TREE_BASE_WIDTH; // height per width
+    const availableHeight = Math.max(H - TREE_BOTTOM_MARGIN, 200);
+
+    const maxWidthByHeight = availableHeight / aspect;
+    const width = Math.min(TREE_BASE_WIDTH, W * 0.95, maxWidthByHeight);
+    const height = width * aspect;
 
     const x = (W - width) / 2;
     const y = H - height;
@@ -1410,9 +1416,12 @@
       ctx.fill();
     }
 
-    // Star on top – drawn AFTER tree so it stays visible
+    // Star on top – drawn AFTER tree so it stays visible.
+    // Tree image has some transparent top padding, so we place the
+    // star a little lower than the raw image top so it appears just
+    // above the visible foliage, not at the very top of the texture.
     const tipX = rect.x + rect.width / 2;
-    const tipY = rect.y;
+    const tipY = rect.y + rect.height * 0.08;
 
     if (starImg && starImg.complete && starImg.naturalWidth) {
       ctx.drawImage(starImg, tipX - STAR_SIZE / 2, tipY - STAR_SIZE * 0.9, STAR_SIZE, STAR_SIZE);
@@ -1428,7 +1437,7 @@
     // Ornaments stuck on tree
     for (const o of ornaments) {
       const img = getOrnamentImage(o.type);
-      const radius = o.r || 14;
+      const radius = o.r || 22;
       const size = radius * 2;
       if (img && img.complete && img.naturalWidth) {
         ctx.drawImage(img, o.x - size / 2, o.y - size / 2, size, size);
@@ -1461,7 +1470,7 @@
       const color = b.color || ornamentFallbackColors[b.type] || '#ffffff';
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r || 10, 0, Math.PI * 2);
+      ctx.arc(b.x, b.y, b.r || 14, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1515,7 +1524,7 @@
     const vx = Math.cos(angle) * speed;
     const vy = Math.sin(angle) * speed;
 
-    const radius = 14;
+    const radius = 20;
     const type = activeThrowType;
     const color = ornamentFallbackColors[type] || '#ffffff';
 
@@ -1543,8 +1552,11 @@
     const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
     if (clientX == null || clientY == null) return;
 
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Account for any CSS scaling between canvas pixels and layout pixels
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
 
     shootTowards(x, y);
     e.preventDefault();
