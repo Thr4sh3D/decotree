@@ -270,6 +270,11 @@
         <div><b id="itemGlitterName">Glitterslinga</b><br><span id="itemGlitterDesc" style="font-size:12px">Glittrande slinga</span></div>
         <button class="buy-btn" id="buyGlitter" onclick="window.buyPack('glitter', 350)">350 🪙</button>
       </div>
+
+      <div class="shop-item">
+        <div><b id="itemBowName">Röd Rosett</b><br><span id="itemBowDesc" style="font-size:12px">Julig rosett</span></div>
+        <button class="buy-btn" id="buyBow" onclick="window.buyPack('bow', 250)">250 🪙</button>
+      </div>
     </div>
 
     <div id="shopBackgrounds" class="hidden">
@@ -319,6 +324,14 @@
   let treeLoaded = false;
   treeImg.onload = () => { treeLoaded = true; };
 
+  // NEW: background images (shop-based)
+  const bgDayImg = new Image();    bgDayImg.src = 'bgday.jpg';
+  const bgBridgeImg = new Image(); bgBridgeImg.src = 'bgbridge.jpg';
+  const bgNightImg = new Image();  bgNightImg.src = 'bgnight.jpg';
+
+  let currentBg = bgNightImg;      // default to night
+  let currentBgKey = 'bgnight';
+
   // Baubles
   const redImg = new Image();   redImg.src = 'red.png';
   const blueImg = new Image();  blueImg.src = 'blue.png';
@@ -332,6 +345,7 @@
   const giftImg = new Image();  giftImg.src = 'gift.png';
   const candleImg = new Image();candleImg.src = 'candle.png';
   const bulbImg = new Image();  bulbImg.src = 'bulb.png';
+  const bowImg = new Image();   bowImg.src = 'bow.png'; // bow decoration
   // Tinsel segments
   const goldTinselImg = new Image();  goldTinselImg.src = 'goldtinsel.png';
   const silverTinselImg = new Image();silverTinselImg.src = 'silvertinsel.png';
@@ -395,7 +409,10 @@
     bg_day: true,
     bg_night: false,
     bg_aurora: false,
-    bg_sunset: false 
+    bg_sunset: false,
+    bgday: false,
+    bgbridge: false,
+    bgnight: true
   };
 
   const ornamentFallbackColors = {
@@ -412,11 +429,11 @@
   let currentLang = 'sv';
   let santaX = 0;
 
+  // NEW: map shop background keys -> images
   const backgrounds = {
-    bg_day: { id:'bg_day', price:0,   colors:[{p:0,c:'#eaf6ff'},{p:1,c:'#ffffff'}] },
-    bg_night: { id:'bg_night', price:100, colors:[{p:0,c:'#001022'},{p:1,c:'#000010'}] },
-    bg_aurora: { id:'bg_aurora', price:300, colors:[{p:0,c:'#311b63'},{p:0.6,c:'#5eead4'},{p:1,c:'#0f172a'}] },
-    bg_sunset: { id:'bg_sunset', price:500, colors:[{p:0,c:'#ff7e5f'},{p:0.6,c:'#fbd786'},{p:1,c:'#c94b4b'}] }
+    bgday: bgDayImg,
+    bgbridge: bgBridgeImg,
+    bgnight: bgNightImg
   };
 
   // Complete ornament shop list
@@ -438,7 +455,12 @@
     { key: 'candycane',  name: 'Polkagris 🍭',       price: 250, owned: false, img: '🍭' },
     { key: 'gift',       name: 'Julklapp 🎁',        price: 250, owned: false, img: '🎁' },
     { key: 'gingerbread',name: 'Pepparkaka 🍪',      price: 300, owned: false, img: '🍪' },
-    { key: 'candle',     name: 'Levande Ljus 🕯️',   price: 350, owned: false, img: '🕯️' }
+    { key: 'candle',     name: 'Levande Ljus 🕯️',   price: 350, owned: false, img: '🕯️' },
+    { key: 'bow',        name: 'Röd Rosett 🎀',      price: 250, owned: false, img: '🎀' },
+    // NEW: background items (type = 'background')
+    { key: 'bgday',      name: 'Solig Dag ☀️',      price: 500, type: 'background', owned: false, img: '☀️' },
+    { key: 'bgbridge',   name: 'Vinterbro 🌉',       price: 750, type: 'background', owned: false, img: '🌉' },
+    { key: 'bgnight',    name: 'Norrskensnatt 🌌',   price:   0, type: 'background', owned: true,  img: '🌌' }
   ];
 
   let stars = [];
@@ -765,7 +787,8 @@
       money,
       unlocked,
       activeThrowType,
-      activeBackground
+      activeBackground,
+      currentBgKey      // NEW: persist selected image background
     };
     localStorage.setItem('decoTreeSave', JSON.stringify(gameData));
   }
@@ -794,13 +817,26 @@
           bg_day: true,
           bg_night: false,
           bg_aurora: false,
-          bg_sunset: false 
+          bg_sunset: false,
+          bgday: false,
+          bgbridge: false,
+          bgnight: true
         };
         activeThrowType = gameData.activeThrowType || 'red';
         activeBackground = gameData.activeBackground || 'bg_day';
+
+        // NEW: restore selected image background
+        currentBgKey = gameData.currentBgKey && backgrounds[gameData.currentBgKey]
+          ? gameData.currentBgKey
+          : 'bgnight';
+        currentBg = backgrounds[currentBgKey];
       } catch (e) {
         console.error('Failed to load save data:', e);
       }
+    } else {
+      // no save: init default bg
+      currentBgKey = 'bgnight';
+      currentBg = backgrounds[currentBgKey];
     }
   }
 
@@ -936,7 +972,10 @@
       bg_day: true,
       bg_night: false,
       bg_aurora: false,
-      bg_sunset: false 
+      bg_sunset: false,
+      bgday: false,
+      bgbridge: false,
+      bgnight: true
     };
     activeThrowType = 'red';
     activeBackground = 'bg_day'; 
@@ -945,6 +984,9 @@
     ghostTargets = [];
     missionLevel = 1;
     pausedState = null;
+
+    currentBgKey = 'bgnight';
+    currentBg = backgrounds[currentBgKey];
     
     saveGame();
     updateAllUI();
@@ -1104,15 +1146,16 @@
 
   // Backgrounds
   function drawBackground(){
-    // Use image if loaded, otherwise fallback to old gradient/snow logic
-    if (bgImg.complete && bgImg.naturalWidth > 0) {
-      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    // NEW: always draw currently selected background image
+    const img = currentBg;
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     } else {
+      // simple fallback sky/snow if not loaded
       ctx.fillStyle = '#87CEEB';
       ctx.fillRect(0, 0, W, H * 0.8);
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, H * 0.8, W, H * 0.2);
-      if (activeBackground === 'bg_night') drawStars();
     }
   }
   function generateStars(){
@@ -1300,7 +1343,27 @@
       btn.id = 'buy_' + item.key;
       btn.onclick = (e) => {
         e.stopPropagation();
-        window.buyPack(item.key, item.price);
+        // NEW: handle backgrounds vs ornaments
+        if (item.type === 'background') {
+          const key = item.key;
+          const owned = !!unlocked[key];
+
+          if (!owned) {
+            if (money < item.price) return;
+            money -= item.price;
+            unlocked[key] = true;
+            playSound('buy');
+          }
+          // Equip instantly if owned
+          if (backgrounds[key]) {
+            currentBgKey = key;
+            currentBg = backgrounds[key];
+          }
+          saveGame();
+          updateAllUI();
+        } else {
+          window.buyPack(item.key, item.price);
+        }
       };
 
       row.appendChild(label);
@@ -1308,11 +1371,12 @@
       shopItemsDiv.appendChild(row);
     });
 
+   
     checkButtons();
   }
 
   function checkButtons() {
-    // Ornaments: dynamically from shopItems
+    // Ornaments & backgrounds: dynamically from shopItems
     shopItems.forEach(item => {
       const btn = document.getElementById('buy_' + item.key);
       if (!btn) return;
@@ -1320,19 +1384,34 @@
       const owned = !!unlocked[item.key];
       const cost = item.price;
 
-      if (owned) {
-        btn.disabled = true;
-        btn.innerText = translations[currentLang].equipped;
-      } else if (money >= cost) {
-        btn.disabled = false;
-        btn.innerText = cost + ' 🪙';
+      if (item.type === 'background') {
+        // NEW: background button behaviour (buy/equip)
+        if (!owned) {
+          btn.disabled = money < cost;
+          btn.innerText = cost + ' 🪙';
+        } else {
+          const isActive = (currentBgKey === item.key);
+          btn.disabled = isActive;
+          btn.innerText = isActive
+            ? translations[currentLang].equipped
+            : translations[currentLang].equip;
+        }
       } else {
-        btn.disabled = true;
-        btn.innerText = cost + ' 🪙';
+        // existing ornament logic
+        if (owned) {
+          btn.disabled = true;
+          btn.innerText = translations[currentLang].equipped;
+        } else if (money >= cost) {
+          btn.disabled = false;
+          btn.innerText = cost + ' 🪙';
+        } else {
+          btn.disabled = true;
+          btn.innerText = cost + ' 🪙';
+        }
       }
     });
 
-    // Backgrounds (unchanged)
+    // Backgrounds tab (old gradient system) - unchanged
     const bgButtons = {
       buyBg_day:    { unlockKey: 'bg_day',    cost: 0   },
       buyBg_night:  { unlockKey: 'bg_night',  cost: 100 },
@@ -1345,7 +1424,6 @@
       if (!btn) continue;
 
       if (!unlocked[unlockKey]) {
-        // Not owned yet: price logic as usual
         if (money >= cost) {
           btn.disabled = false;
         } else {
@@ -1353,7 +1431,6 @@
         }
         btn.innerText = cost + ' 🪙';
       } else {
-        // Owned: show "Vald" for active, "Välj" for others
         const isActive = (activeBackground === unlockKey);
         btn.disabled = isActive;
         btn.innerText = isActive
@@ -1367,43 +1444,12 @@
     checkButtons();
   }
 
-  tabItems.onclick = (e) => {
-    e.stopPropagation();
-    shopItemsDiv.classList.remove('hidden');
-    shopBackgroundsDiv.classList.add('hidden');
-    tabItems.classList.add('active');
-    tabBackgrounds.classList.remove('active');
-  };
-
-  tabBackgrounds.onclick = (e) => {
-    e.stopPropagation();
-    shopBackgroundsDiv.classList.remove('hidden');
-    shopItemsDiv.classList.add('hidden');
-    tabBackgrounds.classList.add('active');
-    tabItems.classList.remove('active');
-  };
-
-  document.getElementById('resetBtn').onclick = (e) => {
-    e.stopPropagation();
-    if (gameState !== 'MENU') {
-      gameState = 'MENU';
-      pausedState = null;
-      ornaments = [];
-      bullets = [];
-      toggleMenu(true);
-    }
-  };
-
-  document.getElementById('shopBtn').onclick = (e) => {
-    e.stopPropagation();
-    toggleShop(true);
-  };
-
   // --- 3. UI: Quick Switch Sidebar ---
   function renderQuickBar() {
     quickBar.innerHTML = '';
-    // Show all owned ornament items from shopItems
+    // Show all owned ornament items (NOT backgrounds) from shopItems
     shopItems.forEach(item => {
+      if (item.type === 'background') return; // NEW: skip backgrounds
       if (!unlocked[item.key]) return;
 
       const btn = document.createElement('div');
@@ -1479,7 +1525,60 @@
     drawSanta(santaX, player.y);
   }
 
-  // ...existing code...
+  // drawOrnament: image-based for all types, with size variants
+  function drawOrnament(o) {
+    const x = o.x;
+    const y = o.y;
+    const type = o.type;
+
+    let img = null;
+    let mode = 'circle'; // 'standard' | 'tall' | 'wide' | 'circle'
+
+    if (type === 'red')         { img = redImg;        mode = 'standard'; }
+    else if (type === 'blue')  { img = blueImg;       mode = 'standard'; }
+    else if (type === 'green') { img = greenImg;      mode = 'standard'; }
+    else if (type === 'gold')  { img = goldImg;       mode = 'standard'; }
+    else if (type === 'silver'){ img = silverImg;     mode = 'standard'; }
+    else if (type === 'purple'){ img = purpleImg;     mode = 'standard'; }
+    else if (type === 'bulb')  { img = bulbImg;       mode = 'standard'; }
+    else if (type === 'gingerbread') { img = gingerImg; mode = 'standard'; }
+    else if (type === 'gift')  { img = giftImg;       mode = 'standard'; }
+    else if (type === 'candycane') { img = candyImg;  mode = 'tall'; }
+    else if (type === 'candle')    { img = candleImg; mode = 'tall'; }
+    else if (type === 'goldtinsel'){ img = goldTinselImg;  mode = 'wide'; }
+    else if (type === 'silvertinsel'){ img = silverTinselImg; mode = 'wide'; }
+    else if (type === 'redtinsel'){ img = redTinselImg; mode = 'wide'; }
+
+    // NEW: explicit bow drawing (slightly wider than tall)
+    if (type === 'bow') {
+      if (bowImg.complete && bowImg.naturalWidth > 0) {
+        ctx.drawImage(bowImg, x - 25, y - 20, 50, 40);
+        return;
+      }
+      // if image not ready, fall through to circle fallback
+    }
+
+    if (img && img.complete && img.naturalWidth > 0) {
+      if (mode === 'standard') {
+        const w = 30, h = 30;
+        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      } else if (mode === 'tall') {
+        const w = 25, h = 40;
+        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      } else if (mode === 'wide') {
+        const w = 40, h = 20;
+        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      }
+      return;
+    }
+
+    // Fallback: simple colored circle
+    const r = o.r || 10;
+    ctx.fillStyle = o.color || ornamentFallbackColors[type] || '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   function drawSanta(x, y) {
     const w = 80;
