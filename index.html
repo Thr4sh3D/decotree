@@ -713,7 +713,7 @@
   }
 
   // --- 4. GAMEPLAY: Cheat Code ---
-  scoreBox.addEventListener('click', (e) => {
+  moneyText.addEventListener('click', (e) => {
     cheatClicks++;
     if (cheatTimer) clearTimeout(cheatTimer);
     cheatTimer = setTimeout(() => { cheatClicks = 0; }, 400);
@@ -930,13 +930,14 @@
     const tier3VisualX = treeW * 0.24;
     const tier3VisualTop = y1_bot - treeH * 0.28;
     const tier3VisualY2 = y1_bot;
-    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up)
+    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up), LOWERED TOP so star is free
     const tier3CollisionX = treeW * 0.24 * 0.85; // 15% narrower
     const tier3CollisionY2 = y1_bot - 25;        // Raised 25px
+    const tier3CollisionTop = tier3VisualTop + 30; // Lower collision tip below visual star
     
     tree.tiers.push({ 
-      // Collision (physics) - TIGHTER
-      x1: cx, y1: tier3VisualTop,
+      // Collision (physics) - TIGHTER, with lower tip so star is non-colliding
+      x1: cx, y1: tier3CollisionTop,
       x2: cx - tier3CollisionX, y2: tier3CollisionY2,
       x3: cx + tier3CollisionX, y3: tier3CollisionY2,
       // Visual (drawing) - FULL WIDTH
@@ -1041,9 +1042,6 @@
     }
     
     if (gameState === 'MENU') return;
-    
-    // Prevent default touch actions (scrolling) if touching canvas
-    // But allow defaults if we are in the shop (handled in touchmove listener)
     
     const rect = canvas.getBoundingClientRect();
     let cx, cy;
