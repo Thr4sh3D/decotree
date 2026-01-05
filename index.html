@@ -398,6 +398,11 @@
   // Färger och items
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
 
+  // Simple breakpoint-based check for mobile layout
+  function isMobileLayout() {
+    return window.innerWidth <= 768;
+  }
+
   // --- SHOP TABS LOGIC ----------------------------------------------------
   function showItemsTab() {
     tabItems.classList.add('active');
@@ -1539,7 +1544,29 @@
     ctx.clearRect(0, 0, W, H);
 
     if (currentBg && currentBg.complete && currentBg.naturalWidth) {
-      ctx.drawImage(currentBg, 0, 0, W, H);
+      // Draw background with a "cover" behavior so it fills the
+      // canvas nicely on tall mobile screens without looking too
+      // narrow or squashed.
+      const img = currentBg;
+      const canvasAspect = W / H;
+      const imgAspect = img.naturalWidth / img.naturalHeight;
+
+      let sx, sy, sWidth, sHeight;
+      if (imgAspect > canvasAspect) {
+        // Image is relatively wider than canvas → crop sides
+        sHeight = img.naturalHeight;
+        sWidth = sHeight * canvasAspect;
+        sx = (img.naturalWidth - sWidth) / 2;
+        sy = 0;
+      } else {
+        // Image is relatively taller/narrower → crop top/bottom
+        sWidth = img.naturalWidth;
+        sHeight = sWidth / canvasAspect;
+        sx = 0;
+        sy = (img.naturalHeight - sHeight) / 2;
+      }
+
+      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, W, H);
     } else {
       const grad = ctx.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0, '#0b3a4a');
@@ -1646,12 +1673,15 @@
 
     // player.x / player.y represent Santa's bottom-center
     const offsetY = recoilTimer > 0 ? -4 : 0;
+    const scale = isMobileLayout() ? 0.7 : 1; // smaller Santa on mobile
+    const w = SANTA_WIDTH * scale;
+    const h = SANTA_HEIGHT * scale;
     ctx.drawImage(
       santaImg,
-      player.x - SANTA_WIDTH / 2,
-      player.y - SANTA_HEIGHT + offsetY,
-      SANTA_WIDTH,
-      SANTA_HEIGHT
+      player.x - w / 2,
+      player.y - h + offsetY,
+      w,
+      h
     );
   }
 
