@@ -836,13 +836,18 @@
 
   // Audio setup (simplified for brevity but functional)
   let audioCtx, masterGain;
+  let soundEnabled = true;
   function initAudio() {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain(); masterGain.connect(audioCtx.destination);
   }
   function playSound(type) {
-    if(!audioCtx) return;
+    if (!soundEnabled) return;
+    if (!audioCtx) {
+      initAudio();
+    }
+    if (!audioCtx) return;
     if(audioCtx.state==='suspended') audioCtx.resume();
     const t = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
@@ -863,7 +868,23 @@
         osc.start(t); osc.stop(t+0.3);
     }
   }
-  soundBtn.onclick = (e)=>{ e.stopPropagation(); initAudio(); };
+
+  function updateSoundButtonLabel() {
+    if (!soundBtn) return;
+    soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+  }
+
+  soundBtn.onclick = (e)=>{
+    e.stopPropagation();
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+    updateSoundButtonLabel();
+  };
 
   // --- SAVE/LOAD SYSTEM ---
   function saveGame() {
@@ -1138,7 +1159,24 @@
         row.className = 'shop-item';
 
         const label = document.createElement('div');
-        label.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+
+        const thumbImgObj = getOrnamentImage(item.key);
+        if (thumbImgObj && thumbImgObj.src) {
+          const thumb = document.createElement('img');
+          thumb.src = thumbImgObj.src;
+          thumb.style.width = '56px';
+          thumb.style.height = '56px';
+          thumb.style.borderRadius = '50%';
+          thumb.style.objectFit = 'contain';
+          thumb.style.marginRight = '8px';
+          label.appendChild(thumb);
+        }
+
+        const textWrap = document.createElement('div');
+        textWrap.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+        label.appendChild(textWrap);
 
         const btn = document.createElement('button');
         btn.className = 'buy-btn';
@@ -1163,7 +1201,24 @@
         row.className = 'shop-item';
 
         const label = document.createElement('div');
-        label.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+
+        const bgImgObj = backgrounds[item.key];
+        if (bgImgObj && bgImgObj.src) {
+          const thumb = document.createElement('img');
+          thumb.src = bgImgObj.src;
+          thumb.style.width = '80px';
+          thumb.style.height = '48px';
+          thumb.style.objectFit = 'cover';
+          thumb.style.borderRadius = '6px';
+          thumb.style.marginRight = '8px';
+          label.appendChild(thumb);
+        }
+
+        const textWrap = document.createElement('div');
+        textWrap.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+        label.appendChild(textWrap);
 
         const btn = document.createElement('button');
         btn.className = 'buy-btn';
@@ -1307,7 +1362,18 @@
       const btn = document.createElement('div');
       btn.className = 'quick-btn';
       if (activeThrowType === item.key) btn.classList.add('active');
-      btn.textContent = item.img;
+      const imgObj = getOrnamentImage(item.key);
+      if (imgObj && imgObj.src) {
+        const icon = document.createElement('img');
+        icon.src = imgObj.src;
+        icon.style.width = '56px';
+        icon.style.height = '56px';
+        icon.style.borderRadius = '50%';
+        icon.style.objectFit = 'contain';
+        btn.appendChild(icon);
+      } else {
+        btn.textContent = item.img || '';
+      }
       btn.onclick = (e) => {
         e.stopPropagation();
         activeThrowType = item.key;
