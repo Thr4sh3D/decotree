@@ -489,32 +489,32 @@
   // Complete shop list (backgrounds + ornaments)
   const shopItems = [
     // Backgrounds
-    { key: 'bgnight',  name: 'Natt 🌌',  price:   0, type: 'background', owned: true,  equipped: false, img: '🌌' },
-    { key: 'bgday',    name: 'Dag ☀️',  price: 500, type: 'background', owned: false, equipped: false, img: '☀️' },
-    { key: 'bgbridge', name: 'Bro 🌉',  price: 750, type: 'background', owned: false, equipped: false, img: '🌉' },
+    { key: 'bgnight',  name: 'Natt',        price:   0, type: 'background', owned: true,  equipped: false, img: '🌌' },
+    { key: 'bgday',    name: 'Dag',         price: 500, type: 'background', owned: false, equipped: false, img: '☀️' },
+    { key: 'bgbridge', name: 'Bro',         price: 750, type: 'background', owned: false, equipped: false, img: '🌉' },
 
     // Balls (100)
-    { key: 'red',   name: 'Röd Kula 🔴',   price: 100, type: 'ornament', owned: true,  equipped: true,  img: '🔴' },
-    { key: 'blue',  name: 'Blå Kula 🔵',   price: 100, type: 'ornament', owned: false, equipped: false, img: '🔵' },
-    { key: 'green', name: 'Grön Kula 🟢',  price: 100, type: 'ornament', owned: false, equipped: false, img: '🟢' },
+    { key: 'red',   name: 'Röd Kula',       price: 100, type: 'ornament', owned: true,  equipped: true,  img: '🔴' },
+    { key: 'blue',  name: 'Blå Kula',       price: 100, type: 'ornament', owned: false, equipped: false, img: '🔵' },
+    { key: 'green', name: 'Grön Kula',      price: 100, type: 'ornament', owned: false, equipped: false, img: '🟢' },
 
     // Shiny balls (150)
-    { key: 'gold',   name: 'Guldkula 🟡',  price: 150, type: 'ornament', owned: false, equipped: false, img: '🟡' },
-    { key: 'silver', name: 'Silverkula ⚪',price: 150, type: 'ornament', owned: false, equipped: false, img: '⚪' },
-    { key: 'purple', name: 'Lila Kula 🟣', price: 150, type: 'ornament', owned: false, equipped: false, img: '🟣' },
+    { key: 'gold',   name: 'Guldkula',      price: 150, type: 'ornament', owned: false, equipped: false, img: '🟡' },
+    { key: 'silver', name: 'Silverkula',    price: 150, type: 'ornament', owned: false, equipped: false, img: '⚪' },
+    { key: 'purple', name: 'Lila Kula',     price: 150, type: 'ornament', owned: false, equipped: false, img: '🟣' },
 
     // Specials (200–400)
-    { key: 'light',      name: 'Ljusslinga 💡',  price: 200, type: 'ornament', owned: false, equipped: false, img: '💡' },
-    { key: 'bow',        name: 'Rosett 🎀',      price: 250, type: 'ornament', owned: false, equipped: false, img: '🎀' },
-    { key: 'gift',       name: 'Julklapp 🎁',    price: 250, type: 'ornament', owned: false, equipped: false, img: '🎁' },
-    { key: 'candycane',  name: 'Polkagris 🍭',   price: 250, type: 'ornament', owned: false, equipped: false, img: '🍭' },
-    { key: 'gingerbread',name: 'Pepparkaka 🍪',  price: 300, type: 'ornament', owned: false, equipped: false, img: '🍪' },
-    { key: 'candle',     name: 'Ljus 🕯️',       price: 350, type: 'ornament', owned: false, equipped: false, img: '🕯️' },
+    { key: 'light',      name: 'Ljusslinga',   price: 200, type: 'ornament', owned: false, equipped: false, img: '💡' },
+    { key: 'bow',        name: 'Rosett',       price: 250, type: 'ornament', owned: false, equipped: false, img: '🎀' },
+    { key: 'gift',       name: 'Julklapp',     price: 250, type: 'ornament', owned: false, equipped: false, img: '🎁' },
+    { key: 'candycane',  name: 'Polkagris',    price: 250, type: 'ornament', owned: false, equipped: false, img: '🍭' },
+    { key: 'gingerbread',name: 'Pepparkaka',   price: 300, type: 'ornament', owned: false, equipped: false, img: '🍪' },
+    { key: 'candle',     name: 'Ljus',         price: 350, type: 'ornament', owned: false, equipped: false, img: '🕯️' },
 
     // Tinsel (250)
-    { key: 'goldtinsel',   name: 'Guldglitter ✨',  price: 250, type: 'ornament', owned: false, equipped: false, img: '✨' },
-    { key: 'silvertinsel', name: 'Silverglitter 💫',price: 250, type: 'ornament', owned: false, equipped: false, img: '💫' },
-    { key: 'redtinsel',    name: 'Rött Glitter 🎗️',price: 250, type: 'ornament', owned: false, equipped: false, img: '🎗️' }
+    { key: 'goldtinsel',   name: 'Guldglitter',   price: 250, type: 'ornament', owned: false, equipped: false, img: '✨' },
+    { key: 'silvertinsel', name: 'Silverglitter', price: 250, type: 'ornament', owned: false, equipped: false, img: '💫' },
+    { key: 'redtinsel',    name: 'Rött Glitter',  price: 250, type: 'ornament', owned: false, equipped: false, img: '🎗️' }
   ];
 
   // Tracks the order in which ornaments are equipped so that when
@@ -1320,6 +1320,8 @@
               equipSequence++;
               item.equipSeq = equipSequence;
               item.equipped = true;
+              // Automatically make this the active throw type
+              activeThrowType = item.key;
               saveGame();
               updateAllUI();
             };
