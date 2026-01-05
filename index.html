@@ -140,7 +140,15 @@
     transition: all 0.2s;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     user-select: none;
-    pointer-events: auto; /* keep buttons clickable */
+    pointer-events: auto;
+  }
+
+  /* Selected quick item highlight */
+  .quick-btn.active {
+    border: 3px solid gold !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    transform: scale(1.1);
+    background-color: #ffffff;
   }
 
   /* small helpers */
@@ -870,16 +878,14 @@
     // Visual geometry: Full width, extends to bottomY
     const tier1VisualX = treeW * 0.45;
     const tier1VisualY2 = bottomY;
-    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up)
-    const tier1CollisionX = treeW * 0.45 * 0.85; // 15% narrower
-    const tier1CollisionY2 = bottomY - 25;       // Raised 25px
+    // Collision geometry: ALMOST full width (98%), still slightly inside edges
+    const tier1CollisionX = treeW * 0.45 * 0.98; // was * 0.85
+    const tier1CollisionY2 = bottomY - 25;
     
     tree.tiers.push({ 
-      // Collision (physics) - TIGHTER, more permissive
       x1: cx, y1: bottomY - treeH * 0.42,
       x2: cx - tier1CollisionX, y2: tier1CollisionY2,
       x3: cx + tier1CollisionX, y3: tier1CollisionY2,
-      // Visual (drawing) - FULL WIDTH
       visualX2: cx - tier1VisualX,
       visualX3: cx + tier1VisualX,
       visualY2: tier1VisualY2,
@@ -892,16 +898,14 @@
     // Visual geometry
     const tier2VisualX = treeW * 0.38;
     const tier2VisualY2 = y2_bot;
-    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up)
-    const tier2CollisionX = treeW * 0.38 * 0.85; // 15% narrower
-    const tier2CollisionY2 = y2_bot - 25;        // Raised 25px
+    // Collision geometry: ALMOST full width (98%)
+    const tier2CollisionX = treeW * 0.38 * 0.98; // was * 0.85
+    const tier2CollisionY2 = y2_bot - 25;
     
     tree.tiers.push({ 
-      // Collision (physics) - TIGHTER
       x1: cx, y1: y2_bot - treeH * 0.42,
       x2: cx - tier2CollisionX, y2: tier2CollisionY2,
       x3: cx + tier2CollisionX, y3: tier2CollisionY2,
-      // Visual (drawing) - FULL WIDTH
       visualX2: cx - tier2VisualX,
       visualX3: cx + tier2VisualX,
       visualY2: tier2VisualY2,
@@ -915,17 +919,15 @@
     const tier3VisualX = treeW * 0.24;
     const tier3VisualTop = y1_bot - treeH * 0.28;
     const tier3VisualY2 = y1_bot;
-    // Collision geometry: NARROWER (15% reduction), RAISED bottom (25px up), LOWERED TOP so star is free
-    const tier3CollisionX = treeW * 0.24 * 0.85; // 15% narrower
-    const tier3CollisionY2 = y1_bot - 25;        // Raised 25px
-    const tier3CollisionTop = tier3VisualTop + 30; // Lower collision tip below visual star
+    // Collision geometry: ALMOST full width (98%), still keeps star mostly free
+    const tier3CollisionX = treeW * 0.24 * 0.98; // was * 0.85
+    const tier3CollisionY2 = y1_bot - 25;
+    const tier3CollisionTop = tier3VisualTop + 30;
     
     tree.tiers.push({ 
-      // Collision (physics) - TIGHTER, with lower tip so star is non-colliding
       x1: cx, y1: tier3CollisionTop,
       x2: cx - tier3CollisionX, y2: tier3CollisionY2,
       x3: cx + tier3CollisionX, y3: tier3CollisionY2,
-      // Visual (drawing) - FULL WIDTH
       visualY1: tier3VisualTop,
       visualX2: cx - tier3VisualX,
       visualX3: cx + tier3VisualX,
