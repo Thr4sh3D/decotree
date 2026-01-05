@@ -1265,6 +1265,24 @@
     return { x, y, width, height };
   }
 
+  // Approximate the green branch area of the tree as an inner triangle
+  // (ignores transparent top margin and the brown trunk at the bottom).
+  function getBranchTriangle() {
+    const rect = getTreeRect();
+
+    // Band of green branches (shrunk further so the
+    // effective target area is about 25% smaller than
+    // the full foliage area).
+    const topX = rect.x + rect.width * 0.5;
+    const topY = rect.y + rect.height * 0.19;   // further down
+    const blX  = rect.x + rect.width * 0.29;    // slightly more inward
+    const blY  = rect.y + rect.height * 0.65;   // higher above trunk
+    const brX  = rect.x + rect.width * 0.71;    // symmetric on right
+    const brY  = rect.y + rect.height * 0.65;
+
+    return { topX, topY, blX, blY, brX, brY };
+  }
+
   function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
     const v0x = cx - ax;
     const v0y = cy - ay;
@@ -1290,14 +1308,7 @@
   }
 
   function isInsideTree(px, py) {
-    const rect = getTreeRect();
-    const topX = rect.x + rect.width / 2;
-    const topY = rect.y;
-    const blX = rect.x;
-    const blY = rect.y + rect.height;
-    const brX = rect.x + rect.width;
-    const brY = rect.y + rect.height;
-
+    const { topX, topY, blX, blY, brX, brY } = getBranchTriangle();
     return pointInTriangle(px, py, topX, topY, blX, blY, brX, brY);
   }
 
@@ -1330,19 +1341,20 @@
     const count = Math.min(5 + level * 2, 20);
     ghostTargets = [];
 
-    const rect = getTreeRect();
+    // Use the same inner branch triangle as collision, so all targets
+    // are strictly on the green part of the tree (no stump or margins).
+    const { topX, topY, blX, blY, brX, brY } = getBranchTriangle();
 
     for (let i = 0; i < count; i++) {
-      // Rejection sampling inside triangle
-      let x, y;
-      let tries = 0;
-      do {
-        const rx = rect.x + Math.random() * rect.width;
-        const ry = rect.y + Math.random() * rect.height;
-        x = rx;
-        y = ry;
-        tries++;
-      } while (!isInsideTree(x, y) && tries < 50);
+      // Sample uniformly inside triangle using barycentric coordinates
+      const r1 = Math.random();
+      const r2 = Math.random();
+      const sqrtR1 = Math.sqrt(r1);
+      const u = 1 - sqrtR1;
+      const v = r2 * sqrtR1;
+
+      const x = topX + u * (blX - topX) + v * (brX - topX);
+      const y = topY + u * (blY - topY) + v * (brY - topY);
 
       ghostTargets.push({ x, y, r: 18 });
     }
@@ -1442,7 +1454,8 @@
     // Ornaments stuck on tree
     for (const o of ornaments) {
       const img = getOrnamentImage(o.type);
-      const radius = o.r || 26;
+      const baseRadius = o.r || 26;
+      const radius = baseRadius * 1.2; // 20% wider visual size
       const size = radius * 2;
       if (img && img.complete && img.naturalWidth) {
         ctx.drawImage(img, o.x - size / 2, o.y - size / 2, size, size);
@@ -1475,7 +1488,8 @@
       const color = b.color || ornamentFallbackColors[b.type] || '#ffffff';
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r || 14, 0, Math.PI * 2);
+      const baseRadius = b.r || 14;
+      ctx.arc(b.x, b.y, baseRadius * 1.2, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1533,6 +1547,11 @@
     const type = activeThrowType;
     const color = ornamentFallbackColors[type] || '#ffffff';
 
+    const shouldStopOnTarget = isInsideTree(targetX, targetY);
+    const dxTarget0 = targetX - hand.x;
+    const dyTarget0 = targetY - hand.y;
+    const initialDistSq = dxTarget0 * dxTarget0 + dyTarget0 * dyTarget0;
+
     bullets.push({
       x: hand.x,
       y: hand.y,
@@ -1542,7 +1561,14 @@
       life: 200,
       distanceTraveled: 0,
       color,
-      type
+      type,
+      targetX,
+      targetY,
+      stopOnTarget: shouldStopOnTarget,
+      prevDistSq: initialDistSq,
+      hasEntered: false,
+      lastInsideX: null,
+      lastInsideY: null
     });
 
     recoilTimer = 5;
@@ -1621,19 +1647,44 @@
       const stepDist = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
       b.distanceTraveled += stepDist;
 
-      if (b.y < -50 || b.y > H || b.x < -50 || b.x > W || b.life <= 0) {
+      const offScreen = (b.y < -50 || b.y > H || b.x < -50 || b.x > W || b.life <= 0);
+      if (offScreen) {
+        // If the bullet has been inside the tree at least once, stick
+        // the ornament at the last inside position before removing it.
+        if (b.hasEntered && b.lastInsideX !== null) {
+          ornaments.push({ x: b.lastInsideX, y: b.lastInsideY, r: b.r, color: b.color, type: b.type });
+          playSound('stick');
+        }
         bullets.splice(i, 1);
         continue;
       }
 
       const onTree = isInsideTree(b.x, b.y);
-      if (!onTree) {
-        // Outside triangle – keep flying until off-screen
-        continue;
+
+      // If this shot is meant to stop on the clicked point inside
+      // the tree, snap the ornament there when we are close enough
+      // or have just passed that point along the trajectory.
+      if (b.stopOnTarget) {
+        const dxT = b.targetX - b.x;
+        const dyT = b.targetY - b.y;
+        const distSq = dxT * dxT + dyT * dyT;
+
+        const radiusThreshSq = (b.r || 20) * (b.r || 20) * 1.5;
+        const passedTarget = distSq > b.prevDistSq;
+
+        if (distSq <= radiusThreshSq || passedTarget) {
+          ornaments.push({ x: b.targetX, y: b.targetY, r: b.r, color: b.color, type: b.type });
+          playSound('stick');
+          bullets.splice(i, 1);
+          continue;
+        }
+
+        b.prevDistSq = distSq;
       }
 
-      // Bullet hit the triangle area
-      if (gameState === 'MISSION') {
+      // Mission targets: if we are inside the tree area, allow precise
+      // hits on ghost targets along the path.
+      if (gameState === 'MISSION' && onTree) {
         const idx = findTargetAt(b.x, b.y);
         if (idx !== -1) {
           const target = ghostTargets[idx];
@@ -1652,9 +1703,23 @@
         }
       }
 
-      ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
-      playSound('stick');
-      bullets.splice(i, 1);
+      if (onTree) {
+        // Track that we are inside the tree; keep updating the last
+        // interior position so we can stick there when we leave.
+        b.hasEntered = true;
+        b.lastInsideX = b.x;
+        b.lastInsideY = b.y;
+        continue;
+      }
+
+      // We just left the tree after having been inside: stick at the
+      // last interior point so decorations can appear deeper in the
+      // foliage, not only along the bottom edge.
+      if (b.hasEntered && b.lastInsideX !== null) {
+        ornaments.push({ x: b.lastInsideX, y: b.lastInsideY, r: b.r, color: b.color, type: b.type });
+        playSound('stick');
+        bullets.splice(i, 1);
+      }
     }
 
     const t = translations[currentLang];
