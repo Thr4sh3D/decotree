@@ -1402,11 +1402,17 @@
     // fills as much of the screen as possible while staying fully
     // visible and bottom-centered.
     const aspect = TREE_BASE_HEIGHT / TREE_BASE_WIDTH; // height per width
-    const availableHeight = Math.max(H - TREE_BOTTOM_MARGIN, 200);
+
+    // Give the tree a bit more room on mobile by using a
+    // smaller bottom margin there.
+    const bottomMargin = isMobileLayout() ? 10 : TREE_BOTTOM_MARGIN;
+    const availableHeight = Math.max(H - bottomMargin, 200);
 
     const maxWidthByHeight = availableHeight / aspect;
-    // Let the tree grow up to ~98% of screen width/height limits
-    const width = Math.min(W * 0.98, maxWidthByHeight);
+    // On desktop keep a tiny side margin, but on mobile let the
+    // tree use the full width.
+    const widthLimit = isMobileLayout() ? W : W * 0.98;
+    const width = Math.min(widthLimit, maxWidthByHeight);
     const height = width * aspect;
 
     const x = (W - width) / 2;
@@ -1675,7 +1681,7 @@
 
     // player.x / player.y represent Santa's bottom-center
     const offsetY = recoilTimer > 0 ? -4 : 0;
-    const scale = isMobileLayout() ? 0.7 : 1; // smaller Santa on mobile
+    const scale = isMobileLayout() ? 0.6 : 1; // even smaller Santa on mobile
     const w = SANTA_WIDTH * scale;
     const h = SANTA_HEIGHT * scale;
     ctx.drawImage(
@@ -1726,7 +1732,15 @@
     const type = activeThrowType;
     const color = ornamentFallbackColors[type] || '#ffffff';
 
-    const shouldStopOnTarget = isInsideTree(targetX, targetY);
+    // Shots aimed inside the tree or at the very top/just above
+    // the foliage (towards the star) should try to land exactly
+    // where the player clicked instead of stopping mid-tree.
+    const rect = getTreeRect();
+    const { topY, blX, brX } = getBranchTriangle();
+    const inTree = isInsideTree(targetX, targetY);
+    const atTreeTop = !inTree && targetY < topY && targetY >= rect.y &&
+              targetX >= blX && targetX <= brX;
+    const shouldStopOnTarget = inTree || atTreeTop;
     const dxTarget0 = targetX - hand.x;
     const dyTarget0 = targetY - hand.y;
     const initialDistSq = dxTarget0 * dxTarget0 + dyTarget0 * dyTarget0;
