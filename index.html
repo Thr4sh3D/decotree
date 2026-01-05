@@ -1025,6 +1025,11 @@
         e.target.closest('.quick-btn')) {
         return;
     }
+
+    // Prevent ghost mouse events on mobile ONLY for gameplay taps
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
     
     if (gameState === 'MENU') return;
     
