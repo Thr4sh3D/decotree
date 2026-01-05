@@ -1141,10 +1141,11 @@
 
   // --- BACKGROUND, TREE & RENDERING ----------------------------------------
   function getTreeRect() {
-    const treeW = 500;
-    const treeH = 700;
-    const x = (canvas.width - treeW) / 2;
-    const y = canvas.height - treeH - 50;
+    const groundY = H * 0.8;
+    const treeH = Math.min(groundY * 0.95, 800);
+    const treeW = Math.min(W * 0.45, 600);
+    const x = (W - treeW) / 2;
+    const y = groundY - treeH;
     return { x, y, w: treeW, h: treeH };
   }
 
@@ -1168,10 +1169,10 @@
 
     // Star on the top
     if (starImg.complete && starImg.naturalWidth > 0) {
-      const starW = 70;
-      const starH = 70;
+      const starW = 80;
+      const starH = 80;
       const sx = rect.x + rect.w / 2 - starW / 2;
-      const sy = rect.y - starH + 10;
+      const sy = rect.y - starH;
       ctx.drawImage(starImg, sx, sy, starW, starH);
     }
   }
@@ -1212,11 +1213,10 @@
     else if (o.type === 'silvertinsel') img = silverTinselImg;
     else if (o.type === 'redtinsel') img = redTinselImg;
 
-    let w = 30, h = 30;
-    if (o.type === 'light') { w = 25; h = 35; }
-    else if (o.type === 'bow') { w = 40; h = 35; }
-    else if (o.type === 'candle' || o.type === 'candycane') { w = 20; h = 45; }
-    else if (o.type === 'goldtinsel' || o.type === 'silvertinsel' || o.type === 'redtinsel') { w = 50; h = 20; }
+    let w = 50, h = 50; // standard balls and default ornaments
+    if (o.type === 'bow') { w = 60; h = 50; }
+    else if (o.type === 'candle' || o.type === 'candycane') { w = 30; h = 60; }
+    else if (o.type === 'goldtinsel' || o.type === 'silvertinsel' || o.type === 'redtinsel') { w = 70; h = 30; }
 
     const x = o.x - w / 2;
     const y = o.y - h / 2;
@@ -1471,8 +1471,12 @@
     canvas.height = window.innerHeight * 0.9;
     W = canvas.width;
     H = canvas.height;
-    player.x = W * 0.15;
-    player.y = H * 0.75;
+    const groundY = H * 0.8;
+    const santaSize = 120;
+    const santaCenterY = groundY - santaSize / 2;
+    const santaCenterX = Math.min(W - santaSize, W / 2 + 200);
+    player.x = santaCenterX;
+    player.y = santaCenterY;
     santaX = player.x;
   }
 
