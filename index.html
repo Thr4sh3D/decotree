@@ -1150,12 +1150,10 @@
 
   // --- BACKGROUND, TREE & RENDERING ----------------------------------------
   function getTreeRect() {
-    const groundY = H * 0.8;
-    const baseTreeW = 600;
-    const treeW = Math.min(baseTreeW, W * 0.9);
+    const treeW = 600;
     const treeH = 800;
     const x = (W - treeW) / 2;
-    const y = H - treeH - 50;
+    const y = H - 850; // stump near bottom
     return { x, y, w: treeW, h: treeH };
   }
 
@@ -1223,10 +1221,10 @@
     else if (o.type === 'silvertinsel') img = silverTinselImg;
     else if (o.type === 'redtinsel') img = redTinselImg;
 
-    let w = 50, h = 50; // standard balls and default ornaments
+    let w = 50, h = 50; // standard balls, gift, gingerbread, default
     if (o.type === 'bow') { w = 60; h = 50; }
-    else if (o.type === 'candle' || o.type === 'candycane') { w = 30; h = 60; }
-    else if (o.type === 'goldtinsel' || o.type === 'silvertinsel' || o.type === 'redtinsel') { w = 70; h = 30; }
+    else if (o.type === 'candle' || o.type === 'candycane' || o.type === 'light') { w = 30; h = 70; }
+    else if (o.type === 'goldtinsel' || o.type === 'silvertinsel' || o.type === 'redtinsel') { w = 80; h = 35; }
 
     const x = o.x - w / 2;
     const y = o.y - h / 2;
@@ -1336,12 +1334,29 @@
 
   function isInsideTree(px, py) {
     const rect = getTreeRect();
-    if (py < rect.y || py > rect.y + rect.h) return false;
-    const t = (py - rect.y) / rect.h;
-    const halfBase = rect.w / 2;
-    const halfWidth = halfBase * (1 - 0.6 * t);
-    const cx = rect.x + rect.w / 2;
-    return Math.abs(px - cx) <= halfWidth;
+    const top = {
+      x: rect.x + rect.w / 2,
+      y: rect.y
+    };
+    const bl = {
+      x: rect.x + 50,
+      y: rect.y + rect.h - 50
+    };
+    const br = {
+      x: rect.x + rect.w - 50,
+      y: rect.y + rect.h - 50
+    };
+
+    function area(ax, ay, bx, by, cx, cy) {
+      return Math.abs((ax * (by - cy) + bx * (cy - ay) + cx * (ay - by)) / 2);
+    }
+
+    const A = area(top.x, top.y, bl.x, bl.y, br.x, br.y);
+    const A1 = area(px, py, bl.x, bl.y, br.x, br.y);
+    const A2 = area(top.x, top.y, px, py, br.x, br.y);
+    const A3 = area(top.x, top.y, bl.x, bl.y, px, py);
+
+    return Math.abs(A - (A1 + A2 + A3)) < 0.5;
   }
 
   // --- INPUT & SHOOTING -----------------------------------------------------
@@ -1379,15 +1394,13 @@
   window.addEventListener('touchstart', handleInput, { passive: false });
 
   function fireAtTarget(targetX, targetY) {
-    const santaHandX = santaX + 60;
+    const santaHandX = santaX + 80;
     const santaHandY = player.y + 60;
     const dx = targetX - santaHandX;
     const dy = targetY - santaHandY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist === 0) return;
-
-    const dirX = dx / dist;
-    const dirY = dy / dist;
+    const angle = Math.atan2(dy, dx);
+    const dirX = Math.cos(angle);
+    const dirY = Math.sin(angle);
 
     const color = ornamentFallbackColors[activeThrowType]
       || activePalette[Math.floor(Math.random() * activePalette.length)];
@@ -1482,8 +1495,8 @@
     W = canvas.width;
     H = canvas.height;
     const rect = getTreeRect();
-    const santaCenterX = Math.max(60, rect.x - 100);
-    const santaCenterY = H - 150;
+    const santaCenterX = rect.x - 80;
+    const santaCenterY = H - 180;
     player.x = santaCenterX;
     player.y = santaCenterY;
     santaX = player.x;
