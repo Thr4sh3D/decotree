@@ -1455,15 +1455,20 @@
     for (const o of ornaments) {
       const img = getOrnamentImage(o.type);
       const baseRadius = o.r || 26;
-      const radius = baseRadius * 1.2; // 20% wider visual size
+      const radius = baseRadius; // reset overall size
       const size = radius * 2;
+
+      // Make decorations visually wider (stretched horizontally)
+      const width  = size * 1.8; // ~80% wider
+      const height = size;       // same height as before
+
       if (img && img.complete && img.naturalWidth) {
-        ctx.drawImage(img, o.x - size / 2, o.y - size / 2, size, size);
+        ctx.drawImage(img, o.x - width / 2, o.y - height / 2, width, height);
       } else {
         const color = o.color || ornamentFallbackColors[o.type] || '#ffffff';
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(o.x, o.y, radius, 0, Math.PI * 2);
+        ctx.ellipse(o.x, o.y, radius * 1.8, radius, 0, 0, Math.PI * 2); // wider ellipse
         ctx.fill();
       }
     }
@@ -1488,8 +1493,7 @@
       const color = b.color || ornamentFallbackColors[b.type] || '#ffffff';
       ctx.fillStyle = color;
       ctx.beginPath();
-      const baseRadius = b.r || 14;
-      ctx.arc(b.x, b.y, baseRadius * 1.2, 0, Math.PI * 2);
+      ctx.arc(b.x, b.y, b.r || 14, 0, Math.PI * 2);
       ctx.fill();
     }
   }
