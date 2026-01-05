@@ -305,6 +305,14 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
 
+  // Image assets
+  const santaImg = new Image();
+  santaImg.src = 'santa.png';
+  const bgImg = new Image();
+  bgImg.src = 'bg.png';
+  const starImg = new Image();
+  starImg.src = 'star.png';
+
   // Elements
   const scoreText = document.getElementById('scoreText');
   const moneyText = document.getElementById('moneyText');
@@ -985,19 +993,16 @@
 
   // Backgrounds
   function drawBackground(){
-    const bg = backgrounds[activeBackground] || backgrounds.bg_day;
-    if (activeBackground === 'bg_day') {
+    // Use image if loaded, otherwise fallback to old gradient/snow logic
+    if (bgImg.complete && bgImg.naturalWidth > 0) {
+      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    } else {
       ctx.fillStyle = '#87CEEB';
       ctx.fillRect(0, 0, W, H * 0.8);
-    } else {
-      const g = ctx.createLinearGradient(0, 0, 0, H * 0.8);
-      bg.colors.forEach(c=> g.addColorStop(c.p, c.c));
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H * 0.8);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, H * 0.8, W, H * 0.2);
+      if (activeBackground === 'bg_night') drawStars();
     }
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, H * 0.8, W, H * 0.2);
-    if (activeBackground === 'bg_night') drawStars();
   }
   function generateStars(){
     stars = [];
@@ -1411,32 +1416,23 @@
     if (tree.tiers.length){
       const top = tree.tiers[2];
       const starY = top.visualY1 !== undefined ? top.visualY1 : top.y1;
+      const starX = top.x1;
+      const size = 50;
+
       ctx.save();
-      
-      // === STAR GLOW EFFECT ===
-      ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-      ctx.shadowBlur = 35;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-      
-      // === RADIAL GRADIENT FILL (White center to Gold edge) ===
-      const starGradient = ctx.createRadialGradient(top.x1 - 8, starY - 8, 5, top.x1, starY, 25);
-      starGradient.addColorStop(0, '#ffffff');      // White center
-      starGradient.addColorStop(0.4, '#ffed4e');    // Bright yellow
-      starGradient.addColorStop(1, '#ffd700');      // Gold edge
-      
-      ctx.fillStyle = starGradient;
-      drawStar(ctx, top.x1, starY, 5, 30, 15);
-      ctx.fill();
-      
-      // === OUTER GLOW LAYER (extra shimmer) ===
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
-      ctx.shadowBlur = 20;
-      ctx.strokeStyle = 'rgba(255, 255, 200, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      ctx.shadowBlur = 0;
+      if (starImg.complete && starImg.naturalWidth > 0) {
+        // Center the image on the star coordinates
+        ctx.drawImage(starImg, starX - size / 2, starY - size / 2, size, size);
+      } else {
+        // Fallback: existing glowing vector star
+        // === STAR GLOW EFFECT ===
+        // ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+        // ctx.shadowBlur = 35;
+        // ...
+        // drawStar(ctx, top.x1, starY, 5, 30, 15);
+        // ctx.fill();
+        // ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -1463,520 +1459,21 @@
     ctx.closePath();
   }
 
-  function drawOrnament(o){
-    const type = o.type || 'ball';
-    if (type === 'ball'){
-      const g = ctx.createRadialGradient(o.x-o.r*0.3,o.y-o.r*0.3,1,o.x,o.y,o.r);
-      g.addColorStop(0,'#fff'); g.addColorStop(0.3,o.color); g.addColorStop(1,'#222');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,Math.PI*2); ctx.fill();
-    } else if (type === 'candy'){
-      const r = o.r;
-      ctx.save(); ctx.translate(o.x, o.y); ctx.strokeStyle = '#fff'; ctx.lineWidth = r * 0.6; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(0, -r * 1.2, r * 0.5, Math.PI, 0, false); ctx.lineTo(r * 0.5, r * 1.5); ctx.stroke();
-      ctx.strokeStyle = '#e63946'; ctx.lineWidth = r * 0.15;
-      for (let i = 0; i < 6; i++) {
-        // Simple striping
-        ctx.beginPath(); ctx.moveTo(-r/2, -r + i*r*0.5); ctx.lineTo(r, -r + i*r*0.5 + r*0.5); ctx.stroke();
-      }
-      ctx.restore();
-    } else if (type === 'light'){
-      ctx.save(); ctx.beginPath(); ctx.shadowColor='rgba(255,230,120,0.8)'; ctx.shadowBlur=20; ctx.fillStyle=o.color||'#fff';
-      ctx.ellipse(o.x,o.y,o.r*0.9,o.r*1.2,0,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
-      ctx.fillStyle='#666'; ctx.fillRect(o.x - o.r*0.5, o.y + o.r*1.05, o.r, o.r*0.3); ctx.restore();
-    } else if (type === 'candle'){
-      const w = o.r*0.8, h = o.r*2.0;
-      ctx.fillStyle='#fff'; ctx.fillRect(o.x - w/2, o.y - h, w, h);
-      ctx.fillStyle='#ffd54d'; ctx.beginPath(); ctx.ellipse(o.x, o.y - h - 5, w*0.4, h*0.35, 0,0,Math.PI*2); ctx.fill();
-    } else if (type === 'garland'){
-      // PROFESSIONAL GARLAND: Thick rope with hanging curve & berries
-      ctx.save();
-      const r = o.r;
-      
-      // Define garland bezier curve path (hanging catenary-like shape)
-      const garlandStartX = o.x - r * 2.2;
-      const garlandStartY = o.y - r * 0.5;
-      const garlandEndX = o.x + r * 2.2;
-      const garlandEndY = o.y - r * 0.5;
-      const garlandCp1X = o.x - r * 1.2;
-      // Increased droop for a loopier garland
-      const garlandCp1Y = o.y + r * 3.6; 
-      const garlandCp2X = o.x + r * 1.2;
-      const garlandCp2Y = o.y + r * 3.6;
-      
-      // === Shadow rope (depth) ===
-      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-      ctx.lineWidth = 14;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(garlandStartX + 2, garlandStartY + 3);
-      ctx.bezierCurveTo(garlandCp1X + 2, garlandCp1Y + 3, garlandCp2X + 2, garlandCp2Y + 3, garlandEndX + 2, garlandEndY + 3);
-      ctx.stroke();
-      
-      // === Main garland rope with RED/GREEN gradient ===
-      const garlandGrad = ctx.createLinearGradient(garlandStartX, garlandStartY, garlandEndX, garlandEndY);
-      garlandGrad.addColorStop(0, '#1a4d2e');      // Deep green
-      garlandGrad.addColorStop(0.25, '#2d7a4f');   // Mid green
-      garlandGrad.addColorStop(0.5, '#c41e3a');    // Crimson red (middle)
-      garlandGrad.addColorStop(0.75, '#2d7a4f');   // Mid green
-      garlandGrad.addColorStop(1, '#1a4d2e');      // Deep green
-      
-      ctx.strokeStyle = garlandGrad;
-      ctx.lineWidth = 12;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(garlandStartX, garlandStartY);
-      ctx.bezierCurveTo(garlandCp1X, garlandCp1Y, garlandCp2X, garlandCp2Y, garlandEndX, garlandEndY);
-      ctx.stroke();
-      
-      // === Rope highlight (left edge for 3D) ===
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(garlandStartX - 4, garlandStartY);
-      ctx.bezierCurveTo(garlandCp1X - 5, garlandCp1Y, garlandCp2X - 5, garlandCp2Y, garlandEndX - 4, garlandEndY);
-      ctx.stroke();
-      
-      // === Draw berries along the curve ===
-      const berryCount = 18;
-      for (let i = 0; i <= berryCount; i++) {
-        const t = i / berryCount;
-        // Calculate point on bezier curve
-        const mt = 1 - t;
-        const bx = Math.pow(mt, 3) * garlandStartX +
-                   3 * Math.pow(mt, 2) * t * garlandCp1X +
-                   3 * mt * Math.pow(t, 2) * garlandCp2X +
-                   Math.pow(t, 3) * garlandEndX;
-        const by = Math.pow(mt, 3) * garlandStartY +
-                   3 * Math.pow(mt, 2) * t * garlandCp1Y +
-                   3 * mt * Math.pow(t, 2) * garlandCp2Y +
-                   Math.pow(t, 3) * garlandEndY;
-        
-        // Draw berry (small circle)
-        const berryRadius = r * 0.35;
-        
-        // Berry shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath();
-        ctx.arc(bx + 1, by + 1, berryRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Berry (alternating red/dark red)
-        const isRedBerry = i % 2 === 0;
-        ctx.fillStyle = isRedBerry ? '#d41e3a' : '#8b0000';
-        ctx.beginPath();
-        ctx.arc(bx, by, berryRadius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Berry shine
-        ctx.fillStyle = isRedBerry ? '#ff5555' : '#cc3333';
-        ctx.beginPath();
-        ctx.arc(bx - berryRadius * 0.35, by - berryRadius * 0.35, berryRadius * 0.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      ctx.restore();
-    } else if (type === 'glitter'){
-      // PROFESSIONAL GLITTER: Smooth metallic curve with sparkling reflections
-      ctx.save();
-      const r = o.r;
-      
-      // Define glitter bezier curve (elegant S-curve)
-      const glitterStartX = o.x - r * 2.3;
-      const glitterStartY = o.y - r * 0.3;
-      const glitterEndX = o.x + r * 2.3;
-      const glitterEndY = o.y + r * 0.3;
-      const glitterCp1X = o.x - r * 0.8;
-      // Deeper S-curve for more slack
-      const glitterCp1Y = o.y - r * 2.4;
-      const glitterCp2X = o.x + r * 0.8;
-      const glitterCp2Y = o.y + r * 2.4;
-      
-      // === Shadow tinsel (depth) ===
-      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(glitterStartX + 1.5, glitterStartY + 1.5);
-      ctx.bezierCurveTo(glitterCp1X + 1.5, glitterCp1Y + 1.5, glitterCp2X + 1.5, glitterCp2Y + 1.5, glitterEndX + 1.5, glitterEndY + 1.5);
-      ctx.stroke();
-      
-      // === Main glitter strand with SILVER/GOLD gradient ===
-      const glitterGrad = ctx.createLinearGradient(glitterStartX, glitterStartY, glitterEndX, glitterEndY);
-      glitterGrad.addColorStop(0, '#b8860b');      // Dark gold
-      glitterGrad.addColorStop(0.25, '#ffd700');   // Bright gold
-      glitterGrad.addColorStop(0.5, '#f0f8ff');    // Alice blue (silver)
-      glitterGrad.addColorStop(0.75, '#ffd700');   // Bright gold
-      glitterGrad.addColorStop(1, '#b8860b');      // Dark gold
-      
-      ctx.strokeStyle = glitterGrad;
-      ctx.lineWidth = 2.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(glitterStartX, glitterStartY);
-      ctx.bezierCurveTo(glitterCp1X, glitterCp1Y, glitterCp2X, glitterCp2Y, glitterEndX, glitterEndY);
-      ctx.stroke();
-      
-      // === Sparkling reflections along the curve ===
-      const sparkleCount = 20;
-      for (let i = 0; i <= sparkleCount; i++) {
-        const t = i / sparkleCount;
-        // Calculate point on bezier curve
-        const mt = 1 - t;
-        const sx = Math.pow(mt, 3) * glitterStartX +
-                   3 * Math.pow(mt, 2) * t * glitterCp1X +
-                   3 * mt * Math.pow(t, 2) * glitterCp2X +
-                   Math.pow(t, 3) * glitterEndX;
-        const sy = Math.pow(mt, 3) * glitterStartY +
-                   3 * Math.pow(mt, 2) * t * glitterCp1Y +
-                   3 * mt * Math.pow(t, 2) * glitterCp2Y +
-                   Math.pow(t, 3) * glitterEndY;
-        
-        // Draw radiating sparkle (4-pointed star / cross)
-        const sparkleSize = r * (0.4 + Math.random() * 0.3);
-        const sparkleOpacity = 0.4 + Math.random() * 0.5;
-        
-        ctx.strokeStyle = `rgba(255, 255, 255, ${sparkleOpacity})`;
-        ctx.lineWidth = 1.2 + Math.random() * 0.8;
-        ctx.lineCap = 'round';
-        
-        // Horizontal line
-        ctx.beginPath();
-        ctx.moveTo(sx - sparkleSize, sy);
-        ctx.lineTo(sx + sparkleSize, sy);
-        ctx.stroke();
-        
-        // Vertical line
-        ctx.beginPath();
-        ctx.moveTo(sx, sy - sparkleSize);
-        ctx.lineTo(sx, sy + sparkleSize);
-        ctx.stroke();
-        
-        // Diagonal 1 (only for some sparkles)
-        if (Math.random() > 0.5) {
-          ctx.strokeStyle = `rgba(255, 215, 0, ${sparkleOpacity * 0.7})`;
-          const diagDist = sparkleSize * 0.7;
-          ctx.beginPath();
-          ctx.moveTo(sx - diagDist, sy - diagDist);
-          ctx.lineTo(sx + diagDist, sy + diagDist);
-          ctx.stroke();
-          
-          // Diagonal 2
-          ctx.beginPath();
-          ctx.moveTo(sx + diagDist, sy - diagDist);
-          ctx.lineTo(sx - diagDist, sy + diagDist);
-          ctx.stroke();
-        }
-      }
-      
-      // === Bright highlight dots along curve ===
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-      for (let i = 0; i <= sparkleCount; i += 2) {
-        const t = i / sparkleCount;
-        const mt = 1 - t;
-        const hx = Math.pow(mt, 3) * glitterStartX +
-                   3 * Math.pow(mt, 2) * t * glitterCp1X +
-                   3 * mt * Math.pow(t, 2) * glitterCp2X +
-                   Math.pow(t, 3) * glitterEndX;
-        const hy = Math.pow(mt, 3) * glitterStartY +
-                   3 * Math.pow(mt, 2) * t * glitterCp1Y +
-                   3 * mt * Math.pow(t, 2) * glitterCp2Y +
-                   Math.pow(t, 3) * glitterEndY;
-        
-        ctx.beginPath();
-        ctx.arc(hx, hy, 1.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      
-      ctx.restore();
-    }
-  }
-
-  // 1. VISUALS: Detailed Cute Cartoon Santa
+  // 1. VISUALS: Santa using image asset
   function drawSanta(x, y) {
-    ctx.save();
-    
-    // === SHADOW (cast on ground) ===
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 65, 45, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === LEFT BOOT ===
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath();
-    ctx.ellipse(x - 18, y + 55, 14, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Boot shine
-    ctx.fillStyle = '#333333';
-    ctx.beginPath();
-    ctx.ellipse(x - 18, y + 50, 8, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === RIGHT BOOT ===
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath();
-    ctx.ellipse(x + 18, y + 55, 14, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Boot shine
-    ctx.fillStyle = '#333333';
-    ctx.beginPath();
-    ctx.ellipse(x + 18, y + 50, 8, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === PANTS (dark red/maroon above boots) ===
-    ctx.fillStyle = '#8b0000';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 40, 32, 20, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === MAIN BODY (fat round belly) ===
-    ctx.fillStyle = '#d40000';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 10, 38, 45, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Body shading (darker on right side)
-    ctx.fillStyle = 'rgba(139, 0, 0, 0.3)';
-    ctx.beginPath();
-    ctx.ellipse(x + 12, y + 8, 22, 35, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === BLACK BELT (thick stripe across middle) ===
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(x - 42, y + 8, 84, 16);
-
-    // === BELT BUCKLE (gold/yellow rectangle) ===
-    ctx.fillStyle = '#FFD700';
-    ctx.fillRect(x - 16, y + 5, 32, 22);
-    
-    // Buckle 3D effect - darker border
-    ctx.strokeStyle = '#B8860B';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 16, y + 5, 32, 22);
-    
-    // Buckle shine (inner highlight)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.fillRect(x - 12, y + 9, 10, 8);
-
-    // === LEFT ARM ===
-    ctx.fillStyle = '#d40000';
-    ctx.beginPath();
-    ctx.ellipse(x - 42, y - 5, 12, 32, -0.35, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === RIGHT ARM ===
-    ctx.fillStyle = '#d40000';
-    ctx.beginPath();
-    ctx.ellipse(x + 42, y - 5, 12, 32, 0.35, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === LEFT GLOVE/MITTEN (peach hand) ===
-    ctx.fillStyle = '#ffe0bd';
-    ctx.beginPath();
-    ctx.arc(x - 50, y + 20, 10, 0, Math.PI * 2);
-    ctx.fill();
-    // Thumb
-    ctx.beginPath();
-    ctx.ellipse(x - 47, y + 13, 5, 7, 0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === RIGHT GLOVE/MITTEN (peach hand) ===
-    ctx.fillStyle = '#ffe0bd';
-    ctx.beginPath();
-    ctx.arc(x + 50, y + 20, 10, 0, Math.PI * 2);
-    ctx.fill();
-    // Thumb
-    ctx.beginPath();
-    ctx.ellipse(x + 47, y + 13, 5, 7, -0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === NECK/COLLAR (white fur trim) ===
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(x, y - 28, 32, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === HEAD (peach circle) ===
-    ctx.fillStyle = '#ffe0bd';
-    ctx.beginPath();
-    ctx.arc(x, y - 50, 24, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Head shading (right side darker)
-    ctx.fillStyle = 'rgba(200, 150, 100, 0.25)';
-    ctx.beginPath();
-    ctx.ellipse(x + 10, y - 50, 16, 20, 0.15, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === FLUFFY BEARD (complex multi-circle construction) ===
-    ctx.fillStyle = '#ffffff';
-    
-    // Main beard base (large fluffy shape)
-    ctx.beginPath();
-    ctx.moveTo(x - 20, y - 28);
-    // Left side curve
-    ctx.quadraticCurveTo(x - 28, y - 15, x - 26, y + 5);
-    // Bottom curve
-    ctx.quadraticCurveTo(x - 10, y + 18, x, y + 20);
-    // Right side curve
-    ctx.quadraticCurveTo(x + 10, y + 18, x + 26, y + 5);
-    ctx.quadraticCurveTo(x + 28, y - 15, x + 20, y - 28);
-    // Back to start
-    ctx.quadraticCurveTo(x, y - 32, x - 20, y - 28);
-    ctx.fill();
-
-    // LEFT BEARD PUFF (fluffy circle)
-    ctx.beginPath();
-    ctx.arc(x - 24, y - 12, 11, 0, Math.PI * 2);
-    ctx.fill();
-
-    // RIGHT BEARD PUFF (fluffy circle)
-    ctx.beginPath();
-    ctx.arc(x + 24, y - 12, 11, 0, Math.PI * 2);
-    ctx.fill();
-
-    // CENTER BEARD CURL (lower middle puff)
-    ctx.beginPath();
-    ctx.arc(x, y + 12, 8, 0, Math.PI * 2);
-    ctx.fill();
-
-    // BEARD TEXTURE: Small circles for fluff effect
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    const beardPuffs = [
-      { px: x - 18, py: y - 5, r: 6 },
-      { px: x + 18, py: y - 5, r: 6 },
-      { px: x - 10, py: y + 8, r: 5 },
-      { px: x + 10, py: y + 8, r: 5 },
-      { px: x - 28, py: y + 2, r: 4 },
-      { px: x + 28, py: y + 2, r: 4 }
-    ];
-    beardPuffs.forEach(puff => {
-      ctx.beginPath();
-      ctx.arc(puff.px, puff.py, puff.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // BEARD HIGHLIGHT (shine on left side)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.beginPath();
-    ctx.arc(x - 14, y - 8, 7, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === EYES ===
-    ctx.fillStyle = '#000000';
-    // Left eye
-    ctx.beginPath();
-    ctx.arc(x - 10, y - 55, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    // Right eye
-    ctx.beginPath();
-    ctx.arc(x + 10, y - 55, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // EYE SHINE (white pupils for life)
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x - 9, y - 56, 1.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + 11, y - 56, 1.3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // EYEBROWS (small arcs)
-    ctx.strokeStyle = '#8b6914';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.arc(x - 10, y - 62, 6, Math.PI * 0.2, Math.PI * 0.8, false);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(x + 10, y - 62, 6, Math.PI * 0.2, Math.PI * 0.8, false);
-    ctx.stroke();
-
-    // === NOSE (round red bulbous) ===
-    ctx.fillStyle = '#ff4444';
-    ctx.beginPath();
-    ctx.arc(x, y - 48, 5, 0, Math.PI * 2);
-    ctx.fill();
-    // Nose shine
-    ctx.fillStyle = '#ff8888';
-    ctx.beginPath();
-    ctx.arc(x - 1.5, y - 50, 2, 0, Math.PI * 2);
-    ctx.fill();
-    // Nose shadow
-    ctx.fillStyle = '#cc0000';
-    ctx.beginPath();
-    ctx.arc(x + 1.5, y - 45, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === HAT (floppy red Santa hat) ===
-    // Hat body (cone shape that folds over)
-    ctx.fillStyle = '#d40000';
-    ctx.beginPath();
-    ctx.moveTo(x - 22, y - 73);
-    // Left side of cone
-    ctx.lineTo(x - 12, y - 95);
-    // Folded over tip (curves down on right)
-    ctx.quadraticCurveTo(x + 5, y - 100, x + 15, y - 88);
-    // Right side of cone
-    ctx.lineTo(x + 22, y - 73);
-    // Bottom back to start
-    ctx.quadraticCurveTo(x, y - 68, x - 22, y - 73);
-    ctx.fill();
-
-    // Hat shading (darker on right/folded part)
-    ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
-    ctx.beginPath();
-    ctx.moveTo(x, y - 85);
-    ctx.quadraticCurveTo(x + 10, y - 95, x + 15, y - 88);
-    ctx.lineTo(x + 22, y - 73);
-    ctx.quadraticCurveTo(x + 5, y - 75, x, y - 85);
-    ctx.fill();
-
-    // === HAT BRIM (white fur trim band) ===
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(x, y - 71, 26, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Brim shading (slight depth)
-    ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
-    ctx.beginPath();
-    ctx.ellipse(x, y - 69, 24, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // === POM-POM (fluffy white ball at hat tip) ===
-    ctx.fillStyle = '#ffffff';
-    // Main pom-pom
-    ctx.beginPath();
-    ctx.arc(x + 15, y - 88, 12, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Pom-pom highlight (shine)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.beginPath();
-    ctx.arc(x + 12, y - 92, 6, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Pom-pom fluff texture (small overlapping circles)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    const pompomFluffs = [
-      { px: x + 7, py: y - 85, r: 4 },
-      { px: x + 15, py: y - 82, r: 4 },
-      { px: x + 23, py: y - 85, r: 4 },
-      { px: x + 10, py: y - 95, r: 3.5 },
-      { px: x + 20, py: y - 95, r: 3.5 }
-    ];
-    pompomFluffs.forEach(fluff => {
-      ctx.beginPath();
-      ctx.arc(fluff.px, fluff.py, fluff.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    ctx.restore();
+    // Draw only when image is ready
+    if (santaImg.complete && santaImg.naturalWidth > 0) {
+      const w = 80;
+      const h = 80;
+      // Center Santa on (x, y)
+      ctx.drawImage(santaImg, x - w / 2, y - h / 2, w, h);
+    } else {
+      // Optional minimal fallback (can be removed if not desired)
+      // ctx.fillStyle = 'red';
+      // ctx.beginPath();
+      // ctx.arc(x, y, 20, 0, Math.PI * 2);
+      // ctx.fill();
+    }
   }
 
   // Game Loop
