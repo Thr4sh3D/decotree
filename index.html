@@ -326,9 +326,11 @@
   const starImg  = new Image(); starImg.src  = 'star.png';
 
   // Backgrounds (PNG, no underscores)
-  const bgDayImg    = new Image(); bgDayImg.src    = 'bgday.png';
-  const bgBridgeImg = new Image(); bgBridgeImg.src = 'bgbridge.png';
-  const bgNightImg  = new Image(); bgNightImg.src  = 'bgnight.png';
+  const bgDayImg      = new Image(); bgDayImg.src      = 'bgday.png';
+  const bgBridgeImg   = new Image(); bgBridgeImg.src   = 'bgbridge.png';
+  const bgNightImg    = new Image(); bgNightImg.src    = 'bgnight.png';
+  const bgAnimalsImg  = new Image(); bgAnimalsImg.src  = 'bganimals.png';
+  const bgReindeerImg = new Image(); bgReindeerImg.src = 'bgreindeer.png';
 
   let currentBg    = bgNightImg;   // default
   let currentBgKey = 'bgnight';
@@ -462,7 +464,9 @@
     bg_sunset: false,
     bgday: false,
     bgbridge: false,
-    bgnight: true
+    bgnight: true,
+    bganimals: false,
+    bgreindeer: false
   };
 
   const ornamentFallbackColors = {
@@ -483,7 +487,9 @@
   const backgrounds = {
     bgday: bgDayImg,
     bgbridge: bgBridgeImg,
-    bgnight: bgNightImg
+    bgnight: bgNightImg,
+    bganimals: bgAnimalsImg,
+    bgreindeer: bgReindeerImg
   };
 
   // Complete shop list (backgrounds + ornaments)
@@ -492,6 +498,8 @@
     { key: 'bgnight',  name: 'Natt',        price:   0, type: 'background', owned: true,  equipped: false, img: '🌌' },
     { key: 'bgday',    name: 'Dag',         price: 500, type: 'background', owned: false, equipped: false, img: '☀️' },
     { key: 'bgbridge', name: 'Bro',         price: 750, type: 'background', owned: false, equipped: false, img: '🌉' },
+    { key: 'bganimals', name: 'Djur',       price: 900, type: 'background', owned: false, equipped: false, img: '🐻' },
+    { key: 'bgreindeer', name: 'Renar',     price:1100, type: 'background', owned: false, equipped: false, img: '🦌' },
 
     // Balls (100)
     { key: 'red',   name: 'Röd Kula',       price: 100, type: 'ornament', owned: true,  equipped: true,  img: '🔴' },
@@ -806,7 +814,8 @@
       light: 'Ljusslinga', bow: 'Rosett', gift: 'Julklapp',
       candycane: 'Polkagris', gingerbread: 'Pepparkaka', candle: 'Ljus',
       goldtinsel: 'Guldglitter', silvertinsel: 'Silverglitter', redtinsel: 'Rött glitter',
-      bgnight: 'Natt', bgday: 'Dag', bgbridge: 'Bro'
+      bgnight: 'Natt', bgday: 'Dag', bgbridge: 'Bro',
+      bganimals: 'Djur', bgreindeer: 'Renar'
     },
     en: {
       red: 'Red Ball', blue: 'Blue Ball', green: 'Green Ball',
@@ -814,7 +823,8 @@
       light: 'Light String', bow: 'Bow', gift: 'Present',
       candycane: 'Candy Cane', gingerbread: 'Gingerbread', candle: 'Candle',
       goldtinsel: 'Gold Tinsel', silvertinsel: 'Silver Tinsel', redtinsel: 'Red Tinsel',
-      bgnight: 'Starry Night', bgday: 'Snowy Day', bgbridge: 'Bridge'
+      bgnight: 'Starry Night', bgday: 'Snowy Day', bgbridge: 'Bridge',
+      bganimals: 'Forest Animals', bgreindeer: 'Reindeer'
     },
     es: {
       red: 'Bola roja', blue: 'Bola azul', green: 'Bola verde',
@@ -822,7 +832,8 @@
       light: 'Luces', bow: 'Lazo', gift: 'Regalo',
       candycane: 'Bastón de caramelo', gingerbread: 'Galleta de jengibre', candle: 'Vela',
       goldtinsel: 'Guirnalda dorada', silvertinsel: 'Guirnalda plateada', redtinsel: 'Guirnalda roja',
-      bgnight: 'Noche estrellada', bgday: 'Día nevado', bgbridge: 'Puente'
+      bgnight: 'Noche estrellada', bgday: 'Día nevado', bgbridge: 'Puente',
+      bganimals: 'Animales del bosque', bgreindeer: 'Renos'
     },
     fr: {
       red: 'Boule rouge', blue: 'Boule bleue', green: 'Boule verte',
@@ -830,7 +841,8 @@
       light: 'Guirlande lumineuse', bow: 'Noeud', gift: 'Cadeau',
       candycane: 'Sucre d\'orge', gingerbread: 'Biscuit pain d\'épices', candle: 'Bougie',
       goldtinsel: 'Guirlande dorée', silvertinsel: 'Guirlande argentée', redtinsel: 'Guirlande rouge',
-      bgnight: 'Nuit étoilée', bgday: 'Jour de neige', bgbridge: 'Pont'
+      bgnight: 'Nuit étoilée', bgday: 'Jour de neige', bgbridge: 'Pont',
+      bganimals: 'Animaux de la forêt', bgreindeer: 'Rennes'
     },
     de: {
       red: 'Rote Kugel', blue: 'Blaue Kugel', green: 'Grüne Kugel',
@@ -838,7 +850,8 @@
       light: 'Lichterkette', bow: 'Schleife', gift: 'Geschenk',
       candycane: 'Zuckerstange', gingerbread: 'Lebkuchen', candle: 'Kerze',
       goldtinsel: 'Goldene Girlande', silvertinsel: 'Silberne Girlande', redtinsel: 'Rote Girlande',
-      bgnight: 'Sternennacht', bgday: 'Schneetag', bgbridge: 'Brücke'
+      bgnight: 'Sternennacht', bgday: 'Schneetag', bgbridge: 'Brücke',
+      bganimals: 'Waldtiere', bgreindeer: 'Rentiere'
     },
     pt: {
       red: 'Bola vermelha', blue: 'Bola azul', green: 'Bola verde',
@@ -846,7 +859,8 @@
       light: 'Luzes', bow: 'Laço', gift: 'Presente',
       candycane: 'Bengala doce', gingerbread: 'Biscoito de gengibre', candle: 'Vela',
       goldtinsel: 'Fita dourada', silvertinsel: 'Fita prateada', redtinsel: 'Fita vermelha',
-      bgnight: 'Noite estrelada', bgday: 'Dia de neve', bgbridge: 'Ponte'
+      bgnight: 'Noite estrelada', bgday: 'Dia de neve', bgbridge: 'Ponte',
+      bganimals: 'Animais da floresta', bgreindeer: 'Renas'
     },
     it: {
       red: 'Pallina rossa', blue: 'Pallina blu', green: 'Pallina verde',
@@ -854,7 +868,8 @@
       light: 'Luci', bow: 'Fiocco', gift: 'Regalo',
       candycane: 'Bastoncino di zucchero', gingerbread: 'Biscotto allo zenzero', candle: 'Candela',
       goldtinsel: 'Ghirlanda dorata', silvertinsel: 'Ghirlanda argentata', redtinsel: 'Ghirlanda rossa',
-      bgnight: 'Notte stellata', bgday: 'Giorno di neve', bgbridge: 'Ponte'
+      bgnight: 'Notte stellata', bgday: 'Giorno di neve', bgbridge: 'Ponte',
+      bganimals: 'Animali del bosco', bgreindeer: 'Renna'
     },
     ru: {
       red: 'Красный шар', blue: 'Синий шар', green: 'Зелёный шар',
@@ -862,7 +877,8 @@
       light: 'Гирлянда', bow: 'Бантик', gift: 'Подарок',
       candycane: 'Леденец', gingerbread: 'Пряник', candle: 'Свеча',
       goldtinsel: 'Золотая мишура', silvertinsel: 'Серебряная мишура', redtinsel: 'Красная мишура',
-      bgnight: 'Звёздная ночь', bgday: 'Зимний день', bgbridge: 'Мост'
+      bgnight: 'Звёздная ночь', bgday: 'Зимний день', bgbridge: 'Мост',
+      bganimals: 'Лесные звери', bgreindeer: 'Северные олени'
     },
     zh: {
       red: '红色球', blue: '蓝色球', green: '绿色球',
@@ -870,7 +886,8 @@
       light: '彩灯', bow: '蝴蝶结', gift: '礼物',
       candycane: '拐杖糖', gingerbread: '姜饼', candle: '蜡烛',
       goldtinsel: '金色彩带', silvertinsel: '银色彩带', redtinsel: '红色彩带',
-      bgnight: '星星的夜晚', bgday: '下雪的白天', bgbridge: '小桥'
+      bgnight: '星星的夜晚', bgday: '下雪的白天', bgbridge: '小桥',
+      bganimals: '森林小动物', bgreindeer: '驯鹿'
     },
     ja: {
       red: 'あかいボール', blue: 'あおいボール', green: 'みどりのボール',
@@ -878,7 +895,8 @@
       light: 'ライト', bow: 'リボン', gift: 'プレゼント',
       candycane: 'キャンディケーン', gingerbread: 'ジンジャークッキー', candle: 'キャンドル',
       goldtinsel: 'きんのモール', silvertinsel: 'ぎんのモール', redtinsel: 'あかいモール',
-      bgnight: 'ほしぞらのよる', bgday: 'ゆきのひ', bgbridge: 'はし'
+      bgnight: 'ほしぞらのよる', bgday: 'ゆきのひ', bgbridge: 'はし',
+      bganimals: 'もりのどうぶつ', bgreindeer: 'トナカイ'
     }
   };
 
@@ -1018,7 +1036,9 @@
           bg_sunset: false,
           bgday: false,
           bgbridge: false,
-          bgnight: true
+          bgnight: true,
+          bganimals: false,
+          bgreindeer: false
         };
         activeThrowType = gameData.activeThrowType || 'red';
         activeBackground = gameData.activeBackground || 'bg_day';
@@ -1210,7 +1230,9 @@
       bg_sunset: false,
       bgday: false,
       bgbridge: false,
-      bgnight: true
+      bgnight: true,
+      bganimals: false,
+      bgreindeer: false
     };
     activeThrowType = 'red';
     activeBackground = 'bg_day'; 
