@@ -1665,27 +1665,6 @@
 
       const onTree = isInsideTree(b.x, b.y);
 
-      // If this shot is meant to stop on the clicked point inside
-      // the tree, snap the ornament there when we are close enough
-      // or have just passed that point along the trajectory.
-      if (b.stopOnTarget) {
-        const dxT = b.targetX - b.x;
-        const dyT = b.targetY - b.y;
-        const distSq = dxT * dxT + dyT * dyT;
-
-        const radiusThreshSq = (b.r || 20) * (b.r || 20) * 1.5;
-        const passedTarget = distSq > b.prevDistSq;
-
-        if (distSq <= radiusThreshSq || passedTarget) {
-          ornaments.push({ x: b.targetX, y: b.targetY, r: b.r, color: b.color, type: b.type });
-          playSound('stick');
-          bullets.splice(i, 1);
-          continue;
-        }
-
-        b.prevDistSq = distSq;
-      }
-
       // Mission targets: if we are inside the tree area, allow precise
       // hits on ghost targets along the path.
       if (gameState === 'MISSION' && onTree) {
@@ -1705,6 +1684,50 @@
           bullets.splice(i, 1);
           continue;
         }
+      }
+
+      // If this shot is meant to stop on the clicked point inside
+      // the tree, snap the ornament there when we are close enough
+      // or have just passed that point along the trajectory.
+      if (b.stopOnTarget) {
+        const dxT = b.targetX - b.x;
+        const dyT = b.targetY - b.y;
+        const distSq = dxT * dxT + dyT * dyT;
+
+        const radiusThreshSq = (b.r || 20) * (b.r || 20) * 1.5;
+        const passedTarget = distSq > b.prevDistSq;
+
+        if (distSq <= radiusThreshSq || passedTarget) {
+          // In mission mode, also treat a snap-to-click as a potential
+          // target hit at that click position.
+          if (gameState === 'MISSION') {
+            const hitIdx = findTargetAt(b.targetX, b.targetY);
+            if (hitIdx !== -1) {
+              const t = ghostTargets[hitIdx];
+              ornaments.push({ x: t.x, y: t.y, r: b.r, color: b.color, type: b.type });
+              ghostTargets.splice(hitIdx, 1);
+              playSound('stick');
+              money += 5;
+              saveGame();
+              updateShopUI();
+              if (ghostTargets.length === 0) {
+                missionLevel++;
+                spawnTargets(missionLevel);
+              }
+              bullets.splice(i, 1);
+              continue;
+            }
+          }
+
+          // No mission target at the click point: just stick an
+          // ornament exactly where the player clicked.
+          ornaments.push({ x: b.targetX, y: b.targetY, r: b.r, color: b.color, type: b.type });
+          playSound('stick');
+          bullets.splice(i, 1);
+          continue;
+        }
+
+        b.prevDistSq = distSq;
       }
 
       if (onTree) {
