@@ -1247,14 +1247,12 @@
 
   // --- TREE GEOMETRY & COLLISION -----------------------------------------
   function getTreeRect() {
-    // Large tree, anchored to bottom-center, but clamped to viewport
-    const availableHeight = Math.max(H - TREE_BOTTOM_MARGIN, 300);
-    const height = Math.min(TREE_BASE_HEIGHT, availableHeight);
-    const aspect = TREE_BASE_WIDTH / TREE_BASE_HEIGHT;
-    const width = Math.min(TREE_BASE_WIDTH, height * aspect, W * 0.9);
+    // Large tree with fixed dimensions, bottom-centered on the canvas
+    const width = TREE_BASE_WIDTH;
+    const height = TREE_BASE_HEIGHT;
 
     const x = (W - width) / 2;
-    const y = H - TREE_BOTTOM_MARGIN - height;
+    const y = H - height;
 
     return { x, y, width, height };
   }
@@ -1561,8 +1559,8 @@
 
     const rect = getTreeRect();
 
-    // Santa to the LEFT of the tree, anchored to the bottom
-    const santaBottomY = H - TREE_BOTTOM_MARGIN;
+    // Santa to the LEFT of the tree, anchored to the very bottom
+    const santaBottomY = H;
     const santaOffsetX = 120;
 
     player.x = rect.x - santaOffsetX;
