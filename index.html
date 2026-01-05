@@ -315,7 +315,7 @@
   const TREE_BASE_WIDTH = 900;   // visual design width (wider)
   const TREE_BASE_HEIGHT = 900;  // visual design height
   const TREE_BOTTOM_MARGIN = 40;
-  const SANTA_WIDTH = 240;       // Santa clearly wider
+  const SANTA_WIDTH = 276;       // Santa ~15% wider
   const SANTA_HEIGHT = 180;
   const STAR_SIZE = 80;
 
@@ -397,6 +397,32 @@
 
   // Färger och items
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
+
+  // --- SHOP TABS LOGIC ----------------------------------------------------
+  function showItemsTab() {
+    tabItems.classList.add('active');
+    tabBackgrounds.classList.remove('active');
+    shopItemsDiv.classList.remove('hidden');
+    shopBackgroundsDiv.classList.add('hidden');
+  }
+
+  function showBackgroundsTab() {
+    tabBackgrounds.classList.add('active');
+    tabItems.classList.remove('active');
+    shopBackgroundsDiv.classList.remove('hidden');
+    shopItemsDiv.classList.add('hidden');
+  }
+
+  if (tabItems && tabBackgrounds) {
+    tabItems.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showItemsTab();
+    });
+    tabBackgrounds.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showBackgroundsTab();
+    });
+  }
 
   // Unlocked state for all ornament keys + backgrounds
   let unlocked = { 
@@ -996,6 +1022,10 @@
 
   window.toggleShop = function(show) {
     shopModal.style.display = show ? 'flex' : 'none';
+    if (show) {
+      // Default to the items/decorations tab when opening
+      showItemsTab();
+    }
   };
 
   factoryResetBtn.onclick = (e) => {
@@ -1050,39 +1080,15 @@
   function buildShopFromItems() {
     // Remove only dynamic rows, keep description/other static elements
     shopItemsDiv.querySelectorAll('.shop-item').forEach(el => el.remove());
+    shopBackgroundsDiv.querySelectorAll('.shop-item').forEach(el => el.remove());
 
     const t = translations[currentLang] || {};
     const envTitle = t.envSectionTitle || 'Miljöer';
     const decoTitle = t.decoSectionTitle || 'Dekorationer';
 
-    // Section 1: Miljöer (backgrounds)
-    const envHeader = document.createElement('div');
-    envHeader.style.margin = '10px 0 4px';
-    envHeader.style.fontWeight = 'bold';
-    envHeader.textContent = envTitle;
-    shopItemsDiv.appendChild(envHeader);
-
-    shopItems
-      .filter(item => item.type === 'background')
-      .forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'shop-item';
-
-        const label = document.createElement('div');
-        label.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
-
-        const btn = document.createElement('button');
-        btn.className = 'buy-btn';
-        btn.id = 'buy_' + item.key;
-
-        row.appendChild(label);
-        row.appendChild(btn);
-        shopItemsDiv.appendChild(row);
-      });
-
-    // Section 2: Dekorationer (ornaments)
+    // TAB 1: Föremål – only decorations/ornaments
     const decoHeader = document.createElement('div');
-    decoHeader.style.margin = '14px 0 4px';
+    decoHeader.style.margin = '10px 0 4px';
     decoHeader.style.fontWeight = 'bold';
     decoHeader.textContent = decoTitle;
     shopItemsDiv.appendChild(decoHeader);
@@ -1103,6 +1109,31 @@
         row.appendChild(label);
         row.appendChild(btn);
         shopItemsDiv.appendChild(row);
+      });
+
+    // TAB 2: Bakgrunder – backgrounds by themselves
+    const envHeader = document.createElement('div');
+    envHeader.style.margin = '10px 0 4px';
+    envHeader.style.fontWeight = 'bold';
+    envHeader.textContent = envTitle;
+    shopBackgroundsDiv.appendChild(envHeader);
+
+    shopItems
+      .filter(item => item.type === 'background')
+      .forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'shop-item';
+
+        const label = document.createElement('div');
+        label.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+
+        const btn = document.createElement('button');
+        btn.className = 'buy-btn';
+        btn.id = 'buy_' + item.key;
+
+        row.appendChild(label);
+        row.appendChild(btn);
+        shopBackgroundsDiv.appendChild(row);
       });
 
     checkButtons();
