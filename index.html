@@ -310,6 +310,14 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
 
+  // Visual layout constants
+  const TREE_BASE_WIDTH = 600;
+  const TREE_BASE_HEIGHT = 900;
+  const TREE_BOTTOM_MARGIN = 40;
+  const SANTA_WIDTH = 150;
+  const SANTA_HEIGHT = 150;
+  const STAR_SIZE = 80;
+
   // Image assets
   // Characters & World
   const santaImg = new Image(); santaImg.src = 'santa.png';
@@ -1237,6 +1245,313 @@
     renderQuickBar();
   }
 
+  // --- TREE GEOMETRY & COLLISION -----------------------------------------
+  function getTreeRect() {
+    // Large tree, anchored to bottom-center, but clamped to viewport
+    const availableHeight = Math.max(H - TREE_BOTTOM_MARGIN, 300);
+    const height = Math.min(TREE_BASE_HEIGHT, availableHeight);
+    const aspect = TREE_BASE_WIDTH / TREE_BASE_HEIGHT;
+    const width = Math.min(TREE_BASE_WIDTH, height * aspect, W * 0.9);
+
+    const x = (W - width) / 2;
+    const y = H - TREE_BOTTOM_MARGIN - height;
+
+    return { x, y, width, height };
+  }
+
+  function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+    const v0x = cx - ax;
+    const v0y = cy - ay;
+    const v1x = bx - ax;
+    const v1y = by - ay;
+    const v2x = px - ax;
+    const v2y = py - ay;
+
+    const dot00 = v0x * v0x + v0y * v0y;
+    const dot01 = v0x * v1x + v0y * v1y;
+    const dot02 = v0x * v2x + v0y * v2y;
+    const dot11 = v1x * v1x + v1y * v1y;
+    const dot12 = v1x * v2x + v1y * v2y;
+
+    const denom = dot00 * dot11 - dot01 * dot01;
+    if (denom === 0) return false;
+    const invDenom = 1 / denom;
+
+    const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+    return u >= 0 && v >= 0 && u + v <= 1;
+  }
+
+  function isInsideTree(px, py) {
+    const rect = getTreeRect();
+    const topX = rect.x + rect.width / 2;
+    const topY = rect.y;
+    const blX = rect.x;
+    const blY = rect.y + rect.height;
+    const brX = rect.x + rect.width;
+    const brY = rect.y + rect.height;
+
+    return pointInTriangle(px, py, topX, topY, blX, blY, brX, brY);
+  }
+
+  // --- SNOW ---------------------------------------------------------------
+  function createSnowflake() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 1 + Math.random() * 2,
+      speedY: 0.5 + Math.random() * 1.5,
+      drift: (Math.random() - 0.5) * 0.5
+    };
+  }
+
+  function updateSnow() {
+    for (const f of snowflakes) {
+      f.y += f.speedY;
+      f.x += f.drift;
+      if (f.y > H + 10) {
+        f.y = -10;
+        f.x = Math.random() * W;
+      }
+      if (f.x < -10) f.x = W + 10;
+      if (f.x > W + 10) f.x = -10;
+    }
+  }
+
+  // --- MISSION TARGETS ----------------------------------------------------
+  function spawnTargets(level) {
+    const count = Math.min(5 + level * 2, 20);
+    ghostTargets = [];
+
+    const rect = getTreeRect();
+
+    for (let i = 0; i < count; i++) {
+      // Rejection sampling inside triangle
+      let x, y;
+      let tries = 0;
+      do {
+        const rx = rect.x + Math.random() * rect.width;
+        const ry = rect.y + Math.random() * rect.height;
+        x = rx;
+        y = ry;
+        tries++;
+      } while (!isInsideTree(x, y) && tries < 50);
+
+      ghostTargets.push({ x, y, r: 18 });
+    }
+  }
+
+  function findTargetAt(x, y) {
+    for (let i = 0; i < ghostTargets.length; i++) {
+      const t = ghostTargets[i];
+      const dx = x - t.x;
+      const dy = y - t.y;
+      if (dx * dx + dy * dy <= t.r * t.r * 1.4) return i;
+    }
+    return -1;
+  }
+
+  // --- DRAWING ------------------------------------------------------------
+  function getOrnamentImage(type) {
+    switch (type) {
+      case 'red': return redImg;
+      case 'blue': return blueImg;
+      case 'green': return greenImg;
+      case 'gold': return goldImg;
+      case 'silver': return silverImg;
+      case 'purple': return purpleImg;
+      case 'bow': return bowImg;
+      case 'candle': return candleImg;
+      case 'candycane': return candyImg;
+      case 'gift': return giftImg;
+      case 'gingerbread': return gingerImg;
+      case 'light': return lightImg;
+      case 'goldtinsel': return goldTinselImg;
+      case 'silvertinsel': return silverTinselImg;
+      case 'redtinsel': return redTinselImg;
+      default: return null;
+    }
+  }
+
+  function drawBackground() {
+    ctx.clearRect(0, 0, W, H);
+
+    if (currentBg && currentBg.complete && currentBg.naturalWidth) {
+      ctx.drawImage(currentBg, 0, 0, W, H);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#0b3a4a');
+      grad.addColorStop(1, '#001219');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // Snow
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    for (const f of snowflakes) {
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawTreeAndStar() {
+    const rect = getTreeRect();
+
+    // Tree image or fallback triangle
+    if (treeLoaded && treeImg.complete && treeImg.naturalWidth) {
+      ctx.drawImage(treeImg, rect.x, rect.y, rect.width, rect.height);
+    } else {
+      ctx.fillStyle = '#2a9d8f';
+      ctx.beginPath();
+      ctx.moveTo(rect.x + rect.width / 2, rect.y);
+      ctx.lineTo(rect.x, rect.y + rect.height);
+      ctx.lineTo(rect.x + rect.width, rect.y + rect.height);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Star on top – drawn AFTER tree so it stays visible
+    const tipX = rect.x + rect.width / 2;
+    const tipY = rect.y;
+
+    if (starImg && starImg.complete && starImg.naturalWidth) {
+      ctx.drawImage(starImg, tipX - STAR_SIZE / 2, tipY - STAR_SIZE * 0.9, STAR_SIZE, STAR_SIZE);
+    } else {
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(tipX, tipY - STAR_SIZE * 0.4, STAR_SIZE * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawOrnamentsAndTargets() {
+    // Ornaments stuck on tree
+    for (const o of ornaments) {
+      const img = getOrnamentImage(o.type);
+      const radius = o.r || 14;
+      const size = radius * 2;
+      if (img && img.complete && img.naturalWidth) {
+        ctx.drawImage(img, o.x - size / 2, o.y - size / 2, size, size);
+      } else {
+        const color = o.color || ornamentFallbackColors[o.type] || '#ffffff';
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Mission ghost targets
+    if (gameState === 'MISSION') {
+      ctx.save();
+      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      for (const t of ghostTargets) {
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawBullets() {
+    for (const b of bullets) {
+      const color = b.color || ornamentFallbackColors[b.type] || '#ffffff';
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r || 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawSanta() {
+    if (!santaImg.complete || !santaImg.naturalWidth) return;
+
+    // player.x / player.y represent Santa's bottom-center
+    const offsetY = recoilTimer > 0 ? -4 : 0;
+    ctx.drawImage(
+      santaImg,
+      player.x - SANTA_WIDTH / 2,
+      player.y - SANTA_HEIGHT + offsetY,
+      SANTA_WIDTH,
+      SANTA_HEIGHT
+    );
+  }
+
+  function draw() {
+    if (!W || !H) return;
+    drawBackground();
+    drawTreeAndStar();
+    drawOrnamentsAndTargets();
+    drawBullets();
+    drawSanta();
+  }
+
+  // --- SHOOTING & AIMING --------------------------------------------------
+  function getSantaHandPosition() {
+    // Approximate right-hand position relative to bottom-center
+    const rect = {
+      x: player.x - SANTA_WIDTH / 2,
+      y: player.y - SANTA_HEIGHT,
+      width: SANTA_WIDTH,
+      height: SANTA_HEIGHT
+    };
+    const handX = rect.x + rect.width * 0.8;
+    const handY = rect.y + rect.height * 0.4;
+    return { x: handX, y: handY };
+  }
+
+  function shootTowards(targetX, targetY) {
+    if (gameState === 'MENU') return;
+
+    const hand = getSantaHandPosition();
+    const dx = targetX - hand.x;
+    const dy = targetY - hand.y;
+    const angle = Math.atan2(dy, dx);
+
+    const speed = 18;
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+
+    const radius = 14;
+    const type = activeThrowType;
+    const color = ornamentFallbackColors[type] || '#ffffff';
+
+    bullets.push({
+      x: hand.x,
+      y: hand.y,
+      vx,
+      vy,
+      r: radius,
+      life: 200,
+      distanceTraveled: 0,
+      color,
+      type
+    });
+
+    recoilTimer = 5;
+    playSound('shoot');
+  }
+
+  function handlePointerDown(e) {
+    if (gameState === 'MENU') return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
+    if (clientX == null || clientY == null) return;
+
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    shootTowards(x, y);
+    e.preventDefault();
+  }
+
   // --- RESIZE / INIT -------------------------------------------------------
   function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -1246,12 +1561,12 @@
 
     const rect = getTreeRect();
 
-    // Santa to the LEFT of the tree
-    const santaCenterX = rect.x - 120;
-    const santaCenterY = H - 180;
+    // Santa to the LEFT of the tree, anchored to the bottom
+    const santaBottomY = H - TREE_BOTTOM_MARGIN;
+    const santaOffsetX = 120;
 
-    player.x = santaCenterX;
-    player.y = santaCenterY;
+    player.x = rect.x - santaOffsetX;
+    player.y = santaBottomY;
     santaX = player.x;
   }
 
@@ -1364,6 +1679,9 @@
   window.addEventListener('resize', () => {
     resizeCanvas();
   });
+
+  // Pointer input for shooting
+  canvas.addEventListener('pointerdown', handlePointerDown);
 
   init();
   loop();
