@@ -311,45 +311,42 @@
   const ctx = canvas.getContext('2d');
 
   // Image assets
-  const santaImg = new Image();
-  santaImg.src = 'santa.png';
-  santaImg.onload = () => console.log('Santa image loaded successfully!');
-  santaImg.onerror = () => console.error('Error loading santa.png. Check filename!');
-  const bgImg = new Image();
-  bgImg.src = 'bg.png';
-  const starImg = new Image();
-  starImg.src = 'star.png';
-  const treeImg = new Image();
-  treeImg.src = 'tree.png';
-  let treeLoaded = false;
-  treeImg.onload = () => { treeLoaded = true; };
+  // Characters & World
+  const santaImg = new Image(); santaImg.src = 'santa.png';
+  const treeImg  = new Image(); treeImg.src  = 'tree.png';
+  const starImg  = new Image(); starImg.src  = 'star.png';
 
-  // NEW: background images (shop-based)
-  const bgDayImg = new Image();    bgDayImg.src = 'bgday.jpg';
-  const bgBridgeImg = new Image(); bgBridgeImg.src = 'bgbridge.jpg';
-  const bgNightImg = new Image();  bgNightImg.src = 'bgnight.jpg';
+  // Backgrounds (PNG, no underscores)
+  const bgDayImg    = new Image(); bgDayImg.src    = 'bgday.png';
+  const bgBridgeImg = new Image(); bgBridgeImg.src = 'bgbridge.png';
+  const bgNightImg  = new Image(); bgNightImg.src  = 'bgnight.png';
 
-  let currentBg = bgNightImg;      // default to night
+  let currentBg    = bgNightImg;   // default
   let currentBgKey = 'bgnight';
 
   // Baubles
-  const redImg = new Image();   redImg.src = 'red.png';
-  const blueImg = new Image();  blueImg.src = 'blue.png';
-  const greenImg = new Image(); greenImg.src = 'green.png';
-  const goldImg = new Image();  goldImg.src = 'gold.png';
-  const silverImg = new Image();silverImg.src = 'silver.png';
-  const purpleImg = new Image();purpleImg.src = 'purple.png';
-  // Specials
-  const candyImg = new Image(); candyImg.src = 'candycane.png';
-  const gingerImg = new Image();gingerImg.src = 'gingerbread.png';
-  const giftImg = new Image();  giftImg.src = 'gift.png';
-  const candleImg = new Image();candleImg.src = 'candle.png';
-  const bulbImg = new Image();  bulbImg.src = 'bulb.png';
-  const bowImg = new Image();   bowImg.src = 'bow.png'; // bow decoration
-  // Tinsel segments
-  const goldTinselImg = new Image();  goldTinselImg.src = 'goldtinsel.png';
-  const silverTinselImg = new Image();silverTinselImg.src = 'silvertinsel.png';
-  const redTinselImg = new Image();   redTinselImg.src = 'redtinsel.png';
+  const redImg    = new Image(); redImg.src    = 'red.png';
+  const blueImg   = new Image(); blueImg.src   = 'blue.png';
+  const greenImg  = new Image(); greenImg.src  = 'green.png';
+  const goldImg   = new Image(); goldImg.src   = 'gold.png';
+  const silverImg = new Image(); silverImg.src = 'silver.png';
+  const purpleImg = new Image(); purpleImg.src = 'purple.png';
+
+  // Special Decorations
+  const bowImg     = new Image(); bowImg.src     = 'bow.png';
+  const candleImg  = new Image(); candleImg.src  = 'candle.png';
+  const candyImg   = new Image(); candyImg.src   = 'candycane.png';
+  const giftImg    = new Image(); giftImg.src    = 'gift.png';
+  const gingerImg  = new Image(); gingerImg.src  = 'gingerbread.png';
+  const lightImg   = new Image(); lightImg.src   = 'light.png';
+
+  // Tinsel (no underscores)
+  const goldTinselImg   = new Image(); goldTinselImg.src   = 'goldtinsel.png';
+  const silverTinselImg = new Image(); silverTinselImg.src = 'silvertinsel.png';
+  const redTinselImg    = new Image(); redTinselImg.src    = 'redtinsel.png';
+
+  let treeLoaded = false;
+  treeImg.onload = () => { treeLoaded = true; };
 
   // Elements
   const scoreText = document.getElementById('scoreText');
@@ -398,7 +395,7 @@
     gold: false,
     silver: false,
     purple: false,
-    bulb: false,
+    light: false,
     goldtinsel: false,
     silvertinsel: false,
     redtinsel: false,
@@ -418,7 +415,7 @@
   const ornamentFallbackColors = {
     red: '#e53935', blue: '#1e88e5', green: '#43a047',
     gold: '#fbc02d', silver: '#cccccc', purple: '#8e24aa',
-    bulb: '#ffd54f',
+    light: '#ffd54f',
     goldtinsel: '#fdd835', silvertinsel: '#e0e0e0', redtinsel: '#e53935',
     candycane: '#e91e63', gift: '#f44336',
     gingerbread: '#8d6e63', candle: '#fff8e1'
@@ -429,38 +426,42 @@
   let currentLang = 'sv';
   let santaX = 0;
 
-  // NEW: map shop background keys -> images
+  // Background key -> image
   const backgrounds = {
     bgday: bgDayImg,
     bgbridge: bgBridgeImg,
     bgnight: bgNightImg
   };
 
-  // Complete ornament shop list
+  // Complete shop list (backgrounds + ornaments)
   const shopItems = [
-    // Standard Baubles (Price: 100)
-    { key: 'red',        name: 'Röd Kula 🔴',        price: 100, owned: true,  img: '🔴' },
-    { key: 'blue',       name: 'Blå Kula 🔵',        price: 100, owned: false, img: '🔵' },
-    { key: 'green',      name: 'Grön Kula 🟢',       price: 100, owned: false, img: '🟢' },
-    // Shiny Baubles (Price: 150)
-    { key: 'gold',       name: 'Guldkula 🟡',        price: 150, owned: false, img: '🟡' },
-    { key: 'silver',     name: 'Silverkula ⚪',      price: 150, owned: false, img: '⚪' },
-    { key: 'purple',     name: 'Lila Kula 🟣',       price: 150, owned: false, img: '🟣' },
-    // Lights & Tinsel (Price: 200)
-    { key: 'bulb',       name: 'Glödlampa 💡',      price: 200, owned: false, img: '💡' },
-    { key: 'goldtinsel', name: 'Guldglitter ✨',     price: 200, owned: false, img: '✨' },
-    { key: 'silvertinsel',name:'Silverglitter 🌪️',  price: 200, owned: false, img: '🌪️' },
-    { key: 'redtinsel',  name: 'Rött Glitter 🧣',    price: 200, owned: false, img: '🧣' },
-    // Special Ornaments (Price: 250-350)
-    { key: 'candycane',  name: 'Polkagris 🍭',       price: 250, owned: false, img: '🍭' },
-    { key: 'gift',       name: 'Julklapp 🎁',        price: 250, owned: false, img: '🎁' },
-    { key: 'gingerbread',name: 'Pepparkaka 🍪',      price: 300, owned: false, img: '🍪' },
-    { key: 'candle',     name: 'Levande Ljus 🕯️',   price: 350, owned: false, img: '🕯️' },
-    { key: 'bow',        name: 'Röd Rosett 🎀',      price: 250, owned: false, img: '🎀' },
-    // NEW: background items (type = 'background')
-    { key: 'bgday',      name: 'Solig Dag ☀️',      price: 500, type: 'background', owned: false, img: '☀️' },
-    { key: 'bgbridge',   name: 'Vinterbro 🌉',       price: 750, type: 'background', owned: false, img: '🌉' },
-    { key: 'bgnight',    name: 'Norrskensnatt 🌌',   price:   0, type: 'background', owned: true,  img: '🌌' }
+    // Backgrounds
+    { key: 'bgnight',  name: 'Natt 🌌',  price:   0, type: 'background', owned: true,  img: '🌌' },
+    { key: 'bgday',    name: 'Dag ☀️',  price: 500, type: 'background', owned: false, img: '☀️' },
+    { key: 'bgbridge', name: 'Bro 🌉',  price: 750, type: 'background', owned: false, img: '🌉' },
+
+    // Balls (100)
+    { key: 'red',   name: 'Röd Kula 🔴',   price: 100, type: 'ornament', owned: true,  img: '🔴' },
+    { key: 'blue',  name: 'Blå Kula 🔵',   price: 100, type: 'ornament', owned: false, img: '🔵' },
+    { key: 'green', name: 'Grön Kula 🟢',  price: 100, type: 'ornament', owned: false, img: '🟢' },
+
+    // Shiny balls (150)
+    { key: 'gold',   name: 'Guldkula 🟡',  price: 150, type: 'ornament', owned: false, img: '🟡' },
+    { key: 'silver', name: 'Silverkula ⚪',price: 150, type: 'ornament', owned: false, img: '⚪' },
+    { key: 'purple', name: 'Lila Kula 🟣', price: 150, type: 'ornament', owned: false, img: '🟣' },
+
+    // Specials (200–400)
+    { key: 'light',      name: 'Ljusslinga 💡',  price: 200, type: 'ornament', owned: false, img: '💡' },
+    { key: 'bow',        name: 'Rosett 🎀',      price: 250, type: 'ornament', owned: false, img: '🎀' },
+    { key: 'gift',       name: 'Julklapp 🎁',    price: 250, type: 'ornament', owned: false, img: '🎁' },
+    { key: 'candycane',  name: 'Polkagris 🍭',   price: 250, type: 'ornament', owned: false, img: '🍭' },
+    { key: 'gingerbread',name: 'Pepparkaka 🍪',  price: 300, type: 'ornament', owned: false, img: '🍪' },
+    { key: 'candle',     name: 'Ljus 🕯️',       price: 350, type: 'ornament', owned: false, img: '🕯️' },
+
+    // Tinsel (250)
+    { key: 'goldtinsel',   name: 'Guldglitter ✨',  price: 250, type: 'ornament', owned: false, img: '✨' },
+    { key: 'silvertinsel', name: 'Silverglitter 💫',price: 250, type: 'ornament', owned: false, img: '💫' },
+    { key: 'redtinsel',    name: 'Rött Glitter 🎗️',price: 250, type: 'ornament', owned: false, img: '🎗️' }
   ];
 
   let stars = [];
@@ -788,7 +789,7 @@
       unlocked,
       activeThrowType,
       activeBackground,
-      currentBgKey      // NEW: persist selected image background
+      currentBgKey
     };
     localStorage.setItem('decoTreeSave', JSON.stringify(gameData));
   }
@@ -806,7 +807,7 @@
           gold: false,
           silver: false,
           purple: false,
-          bulb: false,
+          light: false,
           goldtinsel: false,
           silvertinsel: false,
           redtinsel: false,
@@ -825,7 +826,6 @@
         activeThrowType = gameData.activeThrowType || 'red';
         activeBackground = gameData.activeBackground || 'bg_day';
 
-        // NEW: restore selected image background
         currentBgKey = gameData.currentBgKey && backgrounds[gameData.currentBgKey]
           ? gameData.currentBgKey
           : 'bgnight';
@@ -834,7 +834,6 @@
         console.error('Failed to load save data:', e);
       }
     } else {
-      // no save: init default bg
       currentBgKey = 'bgnight';
       currentBg = backgrounds[currentBgKey];
     }
@@ -961,7 +960,7 @@
       gold: false,
       silver: false,
       purple: false,
-      bulb: false,
+      light: false,
       goldtinsel: false,
       silvertinsel: false,
       redtinsel: false,
@@ -992,112 +991,658 @@
     updateAllUI();
     updateLanguage();
   };
+  // --- SHOP UI & QUICK BAR -------------------------------------------------
+  function buildShopFromItems() {
+    shopItemsDiv.querySelectorAll('.shop-item').forEach(el => el.remove());
 
-  window.addEventListener('mousemove', (e) => {
-    if (e.target.closest('#shopModal') || e.target.closest('.shop-content')) return;
+    shopItems.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'shop-item';
+
+      const label = document.createElement('div');
+      label.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+
+      const btn = document.createElement('button');
+      btn.className = 'buy-btn';
+      btn.id = 'buy_' + item.key;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (item.type === 'background') {
+          const key = item.key;
+          const owned = !!unlocked[key];
+
+          if (!owned) {
+            if (money < item.price) return;
+            money -= item.price;
+            unlocked[key] = true;
+            playSound('buy');
+          }
+          if (backgrounds[key]) {
+            currentBgKey = key;
+            currentBg = backgrounds[key];
+          }
+          saveGame();
+          updateAllUI();
+        } else {
+          window.buyPack(item.key, item.price);
+        }
+      };
+
+      row.appendChild(label);
+      row.appendChild(btn);
+      shopItemsDiv.appendChild(row);
+    });
+
+    checkButtons();
+  }
+
+  function checkButtons() {
+    shopItems.forEach(item => {
+      const btn = document.getElementById('buy_' + item.key);
+      if (!btn) return;
+
+      const owned = !!unlocked[item.key];
+      const cost = item.price;
+
+      if (item.type === 'background') {
+        if (!owned) {
+          btn.disabled = money < cost;
+          btn.innerText = cost + ' 🪙';
+        } else {
+          const isActive = (currentBgKey === item.key);
+          btn.disabled = isActive;
+          btn.innerText = isActive
+            ? translations[currentLang].equipped
+            : translations[currentLang].equip;
+        }
+      } else {
+        if (owned) {
+          btn.disabled = true;
+          btn.innerText = translations[currentLang].equipped;
+        } else if (money >= cost) {
+          btn.disabled = false;
+          btn.innerText = cost + ' 🪙';
+        } else {
+          btn.disabled = true;
+          btn.innerText = cost + ' 🪙';
+        }
+      }
+    });
+
+    // Old gradient backgrounds (kept for backwards compatibility)
+    const bgButtons = {
+      buyBg_day:    { unlockKey: 'bg_day',    cost: 0   },
+      buyBg_night:  { unlockKey: 'bg_night',  cost: 100 },
+      buyBg_aurora: { unlockKey: 'bg_aurora', cost: 300 },
+      buyBg_sunset: { unlockKey: 'bg_sunset', cost: 500 }
+    };
+
+    for (const [btnId, { unlockKey, cost }] of Object.entries(bgButtons)) {
+      const btn = document.getElementById(btnId);
+      if (!btn) continue;
+
+      if (!unlocked[unlockKey]) {
+        btn.disabled = money < cost;
+        btn.innerText = cost + ' 🪙';
+      } else {
+        const isActive = (activeBackground === unlockKey);
+        btn.disabled = isActive;
+        btn.innerText = isActive
+          ? translations[currentLang].equipped
+          : translations[currentLang].equip;
+      }
+    }
+  }
+
+  function updateShopUI() {
+    checkButtons();
+  }
+
+  function renderQuickBar() {
+    quickBar.innerHTML = '';
+    shopItems.forEach(item => {
+      if (item.type === 'background') return;
+      if (!unlocked[item.key]) return;
+
+      const btn = document.createElement('div');
+      btn.className = 'quick-btn';
+      if (activeThrowType === item.key) btn.classList.add('active');
+      btn.textContent = item.img;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        activeThrowType = item.key;
+        renderQuickBar();
+      };
+      btn.ontouchstart = (e) => { e.stopPropagation(); };
+      quickBar.appendChild(btn);
+    });
+  }
+
+  function updateAllUI() {
+    checkButtons();
+    renderQuickBar();
+  }
+
+  // --- BACKGROUND, TREE & RENDERING ----------------------------------------
+  function getTreeRect() {
+    const treeW = 500;
+    const treeH = 700;
+    const x = (canvas.width - treeW) / 2;
+    const y = canvas.height - treeH - 50;
+    return { x, y, w: treeW, h: treeH };
+  }
+
+  function drawBackground() {
+    const img = currentBg;
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(0, 0, W, H * 0.8);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, H * 0.8, W, H * 0.2);
+    }
+  }
+
+  function drawTree() {
+    const rect = getTreeRect();
+    if (treeLoaded && treeImg.complete && treeImg.naturalWidth > 0) {
+      ctx.drawImage(treeImg, rect.x, rect.y, rect.w, rect.h);
+    }
+
+    // Star on the top
+    if (starImg.complete && starImg.naturalWidth > 0) {
+      const starW = 70;
+      const starH = 70;
+      const sx = rect.x + rect.w / 2 - starW / 2;
+      const sy = rect.y - starH + 10;
+      ctx.drawImage(starImg, sx, sy, starW, starH);
+    }
+  }
+
+  function drawSanta() {
+    const size = 120;
+    const baseX = santaX;
+    const baseY = player.y;
+    const recoilOffset = recoilTimer > 0 ? -10 : 0;
+    const x = baseX - size / 2;
+    const y = baseY - size / 2 + recoilOffset;
+
+    if (santaImg.complete && santaImg.naturalWidth > 0) {
+      ctx.drawImage(santaImg, x, y, size, size);
+    } else {
+      ctx.fillStyle = '#d32f2f';
+      ctx.beginPath();
+      ctx.arc(baseX, baseY, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawOrnament(o) {
+    let img = null;
+    if (o.type === 'red') img = redImg;
+    else if (o.type === 'blue') img = blueImg;
+    else if (o.type === 'green') img = greenImg;
+    else if (o.type === 'gold') img = goldImg;
+    else if (o.type === 'silver') img = silverImg;
+    else if (o.type === 'purple') img = purpleImg;
+    else if (o.type === 'gift') img = giftImg;
+    else if (o.type === 'gingerbread') img = gingerImg;
+    else if (o.type === 'candle') img = candleImg;
+    else if (o.type === 'candycane') img = candyImg;
+    else if (o.type === 'light') img = lightImg;
+    else if (o.type === 'bow') img = bowImg;
+    else if (o.type === 'goldtinsel') img = goldTinselImg;
+    else if (o.type === 'silvertinsel') img = silverTinselImg;
+    else if (o.type === 'redtinsel') img = redTinselImg;
+
+    let w = 30, h = 30;
+    if (o.type === 'light') { w = 25; h = 35; }
+    else if (o.type === 'bow') { w = 40; h = 35; }
+    else if (o.type === 'candle' || o.type === 'candycane') { w = 20; h = 45; }
+    else if (o.type === 'goldtinsel' || o.type === 'silvertinsel' || o.type === 'redtinsel') { w = 50; h = 20; }
+
+    const x = o.x - w / 2;
+    const y = o.y - h / 2;
+
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, x, y, w, h);
+    } else {
+      const col = ornamentFallbackColors[o.type] || '#ffffff';
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, o.r || 12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawSnow() {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    snowflakes.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function drawGhostTargets() {
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 2;
+    ghostTargets.forEach(t => {
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+  }
+
+  function drawBullets() {
+    bullets.forEach(b => {
+      ctx.fillStyle = b.color;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBackground();
+    drawSnow();
+    drawTree();
+    if (gameState === 'MISSION') drawGhostTargets();
+    ornaments.forEach(o => drawOrnament(o));
+    drawBullets();
+    drawSanta();
+  }
+
+  // --- SNOW & TARGET HELPERS -----------------------------------------------
+  function createSnowflake() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 3 + 2,
+      speed: Math.random() * 1 + 0.5,
+      wobble: Math.random() * Math.PI * 2
+    };
+  }
+
+  function updateSnow() {
+    snowflakes.forEach(s => {
+      s.y += s.speed;
+      s.x += Math.sin(s.wobble) * 0.5;
+      s.wobble += 0.05;
+      if (s.y > H) {
+        s.y = -10;
+        s.x = Math.random() * W;
+      }
+    });
+  }
+
+  function randomPointOnTree() {
+    const rect = getTreeRect();
+    const y = rect.y + Math.random() * rect.h;
+    const t = (y - rect.y) / rect.h;
+    const halfBase = rect.w / 2;
+    const halfWidth = halfBase * (1 - 0.6 * t);
+    const cx = rect.x + rect.w / 2;
+    const x = cx + (Math.random() * 2 - 1) * halfWidth;
+    return { x, y };
+  }
+
+  function spawnTargets(level) {
+    ghostTargets = [];
+    const count = Math.min(3 + level, 8);
+    for (let i = 0; i < count; i++) {
+      const p = randomPointOnTree();
+      ghostTargets.push({ x: p.x, y: p.y, r: 22 + Math.random() * 10 });
+    }
+  }
+
+  function findTargetAt(x, y) {
+    for (let i = 0; i < ghostTargets.length; i++) {
+      const t = ghostTargets[i];
+      const dx = x - t.x;
+      const dy = y - t.y;
+      if (Math.sqrt(dx * dx + dy * dy) <= t.r + 8) return i;
+    }
+    return -1;
+  }
+
+  function isInsideTree(px, py) {
+    const rect = getTreeRect();
+    if (py < rect.y || py > rect.y + rect.h) return false;
+    const t = (py - rect.y) / rect.h;
+    const halfBase = rect.w / 2;
+    const halfWidth = halfBase * (1 - 0.6 * t);
+    const cx = rect.x + rect.w / 2;
+    return Math.abs(px - cx) <= halfWidth;
+  }
+
+  // --- INPUT & SHOOTING -----------------------------------------------------
+  function handleInput(e) {
+    if (e.target.closest('button') ||
+        e.target.closest('.score-box') ||
+        e.target.closest('#shopModal') ||
+        e.target.closest('#menuOverlay') ||
+        e.target.closest('.quick-btn')) {
+      return;
+    }
+
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
+
+    if (gameState === 'MENU') return;
+
     const rect = canvas.getBoundingClientRect();
-    santaX = e.clientX - rect.left;
+    let cx, cy;
+    if (e.type === 'touchstart') {
+      if (e.touches.length > 0) {
+        cx = e.touches[0].clientX - rect.left;
+        cy = e.touches[0].clientY - rect.top;
+      }
+    } else {
+      cx = e.clientX - rect.left;
+      cy = e.clientY - rect.top;
+    }
+
+    if (cx !== undefined && cy !== undefined) fireAtTarget(cx, cy);
+  }
+
+  window.addEventListener('mousedown', handleInput);
+  window.addEventListener('touchstart', handleInput, { passive: false });
+
+  function fireAtTarget(targetX, targetY) {
+    const santaY = player.y - 40;
+    const dx = targetX - santaX;
+    const dy = targetY - santaY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist === 0) return;
+
+    const dirX = dx / dist;
+    const dirY = dy / dist;
+
+    const color = ornamentFallbackColors[activeThrowType]
+      || activePalette[Math.floor(Math.random() * activePalette.length)];
+
+    const speed = 15;
+    const totalDistance = Math.sqrt((targetX - santaX) ** 2 + (targetY - santaY) ** 2);
+
+    bullets.push({
+      x: santaX,
+      y: santaY,
+      vx: dirX * speed,
+      vy: dirY * speed,
+      r: Math.random() * 5 + 8,
+      color,
+      type: activeThrowType,
+      life: 100,
+      targetX,
+      targetY,
+      totalDistance,
+      distanceTraveled: 0
+    });
+
+    playSound('shoot');
+    recoilTimer = 5;
+  }
+
+  // --- UPDATE & MAIN LOOP ---------------------------------------------------
+  function update() {
+    if (gameState === 'MENU') return;
+
+    updateSnow();
+
+    if (recoilTimer > 0) recoilTimer--;
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      b.x += b.vx;
+      b.y += b.vy;
+      b.life--;
+
+      const stepDist = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+      b.distanceTraveled += stepDist;
+
+      if (b.y < -50 || b.y > H || b.x < -50 || b.x > W || b.life <= 0) {
+        bullets.splice(i, 1);
+        continue;
+      }
+
+      const distToTarget = Math.sqrt((b.x - b.targetX) ** 2 + (b.y - b.targetY) ** 2);
+      const bulletSpeed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+
+      if (distToTarget < bulletSpeed * 2) {
+        let hit = isInsideTree(b.x, b.y);
+
+        if (hit) {
+          if (gameState === 'MISSION') {
+            const idx = findTargetAt(b.x, b.y);
+            if (idx !== -1) {
+              const target = ghostTargets[idx];
+              ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
+              ghostTargets.splice(idx, 1);
+              playSound('stick');
+              money += 5;
+              saveGame();
+              updateShopUI();
+              if (ghostTargets.length === 0) {
+                missionLevel++;
+                spawnTargets(missionLevel);
+              }
+              bullets.splice(i, 1);
+              continue;
+            }
+          }
+          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+          playSound('stick');
+          bullets.splice(i, 1);
+        } else {
+          if (distToTarget > bulletSpeed * 5 || b.distanceTraveled > b.totalDistance + 100) {
+            bullets.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    const t = translations[currentLang];
+    scoreText.innerText = '🎄 ' + t.ornaments + ': ' + ornaments.length;
+    moneyText.innerText = '💰 ' + money + ' ' + t.money;
+  }
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight * 0.9;
+    W = canvas.width;
+    H = canvas.height;
+    player.x = W * 0.15;
+    player.y = H * 0.75;
+    santaX = player.x;
+  }
+
+  function initGame() {
+    resizeCanvas();
+    loadGame();
+    updateLanguage();
+    buildShopFromItems();
+    renderQuickBar();
+
+    snowflakes = [];
+    for (let i = 0; i < 120; i++) {
+      snowflakes.push(createSnowflake());
+    }
+
+    updateAllUI();
+
+    if (gameState === 'MISSION' && ghostTargets.length === 0) {
+      spawnTargets(missionLevel);
+    }
+  }
+
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize', () => {
+    resizeCanvas();
   });
 
-  window.addEventListener('touchmove', (e) => {
-    // 4. GAMEPLAY: Allow scroll in shop (don't prevent default if in shop)
-    if (e.target.closest('.shop-content')) return;
-    
-    e.preventDefault(); 
-    const rect = canvas.getBoundingClientRect();
-    if (e.touches.length > 0) {
-      santaX = e.touches[0].clientX - rect.left;
-    }
-  }, { passive: false });
+  initGame();
+  loop();
 
-  // Init / Resize
-  function resize(){
-    W=window.innerWidth;
-    H=window.innerHeight;
-    canvas.width=W;
-    canvas.height=H;
-    santaX = W/2;
-    player.x = W/2;
-    player.y = H-60;
-    setupTree();
-    if(snowflakes.length===0){
-      for(let i=0;i<30;i++) snowflakes.push(createSnowflake());
-    }
-    generateStars();
+})();
+</script>
+</body>
+</html>
+
+  function updateAllUI() {
+    checkButtons();
+    updateShopUI();
+    renderQuickBar();
   }
-  window.addEventListener('resize', resize);
 
-  // --- 1. VISUALS & 2. PHYSICS: Tree Setup ---
-  function setupTree(){ 
-    const cx=W/2; 
-    const bottomY=H-110; 
-    const treeH=Math.min(H*0.65, W*0.85); 
-    const treeW=treeH*0.95;
-    tree.tiers=[]; 
-    
-    // TIER 1: BOTTOM (Widest)
-    // Visual geometry: Full width, extends to bottomY
-    const tier1VisualX = treeW * 0.45;
-    const tier1VisualY2 = bottomY;
-    // Collision geometry: ALMOST full width (98%), still slightly inside edges
-    const tier1CollisionX = treeW * 0.45 * 0.98; // was * 0.85
-    const tier1CollisionY2 = bottomY - 25;
-    
-    tree.tiers.push({ 
-      x1: cx, y1: bottomY - treeH * 0.42,
-      x2: cx - tier1CollisionX, y2: tier1CollisionY2,
-      x3: cx + tier1CollisionX, y3: tier1CollisionY2,
-      visualX2: cx - tier1VisualX,
-      visualX3: cx + tier1VisualX,
-      visualY2: tier1VisualY2,
-      color: '#087023',
-      darkColor: '#0a5a1f'
-    }); 
-    
-    // TIER 2: MIDDLE
-    const y2_bot = bottomY - treeH * 0.25;
-    // Visual geometry
-    const tier2VisualX = treeW * 0.38;
-    const tier2VisualY2 = y2_bot;
-    // Collision geometry: ALMOST full width (98%)
-    const tier2CollisionX = treeW * 0.38 * 0.98; // was * 0.85
-    const tier2CollisionY2 = y2_bot - 25;
-    
-    tree.tiers.push({ 
-      x1: cx, y1: y2_bot - treeH * 0.42,
-      x2: cx - tier2CollisionX, y2: tier2CollisionY2,
-      x3: cx + tier2CollisionX, y3: tier2CollisionY2,
-      visualX2: cx - tier2VisualX,
-      visualX3: cx + tier2VisualX,
-      visualY2: tier2VisualY2,
-      color: '#0a8a2f',
-      darkColor: '#067a23'
-    }); 
-    
-    // TIER 3: TOP (Narrowest)
-    const y1_bot = y2_bot - treeH * 0.25;
-    // Visual geometry
-    const tier3VisualX = treeW * 0.24;
-    const tier3VisualTop = y1_bot - treeH * 0.28;
-    const tier3VisualY2 = y1_bot;
-    // Collision geometry: ALMOST full width (98%), still keeps star mostly free
-    const tier3CollisionX = treeW * 0.24 * 0.98; // was * 0.85
-    const tier3CollisionY2 = y1_bot - 25;
-    const tier3CollisionTop = tier3VisualTop + 30;
-    
-    tree.tiers.push({ 
-      x1: cx, y1: tier3CollisionTop,
-      x2: cx - tier3CollisionX, y2: tier3CollisionY2,
-      x3: cx + tier3CollisionX, y3: tier3CollisionY2,
-      visualY1: tier3VisualTop,
-      visualX2: cx - tier3VisualX,
-      visualX3: cx + tier3VisualX,
-      visualY2: tier3VisualY2,
-      color: '#0fb24b',
-      darkColor: '#0a9535'
-    }); 
-    
-    tree.trunk = { x: cx - 20, y: bottomY, w: 40, h: 50 }; 
+  // Build ornament shop rows from shopItems
+  function buildShopFromItems() {
+    shopItemsDiv.querySelectorAll('.shop-item').forEach(el => el.remove());
+
+    shopItems.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'shop-item';
+
+      const label = document.createElement('div');
+      label.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+
+      const btn = document.createElement('button');
+      btn.className = 'buy-btn';
+      btn.id = 'buy_' + item.key;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (item.type === 'background') {
+          const key = item.key;
+          const owned = !!unlocked[key];
+
+          if (!owned) {
+            if (money < item.price) return;
+            money -= item.price;
+            unlocked[key] = true;
+            playSound('buy');
+          }
+          if (backgrounds[key]) {
+            currentBgKey = key;
+            currentBg = backgrounds[key];
+          }
+          saveGame();
+          updateAllUI();
+        } else {
+          // ornament
+          window.buyPack(item.key, item.price);
+        }
+      };
+
+      row.appendChild(label);
+      row.appendChild(btn);
+      shopItemsDiv.appendChild(row);
+    });
+
+    checkButtons();
+  }
+
+  function checkButtons() {
+    // Ornaments & new image backgrounds
+    shopItems.forEach(item => {
+      const btn = document.getElementById('buy_' + item.key);
+      if (!btn) return;
+
+      const owned = !!unlocked[item.key];
+      const cost = item.price;
+
+      if (item.type === 'background') {
+        if (!owned) {
+          btn.disabled = money < cost;
+          btn.innerText = cost + ' 🪙';
+        } else {
+          const isActive = (currentBgKey === item.key);
+          btn.disabled = isActive;
+          btn.innerText = isActive
+            ? translations[currentLang].equipped
+            : translations[currentLang].equip;
+        }
+      } else {
+        if (owned) {
+          btn.disabled = true;
+          btn.innerText = translations[currentLang].equipped;
+        } else if (money >= cost) {
+          btn.disabled = false;
+          btn.innerText = cost + ' 🪙';
+        } else {
+          btn.disabled = true;
+          btn.innerText = cost + ' 🪙';
+        }
+      }
+    });
+
+    // Backgrounds tab (old gradient system) - unchanged
+    const bgButtons = {
+      buyBg_day:    { unlockKey: 'bg_day',    cost: 0   },
+      buyBg_night:  { unlockKey: 'bg_night',  cost: 100 },
+      buyBg_aurora: { unlockKey: 'bg_aurora', cost: 300 },
+      buyBg_sunset: { unlockKey: 'bg_sunset', cost: 500 }
+    };
+
+    for (const [btnId, { unlockKey, cost }] of Object.entries(bgButtons)) {
+      const btn = document.getElementById(btnId);
+      if (!btn) continue;
+
+      if (!unlocked[unlockKey]) {
+        if (money >= cost) {
+          btn.disabled = false;
+        } else {
+          btn.disabled = true;
+        }
+        btn.innerText = cost + ' 🪙';
+      } else {
+        const isActive = (activeBackground === unlockKey);
+        btn.disabled = isActive;
+        btn.innerText = isActive
+          ? translations[currentLang].equipped
+          : translations[currentLang].equip;
+      }
+    }
+  }
+
+  function renderQuickBar() {
+    quickBar.innerHTML = '';
+    shopItems.forEach(item => {
+      if (item.type === 'background') return;
+      if (!unlocked[item.key]) return;
+
+      const btn = document.createElement('div');
+      btn.className = 'quick-btn';
+      if (activeThrowType === item.key) btn.classList.add('active');
+      btn.textContent = item.img;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        activeThrowType = item.key;
+        renderQuickBar();
+      };
+      btn.ontouchstart = (e) => { e.stopPropagation(); };
+      quickBar.appendChild(btn);
+    });
+  }
+
+  // Backgrounds
+  function drawBackground(){
+    const img = currentBg;
+    if (img && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(0, 0, W, H * 0.8);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, H * 0.8, W, H * 0.2);
+    }
   }
 
   function createSnowflake(){
@@ -1142,30 +1687,6 @@
       if (Math.sqrt(dx*dx+dy*dy) <= t.r + 8) return i;
     }
     return -1;
-  }
-
-  // Backgrounds
-  function drawBackground(){
-    // NEW: always draw currently selected background image
-    const img = currentBg;
-    if (img && img.complete && img.naturalWidth > 0) {
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    } else {
-      // simple fallback sky/snow if not loaded
-      ctx.fillStyle = '#87CEEB';
-      ctx.fillRect(0, 0, W, H * 0.8);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, H * 0.8, W, H * 0.2);
-    }
-  }
-  function generateStars(){
-    stars = [];
-    for(let i=0;i<120;i++) stars.push({x:Math.random()*W, y:Math.random()*H*0.7, r:Math.random()*1.6 + 0.5, a:Math.random()});
-  }
-  function drawStars(){
-    ctx.save(); ctx.fillStyle='white';
-    stars.forEach(s=>{ ctx.globalAlpha = 0.6 + Math.sin(Date.now()/1000 + s.a)*0.4; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill(); });
-    ctx.globalAlpha = 1; ctx.restore();
   }
 
   // Physics: Hitbox check (Barycentric)
@@ -1328,7 +1849,6 @@
 
   // Build ornament shop rows from shopItems
   function buildShopFromItems() {
-    // Remove any existing static ornament rows
     shopItemsDiv.querySelectorAll('.shop-item').forEach(el => el.remove());
 
     shopItems.forEach(item => {
@@ -1343,7 +1863,6 @@
       btn.id = 'buy_' + item.key;
       btn.onclick = (e) => {
         e.stopPropagation();
-        // NEW: handle backgrounds vs ornaments
         if (item.type === 'background') {
           const key = item.key;
           const owned = !!unlocked[key];
@@ -1354,7 +1873,6 @@
             unlocked[key] = true;
             playSound('buy');
           }
-          // Equip instantly if owned
           if (backgrounds[key]) {
             currentBgKey = key;
             currentBg = backgrounds[key];
@@ -1362,6 +1880,7 @@
           saveGame();
           updateAllUI();
         } else {
+          // ornament
           window.buyPack(item.key, item.price);
         }
       };
@@ -1371,12 +1890,11 @@
       shopItemsDiv.appendChild(row);
     });
 
-   
     checkButtons();
   }
 
   function checkButtons() {
-    // Ornaments & backgrounds: dynamically from shopItems
+    // Ornaments & new image backgrounds
     shopItems.forEach(item => {
       const btn = document.getElementById('buy_' + item.key);
       if (!btn) return;
@@ -1385,7 +1903,6 @@
       const cost = item.price;
 
       if (item.type === 'background') {
-        // NEW: background button behaviour (buy/equip)
         if (!owned) {
           btn.disabled = money < cost;
           btn.innerText = cost + ' 🪙';
@@ -1397,7 +1914,6 @@
             : translations[currentLang].equip;
         }
       } else {
-        // existing ornament logic
         if (owned) {
           btn.disabled = true;
           btn.innerText = translations[currentLang].equipped;
@@ -1440,16 +1956,10 @@
     }
   }
 
-  function updateShopUI() {
-    checkButtons();
-  }
-
-  // --- 3. UI: Quick Switch Sidebar ---
   function renderQuickBar() {
     quickBar.innerHTML = '';
-    // Show all owned ornament items (NOT backgrounds) from shopItems
     shopItems.forEach(item => {
-      if (item.type === 'background') return; // NEW: skip backgrounds
+      if (item.type === 'background') return;
       if (!unlocked[item.key]) return;
 
       const btn = document.createElement('div');
@@ -1466,159 +1976,202 @@
     });
   }
 
-  function draw(){
-    drawBackground();
-
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    snowflakes.forEach(s => { ctx.fillRect(s.x - s.r/2, s.y - s.r/2, s.r, s.r); });
-
-    // Draw Tree (sprite)
-    if (treeLoaded && treeImg.naturalWidth > 0) {
-      const treeWidth = 400;
-      const treeHeight = 600;
-      const treeX = canvas.width / 2 - treeWidth / 2;
-      const treeY = 100;
-      // NEW: larger tree, lower on screen
-      ctx.drawImage(treeImg, canvas.width / 2 - 250, canvas.height - 750, 500, 700);
-    } else {
-      // ...existing code...
-    }
-
-    // Ghost targets (mission)
-    if (gameState === 'MISSION'){
-      ctx.save();
-      ghostTargets.forEach(t => {
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([6,6]);
-        ctx.arc(t.x, t.y, t.r, 0, Math.PI*2);
-        ctx.stroke();
-      });
-      ctx.restore();
-    }
-
-
-
-    // Star on top of tree (kept AFTER tree so it renders above)
-    if (tree.tiers.length){
-      const top = tree.tiers[2];
-      const starY = top.visualY1 !== undefined ? top.visualY1 : top.y1;
-      const starX = top.x1;
-      const size = 50;
-
-      ctx.save();
-      if (starImg.complete && starImg.naturalWidth > 0) {
-        // NEW: larger star aligned with new tree top
-        ctx.drawImage(starImg, canvas.width / 2 - 35, canvas.height - 750 - 35, 70, 70);
-      } else {
-        // Optional vector-star fallback
-        // drawStar(ctx, starX, starY, 5, 30, 15);
-        // ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    ornaments.forEach(o => drawOrnament(o));
-    bullets.forEach(b => drawOrnament(b));
-    
-    drawSanta(santaX, player.y);
-  }
-
-  // drawOrnament: image-based for all types, with size variants
-  function drawOrnament(o) {
-    const x = o.x;
-    const y = o.y;
-    const type = o.type;
-
-    let img = null;
-    let mode = 'circle'; // 'standard' | 'tall' | 'wide' | 'circle'
-
-    if (type === 'red')         { img = redImg;        mode = 'standard'; }
-    else if (type === 'blue')  { img = blueImg;       mode = 'standard'; }
-    else if (type === 'green') { img = greenImg;      mode = 'standard'; }
-    else if (type === 'gold')  { img = goldImg;       mode = 'standard'; }
-    else if (type === 'silver'){ img = silverImg;     mode = 'standard'; }
-    else if (type === 'purple'){ img = purpleImg;     mode = 'standard'; }
-    else if (type === 'bulb')  { img = bulbImg;       mode = 'standard'; }
-    else if (type === 'gingerbread') { img = gingerImg; mode = 'standard'; }
-    else if (type === 'gift')  { img = giftImg;       mode = 'standard'; }
-    else if (type === 'candycane') { img = candyImg;  mode = 'tall'; }
-    else if (type === 'candle')    { img = candleImg; mode = 'tall'; }
-    else if (type === 'goldtinsel'){ img = goldTinselImg;  mode = 'wide'; }
-    else if (type === 'silvertinsel'){ img = silverTinselImg; mode = 'wide'; }
-    else if (type === 'redtinsel'){ img = redTinselImg; mode = 'wide'; }
-
-    // NEW: explicit bow drawing (slightly wider than tall)
-    if (type === 'bow') {
-      if (bowImg.complete && bowImg.naturalWidth > 0) {
-        ctx.drawImage(bowImg, x - 25, y - 20, 50, 40);
-        return;
-      }
-      // if image not ready, fall through to circle fallback
-    }
-
+  // Backgrounds
+  function drawBackground(){
+    const img = currentBg;
     if (img && img.complete && img.naturalWidth > 0) {
-      if (mode === 'standard') {
-        const w = 30, h = 30;
-        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
-      } else if (mode === 'tall') {
-        const w = 25, h = 40;
-        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
-      } else if (mode === 'wide') {
-        const w = 40, h = 20;
-        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(0, 0, W, H * 0.8);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, H * 0.8, W, H * 0.2);
+    }
+  }
+
+  function createSnowflake(){
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 3 + 2,
+      speed: Math.random() * 1 + 0.5,
+      wobble: Math.random() * Math.PI * 2
+    };
+  }
+  function updateSnow(){
+    snowflakes.forEach(s=>{
+      s.y += s.speed;
+      s.x += Math.sin(s.wobble)*0.5;
+      s.wobble += 0.05;
+      if(s.y>H){ s.y=-10; s.x=Math.random()*W; }
+    });
+  }
+
+  // Targets (Mission)
+  function spawnTargets(level){
+    ghostTargets = [];
+    const count = Math.min(3 + level, 8);
+    for(let i=0;i<count;i++){
+      const t = randomPointInTree();
+      ghostTargets.push({ x: t.x, y: t.y - Math.random()*10, r: 22 + Math.random()*10 });
+    }
+  }
+  function randomPointInTree(){
+    const tri = tree.tiers[Math.floor(Math.random()*tree.tiers.length)];
+    const u = Math.random(), v = Math.random();
+    const a = Math.sqrt(u);
+    const x = (1 - a) * tri.x1 + (a * (1 - v)) * tri.x2 + (a * v) * tri.x3;
+    const y = (1 - a) * tri.y1 + (a * (1 - v)) * tri.y2 + (a * v) * tri.y3;
+    return {x,y};
+  }
+  function findTargetAt(x,y){
+    for(let i=0;i<ghostTargets.length;i++){
+      const t = ghostTargets[i];
+      const dx = x - t.x, dy = y - t.y;
+      if (Math.sqrt(dx*dx+dy*dy) <= t.r + 8) return i;
+    }
+    return -1;
+  }
+
+  // Physics: Hitbox check (Barycentric)
+  function isInside(px, py, t) {
+    const area = 0.5 * (-t.y2 * t.x3 + t.y1 * (-t.x2 + t.x3) + t.x1 * (t.y2 - t.y3) + t.x2 * t.y3);
+    const s = 1 / (2 * area) * (t.y1 * t.x3 - t.x1 * t.y3 + (t.y3 - t.y1) * px + (t.x1 - t.x3) * py);
+    const trig = 1 / (2 * area) * (t.x1 * t.y2 - t.y1 * t.x2 + (t.y1 - t.y2) * px + (t.x2 - t.x1) * py);
+    return s > 0 && trig > 0 && (1 - s - trig) > 0;
+  }
+
+  // --- 2. PHYSICS: Shooting ---
+  function handleInput(e) {
+    // 2. PHYSICS: Ignore UI clicks
+    if (e.target.closest('button') || 
+        e.target.closest('.score-box') || 
+        e.target.closest('#shopModal') || 
+        e.target.closest('#menuOverlay') || 
+        e.target.closest('.quick-btn')) {
+        return;
+    }
+
+    // Prevent ghost mouse events on mobile ONLY for gameplay taps
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
+    
+    if (gameState === 'MENU') return;
+    
+    const rect = canvas.getBoundingClientRect();
+    let cx, cy;
+    if(e.type === 'touchstart') {
+        if(e.touches.length > 0) {
+            cx = e.touches[0].clientX - rect.left;
+            cy = e.touches[0].clientY - rect.top;
+        }
+    } else {
+        cx = e.clientX - rect.left;
+        cy = e.clientY - rect.top;
+    }
+    
+    if(cx !== undefined && cy !== undefined) fireAtTarget(cx, cy);
+  }
+
+  window.addEventListener('mousedown', handleInput);
+  window.addEventListener('touchstart', handleInput, {passive: false});
+
+  function fireAtTarget(targetX, targetY) {
+    const santaY = player.y - 40;
+    const dx = targetX - santaX;
+    const dy = targetY - santaY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if(dist === 0) return;
+    
+    const dirX = dx/dist;
+    const dirY = dy/dist;
+    
+    const color = ornamentFallbackColors[activeThrowType] 
+                  || activePalette[Math.floor(Math.random() * activePalette.length)];
+    
+    const speed = 15;
+    const totalDistance = Math.sqrt((targetX - santaX)**2 + (targetY - santaY)**2);
+    
+    bullets.push({
+      x: santaX,
+      y: santaY,
+      vx: dirX * speed,
+      vy: dirY * speed,
+      r: Math.random() * 5 + 8,
+      color: color,
+      type: activeThrowType,      // NEW: use ammo type directly
+      life: 100,
+      targetX: targetX,
+      targetY: targetY,
+      totalDistance: totalDistance,
+      distanceTraveled: 0
+    });
+    
+    playSound('shoot');
+    recoilTimer = 5;
+  }
+
+  function update(){
+    if (gameState === 'MENU') return;
+    updateSnow();
+
+    if (recoilTimer > 0) recoilTimer--; // NEW: decay recoil each frame
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      b.x += b.vx;
+      b.y += b.vy;
+      b.life--;
+      
+      // Track distance traveled
+      const stepDist = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
+      b.distanceTraveled += stepDist;
+      
+      if (b.y < -50 || b.y > H || b.x < -50 || b.x > W || b.life <= 0) {
+        bullets.splice(i, 1);
+        continue;
       }
-      return;
-    }
-
-    // Fallback: simple colored circle
-    const r = o.r || 10;
-    ctx.fillStyle = o.color || ornamentFallbackColors[type] || '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function drawSanta(x, y) {
-    const w = 80;
-    const h = 80;
-    let drawX = x;
-    let drawY = y;
-
-    if (recoilTimer > 0) {
-      drawY += 5;
-    }
-
-    if (!santaImg.complete || santaImg.naturalWidth === 0) {
-      ctx.fillStyle = 'red';
-      ctx.beginPath();
-      ctx.arc(drawX, drawY, 20, 0, Math.PI * 2);
-      ctx.fill();
-      return;
-    }
-
-    // NEW: larger Santa, centered on drawX/drawY
-    ctx.drawImage(santaImg, drawX - 60, drawY - 60, 120, 120);
-  }
-
-  // Game Loop
-  resize();
-  loadGame();
-  updateLanguage();
-  buildShopFromItems();
-  renderQuickBar();
-  toggleMenu(true);
-  
-  function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-  }
-  
-  loop();
-
-})();
-</script>
-</body>
-</html>
+      
+      // Only check collision when bullet is CLOSE to target
+      const distToTarget = Math.sqrt((b.x - b.targetX)**2 + (b.y - b.targetY)**2);
+      const bulletSpeed = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
+      
+      if (distToTarget < bulletSpeed * 2) {
+        // Bullet is close to target - check if it hits the tree
+        let hit = false;
+        for (const t of tree.tiers) {
+          if (isInside(b.x, b.y, t)) {
+            hit = true;
+            break;
+          }
+        }
+        
+        if (hit) {
+          if (gameState === 'MISSION') {
+            const idx = findTargetAt(b.x, b.y);
+            if (idx !== -1) {
+              const target = ghostTargets[idx];
+              ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
+              ghostTargets.splice(idx, 1);
+              playSound('stick');
+              money += 5;
+              saveGame();
+              checkButtons();
+              updateShopUI();
+              if (ghostTargets.length === 0) {
+                missionLevel++;
+                spawnTargets(missionLevel);
+              }
+              bullets.splice(i, 1);
+              continue;
+            }
+          }
+          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+          playSound('stick');
+          bullets.splice(i, 1);
+        } else {
+          // Bullet passed through target area without hitting tree - continue or fade
+          // Remove if it's too far past target
+          if (distToTarget > bulletSpeed * 5 || b.distanceTraveled > b.totalDistance + 100) {
+            bullets.splice
