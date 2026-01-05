@@ -311,11 +311,11 @@
   const ctx = canvas.getContext('2d');
 
   // Visual layout constants
-  // Slightly wider, squat tree & Santa so nothing looks too skinny
-  const TREE_BASE_WIDTH = 750;   // visual design width
+  // Wider, slightly squat tree & Santa so nothing looks too skinny
+  const TREE_BASE_WIDTH = 900;   // visual design width (wider)
   const TREE_BASE_HEIGHT = 900;  // visual design height
   const TREE_BOTTOM_MARGIN = 40;
-  const SANTA_WIDTH = 200;       // make Santa a bit wider than tall
+  const SANTA_WIDTH = 240;       // Santa clearly wider
   const SANTA_HEIGHT = 180;
   const STAR_SIZE = 80;
 
@@ -1417,18 +1417,17 @@
     }
 
     // Star on top – drawn AFTER tree so it stays visible.
-    // Tree image has some transparent top padding, so we place the
-    // star a little lower than the raw image top so it appears just
-    // above the visible foliage, not at the very top of the texture.
+    // Place it clearly above the visible foliage (lower than the
+    // very top of the image, but still above the tree).
     const tipX = rect.x + rect.width / 2;
-    const tipY = rect.y + rect.height * 0.08;
+    const tipY = rect.y + rect.height * 0.12;
 
     if (starImg && starImg.complete && starImg.naturalWidth) {
-      ctx.drawImage(starImg, tipX - STAR_SIZE / 2, tipY - STAR_SIZE * 0.9, STAR_SIZE, STAR_SIZE);
+      ctx.drawImage(starImg, tipX - STAR_SIZE / 2, tipY - STAR_SIZE * 0.7, STAR_SIZE, STAR_SIZE);
     } else {
       ctx.fillStyle = '#ffd700';
       ctx.beginPath();
-      ctx.arc(tipX, tipY - STAR_SIZE * 0.4, STAR_SIZE * 0.35, 0, Math.PI * 2);
+      ctx.arc(tipX, tipY - STAR_SIZE * 0.3, STAR_SIZE * 0.35, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1437,7 +1436,7 @@
     // Ornaments stuck on tree
     for (const o of ornaments) {
       const img = getOrnamentImage(o.type);
-      const radius = o.r || 22;
+      const radius = o.r || 26;
       const size = radius * 2;
       if (img && img.complete && img.naturalWidth) {
         ctx.drawImage(img, o.x - size / 2, o.y - size / 2, size, size);
