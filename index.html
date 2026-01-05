@@ -438,32 +438,32 @@
   // Complete shop list (backgrounds + ornaments)
   const shopItems = [
     // Backgrounds
-    { key: 'bgnight',  name: 'Natt 🌌',  price:   0, type: 'background', owned: true,  img: '🌌' },
-    { key: 'bgday',    name: 'Dag ☀️',  price: 500, type: 'background', owned: false, img: '☀️' },
-    { key: 'bgbridge', name: 'Bro 🌉',  price: 750, type: 'background', owned: false, img: '🌉' },
+    { key: 'bgnight',  name: 'Natt 🌌',  price:   0, type: 'background', owned: true,  equipped: false, img: '🌌' },
+    { key: 'bgday',    name: 'Dag ☀️',  price: 500, type: 'background', owned: false, equipped: false, img: '☀️' },
+    { key: 'bgbridge', name: 'Bro 🌉',  price: 750, type: 'background', owned: false, equipped: false, img: '🌉' },
 
     // Balls (100)
-    { key: 'red',   name: 'Röd Kula 🔴',   price: 100, type: 'ornament', owned: true,  img: '🔴' },
-    { key: 'blue',  name: 'Blå Kula 🔵',   price: 100, type: 'ornament', owned: false, img: '🔵' },
-    { key: 'green', name: 'Grön Kula 🟢',  price: 100, type: 'ornament', owned: false, img: '🟢' },
+    { key: 'red',   name: 'Röd Kula 🔴',   price: 100, type: 'ornament', owned: true,  equipped: true,  img: '🔴' },
+    { key: 'blue',  name: 'Blå Kula 🔵',   price: 100, type: 'ornament', owned: false, equipped: false, img: '🔵' },
+    { key: 'green', name: 'Grön Kula 🟢',  price: 100, type: 'ornament', owned: false, equipped: false, img: '🟢' },
 
     // Shiny balls (150)
-    { key: 'gold',   name: 'Guldkula 🟡',  price: 150, type: 'ornament', owned: false, img: '🟡' },
-    { key: 'silver', name: 'Silverkula ⚪',price: 150, type: 'ornament', owned: false, img: '⚪' },
-    { key: 'purple', name: 'Lila Kula 🟣', price: 150, type: 'ornament', owned: false, img: '🟣' },
+    { key: 'gold',   name: 'Guldkula 🟡',  price: 150, type: 'ornament', owned: false, equipped: false, img: '🟡' },
+    { key: 'silver', name: 'Silverkula ⚪',price: 150, type: 'ornament', owned: false, equipped: false, img: '⚪' },
+    { key: 'purple', name: 'Lila Kula 🟣', price: 150, type: 'ornament', owned: false, equipped: false, img: '🟣' },
 
     // Specials (200–400)
-    { key: 'light',      name: 'Ljusslinga 💡',  price: 200, type: 'ornament', owned: false, img: '💡' },
-    { key: 'bow',        name: 'Rosett 🎀',      price: 250, type: 'ornament', owned: false, img: '🎀' },
-    { key: 'gift',       name: 'Julklapp 🎁',    price: 250, type: 'ornament', owned: false, img: '🎁' },
-    { key: 'candycane',  name: 'Polkagris 🍭',   price: 250, type: 'ornament', owned: false, img: '🍭' },
-    { key: 'gingerbread',name: 'Pepparkaka 🍪',  price: 300, type: 'ornament', owned: false, img: '🍪' },
-    { key: 'candle',     name: 'Ljus 🕯️',       price: 350, type: 'ornament', owned: false, img: '🕯️' },
+    { key: 'light',      name: 'Ljusslinga 💡',  price: 200, type: 'ornament', owned: false, equipped: false, img: '💡' },
+    { key: 'bow',        name: 'Rosett 🎀',      price: 250, type: 'ornament', owned: false, equipped: false, img: '🎀' },
+    { key: 'gift',       name: 'Julklapp 🎁',    price: 250, type: 'ornament', owned: false, equipped: false, img: '🎁' },
+    { key: 'candycane',  name: 'Polkagris 🍭',   price: 250, type: 'ornament', owned: false, equipped: false, img: '🍭' },
+    { key: 'gingerbread',name: 'Pepparkaka 🍪',  price: 300, type: 'ornament', owned: false, equipped: false, img: '🍪' },
+    { key: 'candle',     name: 'Ljus 🕯️',       price: 350, type: 'ornament', owned: false, equipped: false, img: '🕯️' },
 
     // Tinsel (250)
-    { key: 'goldtinsel',   name: 'Guldglitter ✨',  price: 250, type: 'ornament', owned: false, img: '✨' },
-    { key: 'silvertinsel', name: 'Silverglitter 💫',price: 250, type: 'ornament', owned: false, img: '💫' },
-    { key: 'redtinsel',    name: 'Rött Glitter 🎗️',price: 250, type: 'ornament', owned: false, img: '🎗️' }
+    { key: 'goldtinsel',   name: 'Guldglitter ✨',  price: 250, type: 'ornament', owned: false, equipped: false, img: '✨' },
+    { key: 'silvertinsel', name: 'Silverglitter 💫',price: 250, type: 'ornament', owned: false, equipped: false, img: '💫' },
+    { key: 'redtinsel',    name: 'Rött Glitter 🎗️',price: 250, type: 'ornament', owned: false, equipped: false, img: '🎗️' }
   ];
 
   let stars = [];
@@ -791,7 +791,8 @@
       unlocked,
       activeThrowType,
       activeBackground,
-      currentBgKey
+      currentBgKey,
+      shopEquipped: shopItems.map(i => ({ key: i.key, equipped: !!i.equipped }))
     };
     localStorage.setItem('decoTreeSave', JSON.stringify(gameData));
   }
@@ -832,6 +833,15 @@
           ? gameData.currentBgKey
           : 'bgnight';
         currentBg = backgrounds[currentBgKey];
+
+        if (Array.isArray(gameData.shopEquipped)) {
+          const map = new Map(gameData.shopEquipped.map(e => [e.key, !!e.equipped]));
+          shopItems.forEach(item => {
+            if (item.type === 'ornament') {
+              item.equipped = !!map.get(item.key);
+            }
+          });
+        }
       } catch (e) {
         console.error('Failed to load save data:', e);
       }
@@ -1021,28 +1031,6 @@
       const btn = document.createElement('button');
       btn.className = 'buy-btn';
       btn.id = 'buy_' + item.key;
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        if (item.type === 'background') {
-          const key = item.key;
-          const owned = !!unlocked[key];
-
-          if (!owned) {
-            if (money < item.price) return;
-            money -= item.price;
-            unlocked[key] = true;
-            playSound('buy');
-          }
-          if (backgrounds[key]) {
-            currentBgKey = key;
-            currentBg = backgrounds[key];
-          }
-          saveGame();
-          updateAllUI();
-        } else {
-          window.buyPack(item.key, item.price);
-        }
-      };
 
       row.appendChild(label);
       row.appendChild(btn);
@@ -1063,7 +1051,7 @@
       if (item.type === 'background') {
         if (!owned) {
           btn.disabled = money < cost;
-          btn.innerText = cost + ' 🪙';
+          btn.innerText = translations[currentLang].buy;
         } else {
           const isActive = (currentBgKey === item.key);
           btn.disabled = isActive;
@@ -1072,15 +1060,35 @@
             : translations[currentLang].equip;
         }
       } else {
-        if (owned) {
-          btn.disabled = true;
-          btn.innerText = translations[currentLang].equipped;
-        } else if (money >= cost) {
-          btn.disabled = false;
-          btn.innerText = cost + ' 🪙';
+        if (!owned) {
+          btn.disabled = money < cost;
+          btn.innerText = translations[currentLang].buy;
         } else {
-          btn.disabled = true;
-          btn.innerText = cost + ' 🪙';
+          const equippedCount = shopItems.filter(i => i.type === 'ornament' && i.equipped).length;
+          if (item.equipped) {
+            btn.disabled = false;
+            btn.innerText = translations[currentLang].remove || 'Ta bort';
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              item.equipped = false;
+              saveGame();
+              updateAllUI();
+            };
+          } else {
+            btn.disabled = false;
+            btn.innerText = translations[currentLang].equip;
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              const currentEquipped = shopItems.filter(i => i.type === 'ornament' && i.equipped).length;
+              if (currentEquipped >= 5) {
+                alert('Max 5!');
+                return;
+              }
+              item.equipped = true;
+              saveGame();
+              updateAllUI();
+            };
+          }
         }
       }
     });
@@ -1119,6 +1127,7 @@
     shopItems.forEach(item => {
       if (item.type === 'background') return;
       if (!unlocked[item.key]) return;
+      if (!item.equipped) return;
 
       const btn = document.createElement('div');
       btn.className = 'quick-btn';
@@ -1142,10 +1151,11 @@
   // --- BACKGROUND, TREE & RENDERING ----------------------------------------
   function getTreeRect() {
     const groundY = H * 0.8;
-    const treeH = Math.min(groundY * 0.95, 800);
-    const treeW = Math.min(W * 0.45, 600);
+    const baseTreeW = 600;
+    const treeW = Math.min(baseTreeW, W * 0.9);
+    const treeH = 800;
     const x = (W - treeW) / 2;
-    const y = groundY - treeH;
+    const y = H - treeH - 50;
     return { x, y, w: treeW, h: treeH };
   }
 
@@ -1171,8 +1181,8 @@
     if (starImg.complete && starImg.naturalWidth > 0) {
       const starW = 80;
       const starH = 80;
-      const sx = rect.x + rect.w / 2 - starW / 2;
-      const sy = rect.y - starH;
+      const sx = rect.x + rect.w / 2 - 40;
+      const sy = rect.y - 40;
       ctx.drawImage(starImg, sx, sy, starW, starH);
     }
   }
@@ -1369,10 +1379,10 @@
   window.addEventListener('touchstart', handleInput, { passive: false });
 
   function fireAtTarget(targetX, targetY) {
-    const santaCenterX = santaX;
-    const santaCenterY = player.y;
-    const dx = targetX - santaCenterX;
-    const dy = targetY - santaCenterY;
+    const santaHandX = santaX + 60;
+    const santaHandY = player.y + 60;
+    const dx = targetX - santaHandX;
+    const dy = targetY - santaHandY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist === 0) return;
 
@@ -1384,13 +1394,13 @@
 
     const speed = 15;
     const totalDistance = Math.sqrt(
-      (targetX - santaCenterX) ** 2 +
-      (targetY - santaCenterY) ** 2
+      (targetX - santaHandX) ** 2 +
+      (targetY - santaHandY) ** 2
     );
 
     bullets.push({
-      x: santaCenterX,
-      y: santaCenterY,
+      x: santaHandX,
+      y: santaHandY,
       vx: dirX * speed,
       vy: dirY * speed,
       r: Math.random() * 5 + 8,
@@ -1471,10 +1481,9 @@
     canvas.height = window.innerHeight * 0.9;
     W = canvas.width;
     H = canvas.height;
-    const groundY = H * 0.8;
-    const santaSize = 120;
-    const santaCenterY = groundY - santaSize / 2;
-    const santaCenterX = Math.min(W - santaSize, W / 2 + 200);
+    const rect = getTreeRect();
+    const santaCenterX = Math.max(60, rect.x - 100);
+    const santaCenterY = H - 150;
     player.x = santaCenterX;
     player.y = santaCenterY;
     santaX = player.x;
