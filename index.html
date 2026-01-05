@@ -319,15 +319,23 @@
   let treeLoaded = false;
   treeImg.onload = () => { treeLoaded = true; };
 
-  // NEW: ornament images
-  const redImg = new Image();    redImg.src = 'red.png';
-  const blueImg = new Image();   blueImg.src = 'blue.png';
-  const greenImg = new Image();  greenImg.src = 'green.png';
-  const goldImg = new Image();   goldImg.src = 'gold.png';
-  const silverImg = new Image(); silverImg.src = 'silver.png';
-  const purpleImg = new Image(); purpleImg.src = 'purple.png';
-  const candyImg = new Image();  candyImg.src = 'candycane.png';
-  const gingerImg = new Image(); gingerImg.src = 'gingerbread.png';
+  // Baubles
+  const redImg = new Image();   redImg.src = 'red.png';
+  const blueImg = new Image();  blueImg.src = 'blue.png';
+  const greenImg = new Image(); greenImg.src = 'green.png';
+  const goldImg = new Image();  goldImg.src = 'gold.png';
+  const silverImg = new Image();silverImg.src = 'silver.png';
+  const purpleImg = new Image();purpleImg.src = 'purple.png';
+  // Specials
+  const candyImg = new Image(); candyImg.src = 'candycane.png';
+  const gingerImg = new Image();gingerImg.src = 'gingerbread.png';
+  const giftImg = new Image();  giftImg.src = 'gift.png';
+  const candleImg = new Image();candleImg.src = 'candle.png';
+  const bulbImg = new Image();  bulbImg.src = 'bulb.png';
+  // Tinsel segments
+  const goldTinselImg = new Image();  goldTinselImg.src = 'goldtinsel.png';
+  const silverTinselImg = new Image();silverTinselImg.src = 'silvertinsel.png';
+  const redTinselImg = new Image();   redTinselImg.src = 'redtinsel.png';
 
   // Elements
   const scoreText = document.getElementById('scoreText');
@@ -368,38 +376,41 @@
   // Färger och items
   let activePalette = ['#e63946','#d32f2f','#2a9d8f','#e9c46a','#f4a261','#e76f51'];
 
-  // NEW: unlocked map uses ornament keys directly
+  // Unlocked state for all ornament keys + backgrounds
   let unlocked = { 
-    red: true,      // default owned
+    red: true,        // default owned
     blue: false,
     green: false,
     gold: false,
     silver: false,
     purple: false,
+    bulb: false,
+    goldtinsel: false,
+    silvertinsel: false,
+    redtinsel: false,
     candycane: false,
+    gift: false,
     gingerbread: false,
+    candle: false,
     bg_day: true,
     bg_night: false,
     bg_aurora: false,
     bg_sunset: false 
   };
 
-  // NEW: simple fallback colors per ornament type (used if image missing)
   const ornamentFallbackColors = {
-    red:        '#e53935',
-    blue:       '#1e88e5',
-    green:      '#43a047',
-    gold:       '#fbc02d',
-    silver:     '#cccccc',
-    purple:     '#8e24aa',
-    candycane:  '#e91e63',
-    gingerbread:'#8d6e63'
+    red: '#e53935', blue: '#1e88e5', green: '#43a047',
+    gold: '#fbc02d', silver: '#cccccc', purple: '#8e24aa',
+    bulb: '#ffd54f',
+    goldtinsel: '#fdd835', silvertinsel: '#e0e0e0', redtinsel: '#e53935',
+    candycane: '#e91e63', gift: '#f44336',
+    gingerbread: '#8d6e63', candle: '#fff8e1'
   };
 
-  let activeThrowType = 'red'; // default ammo type
+  let activeThrowType = 'red';
   let activeBackground = 'bg_day';
   let currentLang = 'sv';
-  let santaX = 0; 
+  let santaX = 0;
 
   const backgrounds = {
     bg_day: { id:'bg_day', price:0,   colors:[{p:0,c:'#eaf6ff'},{p:1,c:'#ffffff'}] },
@@ -408,16 +419,26 @@
     bg_sunset: { id:'bg_sunset', price:500, colors:[{p:0,c:'#ff7e5f'},{p:0.6,c:'#fbd786'},{p:1,c:'#c94b4b'}] }
   };
 
-  // NEW: shop metadata for ornaments (keys match types)
+  // Complete ornament shop list
   const shopItems = [
-    { key: 'red',        name: 'Röd Kula 🔴',       price: 100, img: '🔴' },
-    { key: 'blue',       name: 'Blå Kula 🔵',       price: 150, img: '🔵' },
-    { key: 'green',      name: 'Grön Kula 🟢',      price: 150, img: '🟢' },
-    { key: 'gold',       name: 'Guldkula 🟡',       price: 200, img: '🟡' },
-    { key: 'silver',     name: 'Silverkula ⚪',     price: 200, img: '⚪' },
-    { key: 'purple',     name: 'Lila Kula 🟣',      price: 200, img: '🟣' },
-    { key: 'candycane',  name: 'Polkagris 🍭',      price: 300, img: '🍭' },
-    { key: 'gingerbread',name: 'Pepparkaka 🍪',     price: 350, img: '🍪' }
+    // Standard Baubles (Price: 100)
+    { key: 'red',        name: 'Röd Kula 🔴',        price: 100, owned: true,  img: '🔴' },
+    { key: 'blue',       name: 'Blå Kula 🔵',        price: 100, owned: false, img: '🔵' },
+    { key: 'green',      name: 'Grön Kula 🟢',       price: 100, owned: false, img: '🟢' },
+    // Shiny Baubles (Price: 150)
+    { key: 'gold',       name: 'Guldkula 🟡',        price: 150, owned: false, img: '🟡' },
+    { key: 'silver',     name: 'Silverkula ⚪',      price: 150, owned: false, img: '⚪' },
+    { key: 'purple',     name: 'Lila Kula 🟣',       price: 150, owned: false, img: '🟣' },
+    // Lights & Tinsel (Price: 200)
+    { key: 'bulb',       name: 'Glödlampa 💡',      price: 200, owned: false, img: '💡' },
+    { key: 'goldtinsel', name: 'Guldglitter ✨',     price: 200, owned: false, img: '✨' },
+    { key: 'silvertinsel',name:'Silverglitter 🌪️',  price: 200, owned: false, img: '🌪️' },
+    { key: 'redtinsel',  name: 'Rött Glitter 🧣',    price: 200, owned: false, img: '🧣' },
+    // Special Ornaments (Price: 250-350)
+    { key: 'candycane',  name: 'Polkagris 🍭',       price: 250, owned: false, img: '🍭' },
+    { key: 'gift',       name: 'Julklapp 🎁',        price: 250, owned: false, img: '🎁' },
+    { key: 'gingerbread',name: 'Pepparkaka 🍪',      price: 300, owned: false, img: '🍪' },
+    { key: 'candle',     name: 'Levande Ljus 🕯️',   price: 350, owned: false, img: '🕯️' }
   ];
 
   let stars = [];
@@ -690,9 +711,11 @@
         itemGarland: 'itemGarland', itemGlitter: 'itemGlitter',
         bgDay: 'bgDay', bgNight: 'bgNight', bgAurora: 'bgAurora', bgSunset: 'bgSunset'
     };
-    for(let k in map) {
-        document.getElementById(k+'Name').innerText = t[map[k]];
-        document.getElementById(k+'Desc').innerText = t[map[k]+'Desc'];
+    for (let k in map) {
+      const nameEl = document.getElementById(k + 'Name');
+      const descEl = document.getElementById(k + 'Desc');
+      if (nameEl) nameEl.innerText = t[map[k]];
+      if (descEl) descEl.innerText = t[map[k] + 'Desc'];
     }
     
     scoreText.innerText = '🎄 ' + t.ornaments + ': ' + ornaments.length;
@@ -739,10 +762,10 @@
   // --- SAVE/LOAD SYSTEM ---
   function saveGame() {
     const gameData = {
-      money: money,
-      unlocked: unlocked,
-      activeThrowType: activeThrowType,
-      activeBackground: activeBackground
+      money,
+      unlocked,
+      activeThrowType,
+      activeBackground
     };
     localStorage.setItem('decoTreeSave', JSON.stringify(gameData));
   }
@@ -760,8 +783,14 @@
           gold: false,
           silver: false,
           purple: false,
+          bulb: false,
+          goldtinsel: false,
+          silvertinsel: false,
+          redtinsel: false,
           candycane: false,
+          gift: false,
           gingerbread: false,
+          candle: false,
           bg_day: true,
           bg_night: false,
           bg_aurora: false,
@@ -850,12 +879,11 @@
   startCreative.onclick = (e) => { e.stopPropagation(); window.startCreativeGame(); };
   startMission.onclick = (e) => { e.stopPropagation(); window.startMissionGame(); };
 
-  // --- CRITICAL FIX: buyPack with SAVE + ornaments/backgrounds ---
+  // buyPack for ornaments + backgrounds
   window.buyPack = function(key, cost) {
     const isBackground = key.startsWith('bg_');
     const alreadyOwned = !!unlocked[key];
 
-    // Only require money when unlocking for the first time
     if (!alreadyOwned && cost > 0) {
       if (money < cost) return;
       money -= cost;
@@ -866,7 +894,6 @@
       playSound('buy');
     }
 
-    // Selecting item always sets it active (no extra cost)
     if (isBackground) {
       activeBackground = key;
     } else {
@@ -898,8 +925,14 @@
       gold: false,
       silver: false,
       purple: false,
+      bulb: false,
+      goldtinsel: false,
+      silvertinsel: false,
+      redtinsel: false,
       candycane: false,
+      gift: false,
       gingerbread: false,
+      candle: false,
       bg_day: true,
       bg_night: false,
       bg_aurora: false,
@@ -918,7 +951,6 @@
     updateLanguage();
   };
 
-  // --- 2. PHYSICS: Movement ---
   window.addEventListener('mousemove', (e) => {
     if (e.target.closest('#shopModal') || e.target.closest('.shop-content')) return;
     const rect = canvas.getBoundingClientRect();
@@ -1147,7 +1179,6 @@
     const dirX = dx/dist;
     const dirY = dy/dist;
     
-    // NEW: use type-based fallback color, images handled in drawOrnament
     const color = ornamentFallbackColors[activeThrowType] 
                   || activePalette[Math.floor(Math.random() * activePalette.length)];
     
@@ -1252,37 +1283,42 @@
     renderQuickBar();
   }
 
+  // Build ornament shop rows from shopItems
+  function buildShopFromItems() {
+    // Remove any existing static ornament rows
+    shopItemsDiv.querySelectorAll('.shop-item').forEach(el => el.remove());
+
+    shopItems.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'shop-item';
+
+      const label = document.createElement('div');
+      label.innerHTML = `<b>${item.name}</b><br><span style="font-size:12px">${item.price} 🪙</span>`;
+
+      const btn = document.createElement('button');
+      btn.className = 'buy-btn';
+      btn.id = 'buy_' + item.key;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.buyPack(item.key, item.price);
+      };
+
+      row.appendChild(label);
+      row.appendChild(btn);
+      shopItemsDiv.appendChild(row);
+    });
+
+    checkButtons();
+  }
+
   function checkButtons() {
-    // NEW: ornament buttons driven by keys
-    const ornamentButtonIds = {
-      red:        'buyStandard',
-      blue:       'buyGold',
-      green:      'buyDiamond',
-      gold:       'buyCandy',
-      silver:     'buyLight',
-      purple:     'buyCandle',
-      candycane:  'buyGarland',
-      gingerbread:'buyGlitter'
-    };
+    // Ornaments: dynamically from shopItems
+    shopItems.forEach(item => {
+      const btn = document.getElementById('buy_' + item.key);
+      if (!btn) return;
 
-    const priceByKey = {
-      red:        100,
-      blue:       150,
-      green:      150,
-      gold:       200,
-      silver:     200,
-      purple:     200,
-      candycane:  300,
-      gingerbread:350
-    };
-
-    // Ornaments
-    for (const [key, btnId] of Object.entries(ornamentButtonIds)) {
-      const btn = document.getElementById(btnId);
-      if (!btn) continue;
-
-      const owned = !!unlocked[key];
-      const cost = priceByKey[key];
+      const owned = !!unlocked[item.key];
+      const cost = item.price;
 
       if (owned) {
         btn.disabled = true;
@@ -1294,9 +1330,9 @@
         btn.disabled = true;
         btn.innerText = cost + ' 🪙';
       }
-    }
+    });
 
-    // Backgrounds (unchanged logic)
+    // Backgrounds (unchanged)
     const bgButtons = {
       buyBg_day:    { unlockKey: 'bg_day',    cost: 0   },
       buyBg_night:  { unlockKey: 'bg_night',  cost: 100 },
@@ -1384,7 +1420,6 @@
     });
   }
 
-  // --- DRAWING ---
   function draw(){
     drawBackground();
 
@@ -1436,11 +1471,9 @@
       ctx.restore();
     }
 
-    // Ornaments & bullets
     ornaments.forEach(o => drawOrnament(o));
     bullets.forEach(b => drawOrnament(b));
     
-    // Santa
     drawSanta(santaX, player.y);
   }
 
@@ -1459,45 +1492,52 @@
     ctx.closePath();
   }
 
-  // NEW: drawOrnament uses image per type, with circle fallback
+  // drawOrnament: image-based for all types, with size variants
   function drawOrnament(o) {
-    // Map type to loaded image
-    let img = null;
-    switch (o.type) {
-      case 'red':        img = redImg;    break;
-      case 'blue':       img = blueImg;   break;
-      case 'green':      img = greenImg;  break;
-      case 'gold':       img = goldImg;   break;
-      case 'silver':     img = silverImg; break;
-      case 'purple':     img = purpleImg; break;
-      case 'candycane':  img = candyImg;  break;
-      case 'gingerbread':img = gingerImg; break;
-      default:           img = null;      break;
-    }
-
     const x = o.x;
     const y = o.y;
+    const type = o.type;
+
+    let img = null;
+    let mode = 'circle'; // 'standard' | 'tall' | 'wide' | 'circle'
+
+    if (type === 'red')         { img = redImg;        mode = 'standard'; }
+    else if (type === 'blue')  { img = blueImg;       mode = 'standard'; }
+    else if (type === 'green') { img = greenImg;      mode = 'standard'; }
+    else if (type === 'gold')  { img = goldImg;       mode = 'standard'; }
+    else if (type === 'silver'){ img = silverImg;     mode = 'standard'; }
+    else if (type === 'purple'){ img = purpleImg;     mode = 'standard'; }
+    else if (type === 'bulb')  { img = bulbImg;       mode = 'standard'; }
+    else if (type === 'gingerbread') { img = gingerImg; mode = 'standard'; }
+    else if (type === 'gift')  { img = giftImg;       mode = 'standard'; }
+    else if (type === 'candycane') { img = candyImg;  mode = 'tall'; }
+    else if (type === 'candle')    { img = candleImg; mode = 'tall'; }
+    else if (type === 'goldtinsel'){ img = goldTinselImg;  mode = 'wide'; }
+    else if (type === 'silvertinsel'){ img = silverTinselImg; mode = 'wide'; }
+    else if (type === 'redtinsel'){ img = redTinselImg; mode = 'wide'; }
 
     if (img && img.complete && img.naturalWidth > 0) {
-      let w = 30;
-      let h = 30;
-      if (o.type === 'candycane') {
-        w = 20;
-        h = 40;
+      if (mode === 'standard') {
+        const w = 30, h = 30;
+        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      } else if (mode === 'tall') {
+        const w = 25, h = 40;
+        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      } else if (mode === 'wide') {
+        const w = 40, h = 20;
+        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
       }
-      ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
       return;
     }
 
     // Fallback: simple colored circle
     const r = o.r || 10;
-    ctx.fillStyle = o.color || '#ffffff';
+    ctx.fillStyle = o.color || ornamentFallbackColors[type] || '#ffffff';
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 1. VISUALS: Santa using image asset with safe fallback
   function drawSanta(x, y) {
     const w = 80;
     const h = 80;
@@ -1526,6 +1566,7 @@
   resize();
   loadGame();
   updateLanguage();
+  buildShopFromItems();
   renderQuickBar();
   toggleMenu(true);
   
