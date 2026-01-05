@@ -353,6 +353,8 @@
   const moneyText = document.getElementById('moneyText');
   const shopModal = document.getElementById('shopModal');
   const soundBtn = document.getElementById('soundBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const shopBtn = document.getElementById('shopBtn');
   const menuOverlay = document.getElementById('menuOverlay');
   const menuBtn = document.getElementById('menuBtn');
   const startCreative = document.getElementById('startCreative');
@@ -914,6 +916,20 @@
   startCreative.onclick = (e) => { e.stopPropagation(); window.startCreativeGame(); };
   startMission.onclick = (e) => { e.stopPropagation(); window.startMissionGame(); };
 
+  if (shopBtn) {
+    shopBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.toggleShop(true);
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ornaments = [];
+    });
+  }
+
   // buyPack for ornaments + backgrounds
   window.buyPack = function(key, cost) {
     const isBackground = key.startsWith('bg_');
@@ -1353,9 +1369,10 @@
   window.addEventListener('touchstart', handleInput, { passive: false });
 
   function fireAtTarget(targetX, targetY) {
-    const santaY = player.y - 40;
-    const dx = targetX - santaX;
-    const dy = targetY - santaY;
+    const santaCenterX = santaX;
+    const santaCenterY = player.y;
+    const dx = targetX - santaCenterX;
+    const dy = targetY - santaCenterY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist === 0) return;
 
@@ -1366,11 +1383,14 @@
       || activePalette[Math.floor(Math.random() * activePalette.length)];
 
     const speed = 15;
-    const totalDistance = Math.sqrt((targetX - santaX) ** 2 + (targetY - santaY) ** 2);
+    const totalDistance = Math.sqrt(
+      (targetX - santaCenterX) ** 2 +
+      (targetY - santaCenterY) ** 2
+    );
 
     bullets.push({
-      x: santaX,
-      y: santaY,
+      x: santaCenterX,
+      y: santaCenterY,
       vx: dirX * speed,
       vy: dirY * speed,
       r: Math.random() * 5 + 8,
@@ -1409,40 +1429,36 @@
         continue;
       }
 
-      const distToTarget = Math.sqrt((b.x - b.targetX) ** 2 + (b.y - b.targetY) ** 2);
-      const bulletSpeed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+      const onTree = isInsideTree(b.x, b.y);
 
-      if (distToTarget < bulletSpeed * 2) {
-        let hit = isInsideTree(b.x, b.y);
+      if (!onTree) {
+        // In the sky or outside the green tree: keep flying
+        continue;
+      }
 
-        if (hit) {
-          if (gameState === 'MISSION') {
-            const idx = findTargetAt(b.x, b.y);
-            if (idx !== -1) {
-              const target = ghostTargets[idx];
-              ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
-              ghostTargets.splice(idx, 1);
-              playSound('stick');
-              money += 5;
-              saveGame();
-              updateShopUI();
-              if (ghostTargets.length === 0) {
-                missionLevel++;
-                spawnTargets(missionLevel);
-              }
-              bullets.splice(i, 1);
-              continue;
-            }
-          }
-          ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+      // Bullet hit the tree area
+      if (gameState === 'MISSION') {
+        const idx = findTargetAt(b.x, b.y);
+        if (idx !== -1) {
+          const target = ghostTargets[idx];
+          ornaments.push({ x: target.x, y: target.y, r: b.r, color: b.color, type: b.type });
+          ghostTargets.splice(idx, 1);
           playSound('stick');
-          bullets.splice(i, 1);
-        } else {
-          if (distToTarget > bulletSpeed * 5 || b.distanceTraveled > b.totalDistance + 100) {
-            bullets.splice(i, 1);
+          money += 5;
+          saveGame();
+          updateShopUI();
+          if (ghostTargets.length === 0) {
+            missionLevel++;
+            spawnTargets(missionLevel);
           }
+          bullets.splice(i, 1);
+          continue;
         }
       }
+
+      ornaments.push({ x: b.x, y: b.y, r: b.r, color: b.color, type: b.type });
+      playSound('stick');
+      bullets.splice(i, 1);
     }
 
     const t = translations[currentLang];
