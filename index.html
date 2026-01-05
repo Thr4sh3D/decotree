@@ -346,7 +346,8 @@
   let gameState = 'MENU';
   let ghostTargets = [];
   let missionLevel = 1;
-  let pausedState = null; // Track paused game state
+  let pausedState = null;
+  let recoilTimer = 0; // NEW: small recoil timer for Santa
 
   // 4. GAMEPLAY: Cheat code tracker
   let cheatClicks = 0;
@@ -1063,7 +1064,7 @@
   window.addEventListener('touchstart', handleInput, {passive: false});
 
   function fireAtTarget(targetX, targetY) {
-    const santaY = player.y - 40; // Fire from slightly higher
+    const santaY = player.y - 40;
     const dx = targetX - santaX;
     const dy = targetY - santaY;
     const dist = Math.sqrt(dx*dx + dy*dy);
@@ -1099,12 +1100,15 @@
     });
     
     playSound('shoot');
+    recoilTimer = 5; // NEW: trigger short recoil after each shot
   }
 
   function update(){
     if (gameState === 'MENU') return;
     updateSnow();
-    
+
+    if (recoilTimer > 0) recoilTimer--; // NEW: decay recoil each frame
+
     for (let i = bullets.length - 1; i >= 0; i--) {
       const b = bullets[i];
       b.x += b.vx;
@@ -1304,7 +1308,7 @@
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     snowflakes.forEach(s => { ctx.fillRect(s.x - s.r/2, s.y - s.r/2, s.r, s.r); });
 
-    // Draw Tree (sprite). Logic/collision still uses invisible tiers from setupTree().
+    // Draw Tree (sprite)
     if (treeLoaded && treeImg.naturalWidth > 0) {
       const treeWidth = 400;
       const treeHeight = 600;
@@ -1312,10 +1316,7 @@
       const treeY = 100;
       ctx.drawImage(treeImg, treeX, treeY, treeWidth, treeHeight);
     } else {
-      // Optional fallback: old procedural tree (trunk + green tiers)
-      // ctx.fillStyle = '#6b3b1b';
-      // ctx.fillRect(tree.trunk.x, tree.trunk.y, tree.trunk.w, tree.trunk.h);
-      // tree.tiers.forEach(t => { ...existing tier drawing code... });
+      // ...optional old procedural tree fallback...
     }
 
     // Ghost targets (mission)
@@ -1373,21 +1374,19 @@
     ctx.closePath();
   }
 
-  // 1. VISUALS: Santa using image asset
+  // 1. VISUALS: Santa using image asset (simplified, always visible)
   function drawSanta(x, y) {
-    // Draw only when image is ready
-    if (santaImg.complete && santaImg.naturalWidth > 0) {
-      const w = 80;
-      const h = 80;
-      // Center Santa on (x, y)
-      ctx.drawImage(santaImg, x - w / 2, y - h / 2, w, h);
-       } else {
-      // Optional minimal fallback (can be removed if not desired)
-      // ctx.fillStyle = 'red';
-      // ctx.beginPath();
-      // ctx.arc(x, y, 20, 0, Math.PI * 2);
-      // ctx.fill();
+    const w = 80;
+    const h = 80;
+    let drawY = y;
+
+    // Small recoil: move Santa slightly down right after a shot
+    if (recoilTimer > 0) {
+      drawY += 5;
     }
+
+    // Draw the sprite centered at (x, drawY)
+    ctx.drawImage(santaImg, x - w / 2, drawY - h / 2, w, h);
   }
 
   // Game Loop
