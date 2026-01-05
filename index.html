@@ -1249,12 +1249,14 @@
   // --- TREE GEOMETRY & COLLISION -----------------------------------------
   function getTreeRect() {
     // Large tree, keeps TREE_BASE_WIDTH x TREE_BASE_HEIGHT aspect,
-    // fills as much as possible while staying fully visible and bottom-centered.
+    // fills as much of the screen as possible while staying fully
+    // visible and bottom-centered.
     const aspect = TREE_BASE_HEIGHT / TREE_BASE_WIDTH; // height per width
     const availableHeight = Math.max(H - TREE_BOTTOM_MARGIN, 200);
 
     const maxWidthByHeight = availableHeight / aspect;
-    const width = Math.min(TREE_BASE_WIDTH, W * 0.95, maxWidthByHeight);
+    // Let the tree grow up to ~98% of screen width/height limits
+    const width = Math.min(W * 0.98, maxWidthByHeight);
     const height = width * aspect;
 
     const x = (W - width) / 2;
@@ -1418,16 +1420,20 @@
 
     // Star on top – drawn AFTER tree so it stays visible.
     // Place it clearly above the visible foliage (lower than the
-    // very top of the image, but still above the tree).
-    const tipX = rect.x + rect.width / 2;
-    const tipY = rect.y + rect.height * 0.12;
+    // very top of the image, quite close to the tree top).
+    // Slightly bias X ~0.1% to the left to match visuals
+    const tipX = rect.x + rect.width * 0.499;
+    const tipY = rect.y + rect.height * 0.16;
+
+    const starW = STAR_SIZE * 1.7; // even wider
+    const starH = STAR_SIZE * 1.05;
 
     if (starImg && starImg.complete && starImg.naturalWidth) {
-      ctx.drawImage(starImg, tipX - STAR_SIZE / 2, tipY - STAR_SIZE * 0.7, STAR_SIZE, STAR_SIZE);
+      ctx.drawImage(starImg, tipX - starW / 2, tipY - starH * 0.5, starW, starH);
     } else {
       ctx.fillStyle = '#ffd700';
       ctx.beginPath();
-      ctx.arc(tipX, tipY - STAR_SIZE * 0.3, STAR_SIZE * 0.35, 0, Math.PI * 2);
+      ctx.arc(tipX, tipY - STAR_SIZE * 0.2, STAR_SIZE * 0.35, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1570,11 +1576,11 @@
 
     const rect = getTreeRect();
 
-    // Santa to the LEFT of the tree, anchored to the very bottom
+    // Santa anchored to the very bottom and positioned at ~35%
+    // of total screen width (from left to right), independent of
+    // tree width so his placement is consistent.
     const santaBottomY = H;
-    const santaOffsetX = 120;
-
-    player.x = rect.x - santaOffsetX;
+    player.x = W * 0.35;
     player.y = santaBottomY;
     santaX = player.x;
   }
