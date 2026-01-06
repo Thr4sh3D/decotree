@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>DecoTree - Lyxversion</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎄</text></svg>">
 <link rel="apple-touch-icon" href="icon.png">
@@ -11,44 +11,57 @@
 
 <style>
   html,body { height:100%; margin:0; overflow: hidden; }
-  body { background:#eaf6ff; font-family:system-ui, -apple-system, sans-serif; }
+  body { background:#eaf6ff; font-family:system-ui, -apple-system, sans-serif; height:100vh; width:100vw; touch-action: none; }
   canvas { display:block; width:100%; height:100%; touch-action: none; }
   
   /* UI: Pengar och Info */
   .ui-bar {
-    position: fixed; top: 10px; left: 10px; right: 10px;
+    position: fixed; top: 8px; left: 8px; right: 8px;
     display: flex; justify-content: space-between; align-items: flex-start;
     pointer-events: none; z-index: 10;
+    width: auto;
   }
   
   .score-box {
     background: rgba(255,255,255,0.95);
-    padding: 8px 15px; border-radius: 20px;
+    padding: 8px 12px; border-radius: 20px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    color: #0b3a4a; font-weight: bold; font-size: 16px;
-    display: flex; flex-direction: column; gap: 6px;
+    color: #0b3a4a; font-weight: bold; font-size: clamp(14px, 3vw, 16px);
+    display: flex; flex-direction: column; gap: 4px;
     pointer-events: auto;
     align-items:flex-start;
-    cursor: pointer; /* För fuskkoden */
+    cursor: pointer;
     user-select: none;
   }
 
   #menuBtn {
-    background: #fff; color:#0b3a4a; border:1px solid #ddd; padding:4px 8px;
-    border-radius:12px; font-size:13px; cursor:pointer;
+    background: #fff; color:#0b3a4a; border:1px solid #ddd; padding:6px 10px;
+    border-radius:12px; font-size:clamp(12px, 2.5vw, 14px); cursor:pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    touch-action: manipulation;
   }
   
   /* Knappar */
   .btn-group {
-    display: flex; flex-direction: column; gap: 10px; pointer-events: auto;
-    align-items: flex-end;
+    display: flex; flex-direction: row; gap: 6px; pointer-events: auto;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
   
   button {
-    border: none; color: white; font-weight: bold; font-size: 14px;
-    padding: 10px 15px; border-radius: 20px; cursor: pointer;
+    border: none; color: white; font-weight: bold; font-size: clamp(12px, 3vw, 14px);
+    padding: 8px 12px; border-radius: 20px; cursor: pointer;
     box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: transform 0.1s;
     text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
   }
   button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
 
@@ -58,8 +71,10 @@
   /* Sound button */
   #soundBtn {
     background: linear-gradient(to bottom, #ffd700, #e8b400); color:#0b3a4a;
-    padding: 8px 12px; font-size: 14px; border-radius: 18px;
+    padding: 8px 12px; font-size: clamp(12px, 3vw, 14px); border-radius: 18px;
     box-shadow: 0 4px 0 rgba(0,0,0,0.15); color: #003049;
+    min-height: 44px;
+    min-width: 44px;
   }
 
   /* Menu overlay */
@@ -113,46 +128,50 @@
   .shop-tab { padding:6px 10px; cursor:pointer; border-radius:8px; background:#eee; }
   .shop-tab.active { background:#dff3ff; color:#005cbf; font-weight:bold; }
 
-  /* 3. UI & MENUS: Quick Switch Sidebar */
+  /* 3. UI & MENUS: Quick Switch Bottom Bar */
   #quickBar {
     position: fixed;
+    bottom: 10px;
+    left: 10px;
     right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 8px;
     z-index: 100;
-    pointer-events: none; /* was: auto; allow clicks to pass through gaps */
+    pointer-events: none;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .quick-btn {
-    font-size: 24px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 2px solid #fff;
+    font-size: clamp(32px, 10vw, 60px);
+    background: rgba(255, 255, 255, 0.9);
+    border: 3px solid #fff;
     border-radius: 50%;
-    width: 45px;
-    height: 45px;
+    width: clamp(60px, 15vw, 80px);
+    height: clamp(60px, 15vw, 80px);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     user-select: none;
     pointer-events: auto;
+    touch-action: manipulation;
+    flex-shrink: 0;
   }
 
   /* Selected quick item highlight */
   .quick-btn.active {
-    border: 3px solid gold !important;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-    transform: scale(1.1);
+    border: 4px solid gold !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.9);
+    transform: scale(1.15);
     background-color: #ffffff;
   }
 
   /* small helpers */
-  .hidden { display:none; }
+  .hidden { display:none !important; }
 
   /* 3. UI: Footer */
   #menuFooter {
@@ -161,7 +180,7 @@
     left: 0;
     right: 0;
     text-align: center;
-    font-size: 11px;
+    font-size: clamp(9px, 2vw, 11px);
     color: #888;
     font-family: sans-serif;
     opacity: 0.8;
@@ -327,14 +346,21 @@
   const treeImg  = new Image(); treeImg.src  = 'tree.png';
   const starImg  = new Image(); starImg.src  = 'star.png';
 
-  // Backgrounds (PNG, no underscores)
+  // Backgrounds (PNG)
   const bgDayImg      = new Image(); bgDayImg.src      = 'bgday.png';
   const bgBridgeImg   = new Image(); bgBridgeImg.src   = 'bgbridge.png';
   const bgNightImg    = new Image(); bgNightImg.src    = 'bgnight.png';
   const bgAnimalsImg  = new Image(); bgAnimalsImg.src  = 'bganimals.png';
   const bgReindeerImg = new Image(); bgReindeerImg.src = 'bgreindeer.png';
 
-  let currentBg    = bgNightImg;   // default
+  // Mobile-optimized backgrounds (PNG)
+  const mobileDayImg      = new Image(); mobileDayImg.src      = 'mobilebgday.png';
+  const mobileNightImg    = new Image(); mobileNightImg.src    = 'mobilebgnight.png';
+  const mobileBridgeImg   = new Image(); mobileBridgeImg.src   = 'mobilebgbridge.png';
+  const mobileReindeerImg = new Image(); mobileReindeerImg.src = 'mobilebgreindeer.png';
+  const mobileAnimalsImg  = new Image(); mobileAnimalsImg.src  = 'mobilebganimals.png';
+
+  // We store the background key, not the image directly
   let currentBgKey = 'bgnight';
 
   // Baubles
@@ -489,23 +515,24 @@
   let currentLang = 'sv';
   let santaX = 0;
 
-  // Background key -> image
-  const backgrounds = {
-    bgday: bgDayImg,
-    bgbridge: bgBridgeImg,
-    bgnight: bgNightImg,
-    bganimals: bgAnimalsImg,
-    bgreindeer: bgReindeerImg
+  // Background definitions: desktop + mobile variants
+  const backgroundData = {
+    bgnight:   { desktop: bgNightImg,    mobile: mobileNightImg },
+    bgday:     { desktop: bgDayImg,      mobile: mobileDayImg },
+    bgbridge:  { desktop: bgBridgeImg,   mobile: mobileBridgeImg },
+    // For these, mobile artwork is used for both desktop and mobile slots
+    bgreindeer:{ desktop: mobileReindeerImg, mobile: mobileReindeerImg },
+    bganimals: { desktop: mobileAnimalsImg,  mobile: mobileAnimalsImg }
   };
 
   // Complete shop list (backgrounds + ornaments)
   const shopItems = [
     // Backgrounds
-    { key: 'bgnight',  name: 'Natt',        price:   0, type: 'background', owned: true,  equipped: false, img: '🌌' },
-    { key: 'bgday',    name: 'Dag',         price: 500, type: 'background', owned: false, equipped: false, img: '☀️' },
-    { key: 'bgbridge', name: 'Bro',         price: 750, type: 'background', owned: false, equipped: false, img: '🌉' },
-    { key: 'bganimals', name: 'Djur',       price: 900, type: 'background', owned: false, equipped: false, img: '🐻' },
-    { key: 'bgreindeer', name: 'Renar',     price:1100, type: 'background', owned: false, equipped: false, img: '🦌' },
+    { key: 'bgnight',   name: 'Natt',           price:   0, type: 'background', owned: true,  equipped: false, img: '🌌' },
+    { key: 'bgday',     name: 'Dag',            price:  500, type: 'background', owned: false, equipped: false, img: '☀️' },
+    { key: 'bgbridge',  name: 'Bro',            price:  750, type: 'background', owned: false, equipped: false, img: '🌉' },
+    { key: 'bgreindeer',name: 'Renar 🦌',       price: 1000, type: 'background', owned: false, equipped: false, img: '🦌' },
+    { key: 'bganimals', name: 'Djurens Jul 🦊', price: 1200, type: 'background', owned: false, equipped: false, img: '🦊' },
 
     // Balls (100)
     { key: 'red',   name: 'Röd Kula',       price: 100, type: 'ornament', owned: true,  equipped: true,  img: '🔴' },
@@ -1049,10 +1076,10 @@
         activeThrowType = gameData.activeThrowType || 'red';
         activeBackground = gameData.activeBackground || 'bg_day';
 
-        currentBgKey = gameData.currentBgKey && backgrounds[gameData.currentBgKey]
+        // Restore background key if it exists in our data set
+        currentBgKey = (gameData.currentBgKey && backgroundData[gameData.currentBgKey])
           ? gameData.currentBgKey
           : 'bgnight';
-        currentBg = backgrounds[currentBgKey];
 
         if (Array.isArray(gameData.shopEquipped)) {
           const map = new Map(gameData.shopEquipped.map(e => [e.key, !!e.equipped]));
@@ -1079,7 +1106,6 @@
       }
     } else {
       currentBgKey = 'bgnight';
-      currentBg = backgrounds[currentBgKey];
     }
   }
 
@@ -1249,7 +1275,6 @@
     pausedState = null;
 
     currentBgKey = 'bgnight';
-    currentBg = backgrounds[currentBgKey];
     
     saveGame();
     updateAllUI();
@@ -1330,7 +1355,8 @@
         label.style.display = 'flex';
         label.style.alignItems = 'center';
 
-        const bgImgObj = backgrounds[item.key];
+        const bgInfo = backgroundData[item.key];
+        const bgImgObj = bgInfo && (bgInfo.desktop || bgInfo.mobile);
         if (bgImgObj && bgImgObj.src) {
           const thumb = document.createElement('img');
           thumb.src = bgImgObj.src;
@@ -1377,9 +1403,9 @@
             if (money < cost) return;
             money -= cost;
             unlocked[item.key] = true;
-            if (backgrounds[item.key]) {
+            if (backgroundData[item.key]) {
+              // When buying a background, activate it by key
               currentBgKey = item.key;
-              currentBg = backgrounds[item.key];
             }
             playSound('buy');
             saveGame();
@@ -1391,9 +1417,9 @@
           btn.innerText = isActive ? t.equipped : t.equip;
           btn.onclick = (e) => {
             e.stopPropagation();
-            if (!backgrounds[item.key]) return;
+            if (!backgroundData[item.key]) return;
+            // Equipping background only updates the key
             currentBgKey = item.key;
-            currentBg = backgrounds[item.key];
             saveGame();
             updateAllUI();
           };
@@ -1520,20 +1546,28 @@
 
   // --- TREE GEOMETRY & COLLISION -----------------------------------------
   function getTreeRect() {
-    // Large tree, keeps TREE_BASE_WIDTH x TREE_BASE_HEIGHT aspect,
-    // fills as much of the screen as possible while staying fully
-    // visible and bottom-centered.
+    // Maintains TREE_BASE_WIDTH x TREE_BASE_HEIGHT aspect ratio
     const aspect = TREE_BASE_HEIGHT / TREE_BASE_WIDTH; // height per width
 
-    // Give the tree a bit more room on mobile by using a
-    // smaller bottom margin there.
-    const bottomMargin = isMobileLayout() ? 10 : TREE_BOTTOM_MARGIN;
-    const availableHeight = Math.max(H - bottomMargin, 200);
+    const isPortrait = H > W;
 
+    // On mobile / portrait we want the tree to take 85% of canvas width
+    if (isPortrait || isMobileLayout()) {
+      const treeWidth = W * 0.85;
+      const treeHeight = treeWidth * aspect;
+
+      const x = (W - treeWidth) / 2; // center horizontally
+      const y = Math.max(H - treeHeight, 50); // keep some top margin
+
+      return { x, y, width: treeWidth, height: treeHeight };
+    }
+
+    // Desktop / landscape: keep previous behavior, fitting tree nicely
+    // while respecting a bottom margin.
+    const bottomMargin = TREE_BOTTOM_MARGIN;
+    const availableHeight = Math.max(H - bottomMargin, 200);
     const maxWidthByHeight = availableHeight / aspect;
-    // On desktop keep a tiny side margin, but on mobile let the
-    // tree use the full width.
-    const widthLimit = isMobileLayout() ? W : W * 0.98;
+    const widthLimit = W * 0.98;
     const width = Math.min(widthLimit, maxWidthByHeight);
     const height = width * aspect;
 
@@ -1670,14 +1704,16 @@
     }
   }
 
-  function drawBackground() {
+  function drawBackground(isPortrait) {
     ctx.clearRect(0, 0, W, H);
 
-    if (currentBg && currentBg.complete && currentBg.naturalWidth) {
+    const bgInfo = backgroundData[currentBgKey] || backgroundData['bgnight'];
+    const img = bgInfo ? (isPortrait ? bgInfo.mobile : bgInfo.desktop) : null;
+
+    if (img && img.complete && img.naturalWidth) {
       // Draw background with a "cover" behavior so it fills the
       // canvas nicely on tall mobile screens without looking too
       // narrow or squashed.
-      const img = currentBg;
       const canvasAspect = W / H;
       const imgAspect = img.naturalWidth / img.naturalHeight;
 
@@ -1803,21 +1839,25 @@
 
     // player.x / player.y represent Santa's bottom-center
     const offsetY = recoilTimer > 0 ? -4 : 0;
-    const scale = isMobileLayout() ? 0.6 : 1; // even smaller Santa on mobile
-    const w = SANTA_WIDTH * scale;
-    const h = SANTA_HEIGHT * scale;
+    
+    // Santa scales to 25% of tree width for proportional mobile-first design
+    const rect = getTreeRect();
+    const santaWidthScaled = rect.width * 0.25;
+    const santaHeightScaled = santaWidthScaled * 1.2; // maintain aspect ratio
+    
     ctx.drawImage(
       santaImg,
-      player.x - w / 2,
-      player.y - h + offsetY,
-      w,
-      h
+      player.x - santaWidthScaled / 2,
+      player.y - santaHeightScaled + offsetY,
+      santaWidthScaled,
+      santaHeightScaled
     );
   }
 
   function draw() {
     if (!W || !H) return;
-    drawBackground();
+    const isPortrait = H > W;
+    drawBackground(isPortrait);
     drawTreeAndStar();
     drawOrnamentsAndTargets();
     drawBullets();
@@ -1827,14 +1867,19 @@
   // --- SHOOTING & AIMING --------------------------------------------------
   function getSantaHandPosition() {
     // Approximate right-hand position relative to bottom-center
-    const rect = {
-      x: player.x - SANTA_WIDTH / 2,
-      y: player.y - SANTA_HEIGHT,
-      width: SANTA_WIDTH,
-      height: SANTA_HEIGHT
+    // Scale hand position based on responsive Santa size (25% of tree width)
+    const rect = getTreeRect();
+    const santaWidth = rect.width * 0.25;
+    const santaHeight = santaWidth * 1.2;
+    
+    const santaRect = {
+      x: player.x - santaWidth / 2,
+      y: player.y - santaHeight,
+      width: santaWidth,
+      height: santaHeight
     };
-    const handX = rect.x + rect.width * 0.8;
-    const handY = rect.y + rect.height * 0.4;
+    const handX = santaRect.x + santaRect.width * 0.8;
+    const handY = santaRect.y + santaRect.height * 0.4;
     return { x: handX, y: handY };
   }
 
@@ -1850,7 +1895,8 @@
     const vx = Math.cos(angle) * speed;
     const vy = Math.sin(angle) * speed;
 
-    const radius = 20;
+    // Ornament size is 12% of screen width for mobile-first responsive design
+    const radius = Math.max(W * 0.06, 12); // 12% of width = radius, min 12px
     const type = activeThrowType;
     const color = ornamentFallbackColors[type] || '#ffffff';
 
@@ -1911,7 +1957,7 @@
   // --- RESIZE / INIT -------------------------------------------------------
   function resizeCanvas() {
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight * 0.9;
+    canvas.height = window.innerHeight * 0.88; // Leave space for bottom quick bar
     W = canvas.width;
     H = canvas.height;
 
