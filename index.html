@@ -1565,10 +1565,10 @@
 
     const isPortrait = H > W;
 
-    // On mobile / portrait: big tree, sitting just above Santa + quick bar
+    // On mobile / portrait: very big tree, sitting just above Santa + quick bar
     if (isPortrait || isMobileLayout()) {
-      // Bigger than before: 90% of screen width
-      const treeWidth = W * 0.9;
+      // Make the tree fill essentially the full screen width
+      const treeWidth = W * 1.0;
       const treeHeight = treeWidth * aspect;
 
       const x = (W - treeWidth) / 2; // center horizontally
