@@ -1571,7 +1571,10 @@
       const treeHeight = treeWidth * aspect;
 
       const x = (W - treeWidth) / 2; // center horizontally
-      const y = Math.max(H - treeHeight, 50); // keep some top margin
+      // Reserve space at the very bottom for Santa + quick bar,
+      // and lift the tree slightly so it feels more centered.
+      const bottomReserve = Math.max(W * 0.18, 80);
+      const y = Math.max(H - treeHeight - bottomReserve, 30);
 
       return { x, y, width: treeWidth, height: treeHeight };
     }
@@ -1912,8 +1915,13 @@
     const vx = Math.cos(angle) * speed;
     const vy = Math.sin(angle) * speed;
 
-    // Ornament size is 12% of screen width for mobile-first responsive design
-    const radius = Math.max(W * 0.06, 12); // 12% of width = radius, min 12px
+    // Scale ornament size relative to the tree so that
+    // decorations look proportional on all screens.
+    const treeRect = getTreeRect();
+    // Target: final ornament graphic ≈ 12% of tree width.
+    // Since we stretch width by 1.8x later, start from a
+    // slightly smaller base radius.
+    const radius = Math.max(treeRect.width * 0.033, 10);
     const type = activeThrowType;
     const color = ornamentFallbackColors[type] || '#ffffff';
 
@@ -1983,7 +1991,8 @@
     // Santa anchored to the very bottom and positioned at ~35%
     // of total screen width (from left to right), independent of
     // tree width so his placement is consistent.
-    const santaBottomY = H;
+    const isMobile = isMobileLayout();
+    const santaBottomY = isMobile ? (H - Math.max(W * 0.18, 80)) : H;
     player.x = W * 0.35;
     player.y = santaBottomY;
     santaX = player.x;
