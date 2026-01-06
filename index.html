@@ -1565,30 +1565,17 @@
 
     const isPortrait = H > W;
 
-    // On mobile / portrait we want the tree to dominate the scene and sit
-    // comfortably above Santa + the quick bar.
+    // On mobile / portrait: big tree, sitting just above Santa + quick bar
     if (isPortrait || isMobileLayout()) {
-      // Reserve a band at the bottom for Santa + quick bar
-      const bottomReserve = Math.max(W * 0.18, 90);
-
-      // Let the tree fill most of the remaining height while
-      // keeping a little space at the top.
-      const availableHeight = Math.max(H - bottomReserve - 40, H * 0.6);
-      let treeHeight = availableHeight;
-      let treeWidth = treeHeight / aspect;
-
-      // Never exceed 90% of the screen width
-      const maxWidth = W * 0.9;
-      if (treeWidth > maxWidth) {
-        treeWidth = maxWidth;
-        treeHeight = treeWidth * aspect;
-      }
+      // Bigger than before: 90% of screen width
+      const treeWidth = W * 0.9;
+      const treeHeight = treeWidth * aspect;
 
       const x = (W - treeWidth) / 2; // center horizontally
-      // Vertically center within the usable area above the reserved band
-      const usableBottom = H - bottomReserve;
-      const yCentered = (usableBottom - treeHeight) / 2;
-      const y = Math.max(yCentered, 20);
+      // Reserve space at the bottom for Santa + quick bar and keep
+      // a small minimum top margin so the tree is not clipped.
+      const bottomReserve = Math.max(W * 0.18, 90);
+      const y = Math.max(H - treeHeight - bottomReserve, 20);
 
       return { x, y, width: treeWidth, height: treeHeight };
     }
