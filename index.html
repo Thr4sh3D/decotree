@@ -1544,6 +1544,20 @@
     renderQuickBar();
   }
 
+  // Ensure quick bar always uses a bottom, horizontal layout
+  function applyQuickBarLayout() {
+    if (!quickBar) return;
+    quickBar.style.position = 'fixed';
+    quickBar.style.bottom = '10px';
+    quickBar.style.left = '10px';
+    quickBar.style.right = '10px';
+    quickBar.style.display = 'flex';
+    quickBar.style.flexDirection = 'row';
+    quickBar.style.justifyContent = 'center';
+    quickBar.style.flexWrap = 'wrap';
+    quickBar.style.pointerEvents = 'none';
+  }
+
   // --- TREE GEOMETRY & COLLISION -----------------------------------------
   function getTreeRect() {
     // Maintains TREE_BASE_WIDTH x TREE_BASE_HEIGHT aspect ratio
@@ -1978,6 +1992,7 @@
   function initGame() {
     // ...existing init, but now uses new layout/physics...
     resizeCanvas();
+    applyQuickBarLayout();
     loadGame();
     updateLanguage();
     buildShopFromItems();
