@@ -1565,16 +1565,30 @@
 
     const isPortrait = H > W;
 
-    // On mobile / portrait we want the tree to take 85% of canvas width
+    // On mobile / portrait we want the tree to dominate the scene and sit
+    // comfortably above Santa + the quick bar.
     if (isPortrait || isMobileLayout()) {
-      const treeWidth = W * 0.85;
-      const treeHeight = treeWidth * aspect;
+      // Reserve a band at the bottom for Santa + quick bar
+      const bottomReserve = Math.max(W * 0.18, 90);
+
+      // Let the tree fill most of the remaining height while
+      // keeping a little space at the top.
+      const availableHeight = Math.max(H - bottomReserve - 40, H * 0.6);
+      let treeHeight = availableHeight;
+      let treeWidth = treeHeight / aspect;
+
+      // Never exceed 90% of the screen width
+      const maxWidth = W * 0.9;
+      if (treeWidth > maxWidth) {
+        treeWidth = maxWidth;
+        treeHeight = treeWidth * aspect;
+      }
 
       const x = (W - treeWidth) / 2; // center horizontally
-      // Reserve space at the very bottom for Santa + quick bar,
-      // and lift the tree slightly so it feels more centered.
-      const bottomReserve = Math.max(W * 0.18, 80);
-      const y = Math.max(H - treeHeight - bottomReserve, 30);
+      // Vertically center within the usable area above the reserved band
+      const usableBottom = H - bottomReserve;
+      const yCentered = (usableBottom - treeHeight) / 2;
+      const y = Math.max(yCentered, 20);
 
       return { x, y, width: treeWidth, height: treeHeight };
     }
@@ -1988,11 +2002,12 @@
 
     const rect = getTreeRect();
 
-    // Santa anchored to the very bottom and positioned at ~35%
-    // of total screen width (from left to right), independent of
-    // tree width so his placement is consistent.
+    // Santa anchored near the bottom and positioned at ~35%
+    // of total screen width (from left to right). On mobile we
+    // lift him above the reserved band used for the quick bar.
     const isMobile = isMobileLayout();
-    const santaBottomY = isMobile ? (H - Math.max(W * 0.18, 80)) : H;
+    const mobileReserve = Math.max(W * 0.18, 90);
+    const santaBottomY = isMobile ? (H - mobileReserve + 16) : H;
     player.x = W * 0.35;
     player.y = santaBottomY;
     santaX = player.x;
