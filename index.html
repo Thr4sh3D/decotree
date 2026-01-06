@@ -1708,7 +1708,10 @@
     ctx.clearRect(0, 0, W, H);
 
     const bgInfo = backgroundData[currentBgKey] || backgroundData['bgnight'];
-    const img = bgInfo ? (isPortrait ? bgInfo.mobile : bgInfo.desktop) : null;
+    // Use mobile-optimized artwork on small/mobile layouts,
+    // regardless of orientation. Desktop keeps the original images.
+    const useMobile = isMobileLayout();
+    const img = bgInfo ? (useMobile ? bgInfo.mobile : bgInfo.desktop) : null;
 
     if (img && img.complete && img.naturalWidth) {
       // Draw background with a "cover" behavior so it fills the
